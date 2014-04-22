@@ -2,7 +2,7 @@
 
 **_Author_**: Matthew Ng (matthewn4444@gmail)
 
-Similar to [pyLightpack](https://github.com/Atarity/Lightpack/blob/master/Software/apiexamples/pyLightpack/lightpack.py) from the author's site, this API is used for C++ although containing the same functions.
+This is an API for C++ projects similar to [pyLightpack](https://github.com/Atarity/Lightpack/blob/master/Software/apiexamples/pyLightpack/lightpack.py) from the author's site.
 This library uses [dlib](http://dlib.net/) for their sockets API. 
 This library communicates to the Lightpack server [Prismatik](http://lightpack.tv/downloads).
 
