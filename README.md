@@ -14,6 +14,7 @@ So far this library was compiled on Windows using Visual Studio 2013 however I a
 
 #include <Lightpack.h>
 #include <string.h>
+#include <iostream>
 
 #define HOST "127.0.0.1"
 #define PORT 3636
@@ -29,11 +30,11 @@ int main() {
             light.setBrightness(40);
             light.setColorToAll(255, 0, 0);     // Red
         } else {
-            printf("Failed to connect.\n");
+            std::cout << "Failed to connect." << std::endl;
         }
     }
     catch (std::exception& e) {
-        printf("%s\n", e.what());
+        std::cout << e.what() << std::endl;
     }
     return 0;
 }
