@@ -17,7 +17,7 @@ int main()
     Lightpack light(HOST, PORT, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, APIKEY);
     try {
         // Test all the functions in the Lightpack APIj
-        if (light.connect() == 0) {
+        if (light.connect() == Lightpack::RESULT::OK) {
             cout << "Connected" << endl;
             test("Lock",            light.lock() == Lightpack::RESULT::OK);
             test("Number of LEDs",  light.getCountLeds() == 10);
