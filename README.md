@@ -23,7 +23,7 @@ So far this library was compiled on Windows using Visual Studio 2013 however I a
 int main() {
     Lightpack light(HOST, PORT, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, APIKEY);
     try {
-        // Test all the functions in the Lightpack APIj
+        // Connect and change all the LED's color to red
         if (light.connect() == Lightpack::RESULT::OK) {
             light.lock();
             light.setSmooth(100);
