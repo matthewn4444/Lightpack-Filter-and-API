@@ -3,6 +3,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace Lightpack;
 
 #define HOST "127.0.0.1"
 #define PORT 3636
@@ -14,35 +15,48 @@ void test(const char* name, bool assertion) {
 
 int main()
 {
-    Lightpack light(HOST, PORT, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, APIKEY);
-    try {
-        // Test all the functions in the Lightpack APIj
-        if (light.connect() == Lightpack::RESULT::OK) {
-            cout << "Connected" << endl;
-            test("Lock",            light.lock() == Lightpack::RESULT::OK);
-            test("Number of LEDs",  light.getCountLeds() == 10);
-            test("Set profile",     light.setProfile("Lightpack") == Lightpack::RESULT::OK);
-            test("Smooth",          light.setSmooth(100) == Lightpack::RESULT::OK);
-            test("Gamma",           light.setGamma(2.5) == Lightpack::RESULT::OK);
-            test("Brightness",      light.setBrightness(10) == Lightpack::RESULT::OK);
-            test("API Status",      light.getAPIStatus() == Lightpack::RESULT::BUSY);
-            test("Status",          light.getStatus() == Lightpack::STATUS::ON);
-            test("Get Profile",     light.getProfile() == "Lightpack");
-            test("Color all",       light.setColorToAll(0, 255, 0) == Lightpack::RESULT::OK);
-            test("Color all",       light.setColor(1, 255, 0, 0) == Lightpack::RESULT::OK);
+    LedDevice device;
+    if (device.open()) {
+        device.setSmooth(100);
+        device.setBrightness(50);
+        device.setColorToAll(255, 255, 0);
+        device.setColor(4, 255, 0, 0);
+    }
+    else {
+        cout << "Failed to connect to the leds, try to connect to client" << endl;
 
-            vector<string> profiles = light.getProfiles();
-            cout << "Profiles:" << endl;
-            for (size_t i = 0; i < profiles.size(); i++) {
-                cout << "\t" << i << ": " << profiles[i] << endl;
+        PrismatikClient light(HOST, PORT, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, APIKEY);
+        try {
+            // Test all the functions in the Lightpack APIj
+            if (light.connect() == Lightpack::OK) {
+                cout << "Connected" << endl;
+                test("Lock", light.lock() == Lightpack::OK);
+                test("Number of LEDs", light.getCountLeds() == 10);
+                test("Set profile", light.setProfile("Lightpack") == Lightpack::OK);
+                test("Smooth", light.setSmooth(100) == Lightpack::OK);
+                test("Gamma", light.setGamma(2.5) == Lightpack::OK);
+                test("Brightness", light.setBrightness(10) == Lightpack::OK);
+                test("API Status", light.getAPIStatus() == Lightpack::BUSY);
+                test("Status", light.getStatus() == PrismatikClient::ON);
+                test("Get Profile", light.getProfile() == "Lightpack");
+                test("Color all", light.setColorToAll(0, 255, 0) == Lightpack::OK);
+                test("Color ", light.setColor(1, 255, 0, 0) == Lightpack::OK);
+
+                vector<string> profiles = light.getProfiles();
+                cout << "Profiles:" << endl;
+                for (size_t i = 0; i < profiles.size(); i++) {
+                    cout << "\t" << i << ": " << profiles[i] << endl;
+                }
+                test("First profile:", profiles[0] == "Lightpack");
+                cout << "Done" << endl;
             }
-            test("First profile:",  profiles[0] == "Lightpack");
-            cout << "Done" << endl;
+            else {
+                cout << "USB not connected" << endl;
+            }
+        }
+        catch (std::exception& e) {
+            cout << e.what() << endl;
         }
     }
-    catch (std::exception& e) {
-        cout << e.what() << endl;
-    }
-
     system("pause");
 }
