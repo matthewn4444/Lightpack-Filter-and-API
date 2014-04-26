@@ -39,8 +39,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>hidapi;C:\Programming\libs\dlib-18.7;$(IncludePath)</IncludePath>
-    <LibraryPath>lib/;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Programming\libs\dlib-18.7;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
     <OutDir>..\lib\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -55,7 +55,7 @@
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>hidapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Setupapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -74,11 +74,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\..\Programming\libs\dlib-18.7\dlib\all\source.cpp" />
+    <ClCompile Include="hidapi\hid.c" />
     <ClCompile Include="LedDevice.cpp" />
     <ClCompile Include="PrismatikClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Lightpack.h" />
+    <ClInclude Include="hidapi\hidapi.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

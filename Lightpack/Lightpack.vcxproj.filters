@@ -27,10 +27,16 @@
     <ClCompile Include="LedDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="hidapi\hid.c">
+      <Filter>device</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Lightpack.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="hidapi\hidapi.h">
+      <Filter>device</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
