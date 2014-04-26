@@ -301,8 +301,8 @@ namespace Lightpack {
         g = (mBrightness / 100.0) * g;
         b = (mBrightness / 100.0) * b;
 
-        red12bit = r;
-        green12bit = g;
-        blue12bit = b;
+        red12bit = (int)r;
+        green12bit = (int)g;
+        blue12bit = (int)b;
     }
 };
