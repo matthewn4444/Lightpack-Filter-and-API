@@ -10,9 +10,30 @@ typedef struct hid_device_ hid_device;
 namespace Lightpack {
     enum RESULT { OK, FAIL, BUSY, NOT_LOCKED, IDLE };
 
+    // Basic rect structure
+    struct Rect {
+    public:
+        Rect(){}
+        Rect(int _x, int _y, int _width, int _height)
+            : x(_x), y(_y), width(_width), height(_height) {}
+        int x, y, width, height;
+    };
+
+    // Basic LED structure
+    struct Led {
+    public:
+        Led(){}
+        Led(int _id, Rect _rect, bool _enabled = true)
+            : id(_id), rect(_rect), enabled(_enabled) {}
+        int id;
+        Rect rect;
+        bool enabled;
+    };
+
     // Base class for Prismatik and LedDevice
     class LedBase {
-        virtual int getCountLeds() = 0;
+    public:
+        virtual size_t getCountLeds() = 0;
 
         virtual RESULT setColor(int n, int red, int green, int blue) = 0;
         virtual RESULT setColorToAll(int red, int green, int blue) = 0;
@@ -34,7 +55,7 @@ namespace Lightpack {
         std::vector<std::string> getProfiles();
         std::string getProfile();
         STATUS getStatus();
-        int getCountLeds();
+        size_t getCountLeds();
         RESULT getAPIStatus();
 
         RESULT connect();
@@ -52,6 +73,12 @@ namespace Lightpack {
         RESULT turnOff();
         void disconnect();
 
+        bool loadLedInformation(std::string profileName);
+
+        inline const Led& getLedInfo(int i) {
+            return mLeds[i];
+        }
+
     private:
         // PIMPL implemenation to avoid people to compile dlib dependency
         class socket_impl;
@@ -61,12 +88,19 @@ namespace Lightpack {
         std::string readResultValue();
         RESULT getResult();
 
+        static const char* getHomeDirectory();
+        static bool parseIniPairValue(const std::string& line, int& first, int& second);
+
+        // Private static variable
+        static char sCacheHomeDirectory[1024];
+
         // Private variables
         std::string mHost;
         unsigned int mPort;
         std::vector<int> mLedMap;
         std::string mApiKey;
         char mCmdCache[1024];
+        std::vector<Led> mLeds;
     };
 
     class LedDevice : public LedBase {
@@ -87,8 +121,8 @@ namespace Lightpack {
         bool setColorDepth(int value);
         bool setRefreshDelay(int value);
 
-        inline int getCountLeds() {
-            return mDevices.empty() ? -1 : (int)mCurrentColors.size();
+        inline size_t getCountLeds() {
+            return mCurrentColors.size();
         }
 
         inline void pauseUpdating() {

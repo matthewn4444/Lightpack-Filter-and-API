@@ -77,12 +77,16 @@
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\..\Programming\libs\dlib-18.7\dlib\all\source.cpp" />
     <ClCompile Include="hidapi\hid.c" />
+    <ClCompile Include="inih\cpp\INIReader.cpp" />
+    <ClCompile Include="inih\ini.c" />
     <ClCompile Include="LedDevice.cpp" />
     <ClCompile Include="PrismatikClient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Lightpack.h" />
     <ClInclude Include="hidapi\hidapi.h" />
+    <ClInclude Include="inih\cpp\INIReader.h" />
+    <ClInclude Include="inih\ini.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

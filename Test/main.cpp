@@ -21,13 +21,14 @@ int main()
         device.setBrightness(50);
         device.setColorToAll(255, 255, 0);
         device.setColor(4, 255, 0, 0);
+        system("pause");
     }
     else {
         cout << "Failed to connect to the leds, try to connect to client" << endl;
 
         PrismatikClient light(HOST, PORT, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, APIKEY);
         try {
-            // Test all the functions in the Lightpack APIj
+            // Test all the functions in the Lightpack API
             if (light.connect() == Lightpack::OK) {
                 cout << "Connected" << endl;
                 test("Lock", light.lock() == Lightpack::OK);
@@ -35,7 +36,7 @@ int main()
                 test("Set profile", light.setProfile("Lightpack") == Lightpack::OK);
                 test("Smooth", light.setSmooth(100) == Lightpack::OK);
                 test("Gamma", light.setGamma(2.5) == Lightpack::OK);
-                test("Brightness", light.setBrightness(10) == Lightpack::OK);
+                test("Brightness", light.setBrightness(40) == Lightpack::OK);
                 test("API Status", light.getAPIStatus() == Lightpack::BUSY);
                 test("Status", light.getStatus() == PrismatikClient::ON);
                 test("Get Profile", light.getProfile() == "Lightpack");
@@ -57,6 +58,6 @@ int main()
         catch (std::exception& e) {
             cout << e.what() << endl;
         }
+        system("pause");
     }
-    system("pause");
 }

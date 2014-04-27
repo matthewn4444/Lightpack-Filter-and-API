@@ -16,6 +16,9 @@
     <Filter Include="device">
       <UniqueIdentifier>{f4722e40-e3e6-4af0-b9b2-ceabf882ea4b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="inih">
+      <UniqueIdentifier>{2de8d713-d7c7-4606-9274-56dfc14a35b0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\..\Programming\libs\dlib-18.7\dlib\all\source.cpp">
@@ -30,6 +33,12 @@
     <ClCompile Include="hidapi\hid.c">
       <Filter>device</Filter>
     </ClCompile>
+    <ClCompile Include="inih\ini.c">
+      <Filter>inih</Filter>
+    </ClCompile>
+    <ClCompile Include="inih\cpp\INIReader.cpp">
+      <Filter>inih</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Lightpack.h">
@@ -37,6 +46,12 @@
     </ClInclude>
     <ClInclude Include="hidapi\hidapi.h">
       <Filter>device</Filter>
+    </ClInclude>
+    <ClInclude Include="inih\ini.h">
+      <Filter>inih</Filter>
+    </ClInclude>
+    <ClInclude Include="inih\cpp\INIReader.h">
+      <Filter>inih</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

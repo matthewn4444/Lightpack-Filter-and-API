@@ -1,5 +1,10 @@
 #include "../include/Lightpack.h"
+#include "inih\cpp\INIReader.h"
 #include <dlib/iosockstream.h>
+
+#ifdef _WIN32
+#include <Shlobj.h>
+#endif
 
 // Commands
 #define CMD_GET_PROFILE         "getprofile\n"
@@ -19,6 +24,13 @@
 #define CMD_SET_STATUS_ON       "setstatus:on\n"
 #define CMD_SET_STATUS_OFF      "setstatus:off\n"
 
+// Prismatik preference keys
+#define PRISM_KEY_ENABLED   "IsEnabled"
+#define PRISM_KEY_POSITION  "Position"
+#define PRISM_KEY_SIZE      "Size"
+
+#define MAXPATHLENGTH 1024
+
 namespace Lightpack {
 
     // PIMPL Implementation to avoid dlib compile dependency
@@ -31,6 +43,8 @@ namespace Lightpack {
         }
     };
 
+    char PrismatikClient::sCacheHomeDirectory[1024] = {};
+
     PrismatikClient::PrismatikClient(const std::string& host, unsigned int port, const std::vector<int>& ledMap, const std::string& apikey)
         : mHost(host)
         , mPort(port)
@@ -42,6 +56,50 @@ namespace Lightpack {
 
     PrismatikClient::~PrismatikClient() {
         disconnect();
+    }
+
+    const char* PrismatikClient::getHomeDirectory() {
+        if (strlen(sCacheHomeDirectory) > 0) {
+            return sCacheHomeDirectory;
+        }
+#ifdef _WIN32
+        wchar_t path_w[MAXPATHLENGTH];
+        if (SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path_w) >= 0) {
+            wcstombs(sCacheHomeDirectory, path_w, MAXPATHLENGTH);
+            return sCacheHomeDirectory;
+        }
+#else
+        char* buffer = getenv("HOME");
+        if (buffer != NULL) {
+            strcpy(sCacheHomeDirectory, buffer);
+            return sCacheHomeDirectory;
+        }
+#endif
+        return NULL;
+    }
+
+    // Parsing the numbers in the format that Prismatik uses to describe the position or size
+    //      Format:
+    //              Position=@Point(1000 100)       // Parses 1000 and 100 out
+    bool PrismatikClient::parseIniPairValue(const std::string& line, int& first, int& second) {
+        int a = line.find_first_of('(');
+        int b = line.find_first_of(' ', a);
+        if (a == -1 || b == -1) return false;
+
+        int c = line.find_first_of(')', ++b);
+        if (c == -1) return false;
+
+        char* pEnd;
+        a++;
+        int temp1 = (int)strtol(line.substr(a, b - a - 1).c_str(), &pEnd, 10);
+        if (*pEnd) return false;
+
+        int temp2 = (int)strtol(line.substr(b, c - b).c_str(), &pEnd, 10);
+        if (*pEnd) return false;
+
+        first = temp1;
+        second = temp2;
+        return true;
     }
 
     std::string PrismatikClient::readResultLine() {
@@ -121,7 +179,7 @@ namespace Lightpack {
         return UNKNOWN;
     }
 
-    int PrismatikClient::getCountLeds() {
+    size_t PrismatikClient::getCountLeds() {
         pimpl->socket() << CMD_GET_COUNT_LEDS;
         return atoi(readResultValue().c_str());
     }
@@ -152,7 +210,7 @@ namespace Lightpack {
     }
 
     RESULT PrismatikClient::setColor(int n, int r, int g, int b) {
-        sprintf(mCmdCache, CMD_SET_COLOR, n, r, g, b);
+        sprintf(mCmdCache, CMD_SET_COLOR, (n + 1), r, g, b);
         printf("%s\n", mCmdCache);
         pimpl->socket() << mCmdCache;
         return getResult();
@@ -223,5 +281,39 @@ namespace Lightpack {
     void PrismatikClient::disconnect() {
         unlock();
         pimpl->socket().close();
+    }
+
+    bool PrismatikClient::loadLedInformation(std::string profileName) {
+        // Load the leds into memory from the default ini file
+        std::string path = std::string(getHomeDirectory()) + "/Prismatik/Profiles/" + profileName + ".ini";
+        INIReader reader(path.c_str());
+        if (reader.ParseError()) {
+            printf("Failed to read profile preferences.\n");
+            return false;
+        }
+
+        // Parse the ini file to get the information about the leds
+        size_t ledCount = getCountLeds();
+        mLeds.clear();
+        for (size_t i = 0; i < ledCount; i++) {
+            std::string section = "LED_" + std::to_string(mLedMap[i]);
+
+            bool enabled = reader.GetBoolean(section, PRISM_KEY_ENABLED, false);
+            std::string positionStr = reader.Get(section, PRISM_KEY_POSITION, "");
+            std::string sizeStr = reader.Get(section, PRISM_KEY_SIZE, "");
+
+            if (enabled && !positionStr.empty() && !sizeStr.empty()) {
+                int x, y, w, h;
+
+                if (!parseIniPairValue(positionStr, x, y)
+                    || !parseIniPairValue(sizeStr, w, h)) {
+                    mLeds.clear();
+                    printf("Failed to parse profile prefence for LED %d.\n", mLedMap[i]);
+                    return false;
+                }
+                mLeds.push_back(Led(mLedMap[i], Rect(x, y, w, h), enabled));
+            }
+        }
+        return true;
     }
 };
