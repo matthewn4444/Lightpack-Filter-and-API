@@ -5,15 +5,14 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mDevice(NULL)
 , mWidth(0)
 , mHeight(0)
-, thing(0)
-, m_pData(0)
 , mFrameBuffer(0)
 , mhThread(INVALID_HANDLE_VALUE)
 , mThreadId(0)
 , mThreadStopRequested(false)
 , mIsWorking(false)
+, mFrameReady(false)
 {
-    mLog = new Log("log.txt");
+    //mLog = new Log("log.txt");
 
     // Hard coded values from profile
     mLedArea = {
@@ -136,29 +135,10 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
     return S_OK;
 }
 
-STDMETHODIMP CLightpack::Pause()
-{
-    log("pause");
-    return CTransInPlaceFilter::Pause();
-}
-
-STDMETHODIMP CLightpack::Stop()
-{
-    log("stop");
-    /*
-    if (stuff) {
-        FILE* f = fopen("block.dat", "wb");
-        if (f) {
-            fwrite(stuff, 1, 1280 * 720 * 4, f);
-            fclose(f);
-        }
-    }
-    */
-    return CTransInPlaceFilter::Stop();
-}
-
 void CLightpack::startThread()
 {
+    CAutoLock lock(m_pLock);
+
     mhThread = CreateThread(NULL, 0, ParsingThread, (void*) this, 0, &mThreadId);
 
     ASSERT(mhThread);
@@ -169,6 +149,8 @@ void CLightpack::startThread()
 
 void CLightpack::destroyThread()
 {
+    CAutoLock lock(m_pLock);
+
     EnterCriticalSection(&mBufferLock);
     mThreadStopRequested = true;
     LeaveCriticalSection(&mBufferLock);
@@ -181,6 +163,8 @@ void CLightpack::destroyThread()
 
 void CLightpack::updateLights() 
 {
+    CAutoLock lock(m_pLock);
+
     mDevice->pauseUpdating();
     for (size_t i = 0; i < mScaledRects.size(); i++) {
         Lightpack::Rect& rect = mScaledRects[i];
@@ -210,78 +194,55 @@ DWORD CLightpack::threadStart()
 {
     while (true) {
         EnterCriticalSection(&mBufferLock);
-        //log("Enter thread crit section");
-            m_pData = 0;
         mIsWorking = false;
+        mFrameReady = false;
 
-        //while (m_pData == NULL && !mThreadStopRequested) {
-        while (m_pData == 0 && !mThreadStopRequested) {
+        // Wait for next frame of new data
+        while (!mFrameReady && !mThreadStopRequested) {
             SleepConditionVariableCS(&mShouldRunUpdate, &mBufferLock, INFINITE);
         }
 
-        //log("Woke up");
-
         if (mThreadStopRequested) {
             LeaveCriticalSection(&mBufferLock);
-            //log("Asked to leave")
             break;
         }
-
-        // Copy the data
-        if (m_pData == 0) continue;
-
-        unsigned int block = mWidth * mHeight;
-        memcpy(mFrameBuffer, m_pData, block);
-        Sleep(10);
-        memcpy(mFrameBuffer + block, m_pData + block, block);
-        Sleep(10);
-        memcpy(mFrameBuffer + block * 2, m_pData + block * 2, block);
-        Sleep(10);
-        memcpy(mFrameBuffer + block * 3, m_pData + block * 3, block);
-
-        m_pData = NULL;
         mIsWorking = true;
-        
-        //log("Leaving thread crit section")
+        mFrameReady = false;
         LeaveCriticalSection(&mBufferLock);
 
         updateLights();
     }
-    log("Thread exiting");
     return 0;
 }
 
 DWORD WINAPI CLightpack::ParsingThread(LPVOID lpvThreadParm)
 {
     CLightpack* pLightpack = (CLightpack*)lpvThreadParm;
-    return pLightpack->threadStart();               // For some reason it crashes here, could be a buffer overflow somewhere
+    return pLightpack->threadStart();
 }
 
 HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
     if (mDevice != NULL && !mScaledRects.empty()) {
         if (mVideoType == MEDIASUBTYPE_RGB32) {
+
+            // Copy and signal the thread to process the incoming data
             EnterCriticalSection(&mBufferLock);
-            bool dataReady = false;
+            mFrameReady = false;
             if (!mIsWorking) {
-                m_pData = 0;
-                pSample->GetPointer(&m_pData);
-                dataReady = true;
+                BYTE* pData = NULL;
+                pSample->GetPointer(&pData);
+                if (pData != NULL) {
+                    mFrameReady = true;
+                    CopyFrame(mFrameBuffer, pData, mWidth, mHeight);
+                }
             }
             LeaveCriticalSection(&mBufferLock);
-            if (m_pData && dataReady) {
-                //log("Wake them up")
+            if (mFrameReady) {
                 WakeConditionVariable(&mShouldRunUpdate);
             }
         }
     }
-
-    thing++;
-
-    if (thing == 24) {
-        thing = 0;
-    }
-
     return S_OK;
 }
 

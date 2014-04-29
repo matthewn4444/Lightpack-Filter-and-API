@@ -10,6 +10,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj",
 		{459A5834-B113-4415-8D48-39AC2C0E89C5} = {459A5834-B113-4415-8D48-39AC2C0E89C5}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Lightpack-filter", "directshow\Lightpack-filter\Lightpack-filter.vcxproj", "{A707A134-5BC9-476B-B4A7-5D76651CCD44}"
+	ProjectSection(ProjectDependencies) = postProject
+		{459A5834-B113-4415-8D48-39AC2C0E89C5} = {459A5834-B113-4415-8D48-39AC2C0E89C5}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -24,6 +29,10 @@ Global
 		{937126C9-ABDA-4626-A7E9-EDACE58D8FB0}.Debug|Win32.Build.0 = Debug|Win32
 		{937126C9-ABDA-4626-A7E9-EDACE58D8FB0}.Release|Win32.ActiveCfg = Release|Win32
 		{937126C9-ABDA-4626-A7E9-EDACE58D8FB0}.Release|Win32.Build.0 = Release|Win32
+		{A707A134-5BC9-476B-B4A7-5D76651CCD44}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A707A134-5BC9-476B-B4A7-5D76651CCD44}.Debug|Win32.Build.0 = Debug|Win32
+		{A707A134-5BC9-476B-B4A7-5D76651CCD44}.Release|Win32.ActiveCfg = Release|Win32
+		{A707A134-5BC9-476B-B4A7-5D76651CCD44}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
