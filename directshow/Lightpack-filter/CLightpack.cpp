@@ -6,7 +6,12 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mWidth(0)
 , mHeight(0)
 , thing(0)
+, m_pData(0)
 , mFrameBuffer(0)
+, mhThread(INVALID_HANDLE_VALUE)
+, mThreadId(0)
+, mThreadStopRequested(false)
+, mIsWorking(false)
 {
     mLog = new Log("log.txt");
 
@@ -24,19 +29,31 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
         { 80, 941, 293, 506 }
     };
 
+    InitializeConditionVariable(&mShouldRunUpdate);
+    InitializeCriticalSection(&mBufferLock);
+
     mDevice = new Lightpack::LedDevice();
     if (!mDevice->open()) {
         delete mDevice;
         mDevice = 0;
+        log("Device not connected")
     }
     else {
         mDevice->setBrightness(100);
         mDevice->setSmooth(20);
+        log("Device connected")
     }
+
+
+    startThread();
 }
 
 CLightpack::~CLightpack(void)
 {
+    destroyThread();
+
+    delete[] mFrameBuffer;
+
     if (mDevice) {
         delete mDevice;
         mDevice = NULL;
@@ -112,6 +129,7 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
             if (!mFrameBuffer) {
                 mFrameBuffer = new BYTE[mWidth * mHeight * 4];
+                std::fill(mFrameBuffer, mFrameBuffer + sizeof(mFrameBuffer), 0);
             }
         }
     }
@@ -139,13 +157,30 @@ STDMETHODIMP CLightpack::Stop()
     return CTransInPlaceFilter::Stop();
 }
 
-void CLightpack::parseFrameThread()
+void CLightpack::startThread()
 {
-    Timer timer;
-    timer.start();
+    mhThread = CreateThread(NULL, 0, ParsingThread, (void*) this, 0, &mThreadId);
 
-    memcpy(mFrameBuffer, m_pData, mWidth * mHeight * 4);
+    ASSERT(mhThread);
+    if (mhThread == NULL) {
+        log("Failed to create thread");
+    }
+}
 
+void CLightpack::destroyThread()
+{
+    EnterCriticalSection(&mBufferLock);
+    mThreadStopRequested = true;
+    LeaveCriticalSection(&mBufferLock);
+
+    WakeAllConditionVariable(&mShouldRunUpdate);
+
+    WaitForSingleObject(mhThread, INFINITE);
+    CloseHandle(mhThread);
+}
+
+void CLightpack::updateLights() 
+{
     mDevice->pauseUpdating();
     for (size_t i = 0; i < mScaledRects.size(); i++) {
         Lightpack::Rect& rect = mScaledRects[i];
@@ -168,18 +203,76 @@ void CLightpack::parseFrameThread()
         //logf("Pixel: Led: %d  [%d %d %d]", (i + 1), (int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels))
     }
     mDevice->resumeUpdating();
+    //logf("Elapsed: %f", timer.elapsed());
+}
 
-    logf("Elapsed: %f", timer.elapsed());
-    timer.stop();
+DWORD CLightpack::threadStart()
+{
+    while (true) {
+        EnterCriticalSection(&mBufferLock);
+        //log("Enter thread crit section");
+            m_pData = 0;
+        mIsWorking = false;
+
+        //while (m_pData == NULL && !mThreadStopRequested) {
+        while (m_pData == 0 && !mThreadStopRequested) {
+            SleepConditionVariableCS(&mShouldRunUpdate, &mBufferLock, INFINITE);
+        }
+
+        //log("Woke up");
+
+        if (mThreadStopRequested) {
+            LeaveCriticalSection(&mBufferLock);
+            //log("Asked to leave")
+            break;
+        }
+
+        // Copy the data
+        if (m_pData == 0) continue;
+
+        unsigned int block = mWidth * mHeight;
+        memcpy(mFrameBuffer, m_pData, block);
+        Sleep(10);
+        memcpy(mFrameBuffer + block, m_pData + block, block);
+        Sleep(10);
+        memcpy(mFrameBuffer + block * 2, m_pData + block * 2, block);
+        Sleep(10);
+        memcpy(mFrameBuffer + block * 3, m_pData + block * 3, block);
+
+        m_pData = NULL;
+        mIsWorking = true;
+        
+        //log("Leaving thread crit section")
+        LeaveCriticalSection(&mBufferLock);
+
+        updateLights();
+    }
+    log("Thread exiting");
+    return 0;
+}
+
+DWORD WINAPI CLightpack::ParsingThread(LPVOID lpvThreadParm)
+{
+    CLightpack* pLightpack = (CLightpack*)lpvThreadParm;
+    return pLightpack->threadStart();               // For some reason it crashes here, could be a buffer overflow somewhere
 }
 
 HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
     if (mDevice != NULL && !mScaledRects.empty()) {
         if (mVideoType == MEDIASUBTYPE_RGB32) {
-            pSample->GetPointer(&m_pData);
-
-            parseFrameThread();
+            EnterCriticalSection(&mBufferLock);
+            bool dataReady = false;
+            if (!mIsWorking) {
+                m_pData = 0;
+                pSample->GetPointer(&m_pData);
+                dataReady = true;
+            }
+            LeaveCriticalSection(&mBufferLock);
+            if (m_pData && dataReady) {
+                //log("Wake them up")
+                WakeConditionVariable(&mShouldRunUpdate);
+            }
         }
     }
 
