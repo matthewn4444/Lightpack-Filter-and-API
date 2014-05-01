@@ -5,10 +5,11 @@
 #include <Lightpack.h>
 
 #include <vector>
+#include <queue>
 #include "copyframe.h"
 
 // TEMP
-//#define LOG_ENABLED
+#define LOG_ENABLED
 
 #ifdef LOG_ENABLED
 #include "log.h"
@@ -41,7 +42,6 @@ static UINT64 getTime()
     return ui.QuadPart;
 }
 
-
 // {188fb505-04ff-4257-9bdb-3ff431852f99}
 static const GUID CLSID_Lightpack =
 { 0x188fb505, 0x04ff, 0x4257, { 0x9b, 0xdb, 0x3f, 0xf4, 0x31, 0x85, 0x2f, 0x99 } };
@@ -70,14 +70,27 @@ public:
 
 private:
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
-    void updateLights();
+    void queueLight(REFERENCE_TIME startTime);
+    void displayLight(COLORREF* colors);
+
+    bool ScheduleNextDisplay();
+    CAMEvent mDisplayLightEvent;
+    std::queue<std::pair<REFERENCE_TIME, COLORREF*>> mColorQueue;
+
+    long getStreamTime() {
+        if (!m_tStart) return 0;        // Not running yet
+        REFERENCE_TIME now;
+        m_pClock->GetTime(&now);
+        return (long)(now - m_tStart);
+    }
 
     // Thread function
     void startThread();
     void destroyThread();
     DWORD threadStart();
-
+#ifdef LOG_ENABLED
     Log* mLog;
+#endif
     std::vector<Lightpack::Rect> mLedArea;
     std::vector<Lightpack::Rect> mScaledRects;
 
@@ -85,9 +98,7 @@ private:
     HANDLE mhThread;
     DWORD mThreadId;
     bool mThreadStopRequested;
-    CRITICAL_SECTION mBufferLock;
-    CONDITION_VARIABLE mShouldRunUpdate;
-    bool mIsWorking;
+    CRITICAL_SECTION mQueueLock;
 
     Lightpack::LedDevice* mDevice;
 
@@ -98,7 +109,6 @@ private:
     int mHeight;
 
     BYTE* mFrameBuffer;
-    bool mFrameReady;
 };
 
 #endif // __CLIGHTPACK__

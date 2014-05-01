@@ -1,5 +1,9 @@
 #include "CLightpack.h"
 
+#define RED(n)      n & 0xFF
+#define GREEN(n)    (n & 0xFF00) >> 8
+#define BLUE(n)     (n & 0xFF0000) >> 16
+
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 : CTransInPlaceFilter(FILTER_NAME, pUnk, CLSID_Lightpack, phr)
 , mDevice(NULL)
@@ -9,10 +13,10 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mhThread(INVALID_HANDLE_VALUE)
 , mThreadId(0)
 , mThreadStopRequested(false)
-, mIsWorking(false)
-, mFrameReady(false)
 {
-    //mLog = new Log("log.txt");
+#ifdef LOG_ENABLED
+    mLog = new Log("log.txt");
+#endif
 
     // Hard coded values from profile
     mLedArea = {
@@ -28,8 +32,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
         { 80, 941, 293, 506 }
     };
 
-    InitializeConditionVariable(&mShouldRunUpdate);
-    InitializeCriticalSection(&mBufferLock);
+    InitializeCriticalSection(&mQueueLock);
 
     mDevice = new Lightpack::LedDevice();
     if (!mDevice->open()) {
@@ -53,15 +56,27 @@ CLightpack::~CLightpack(void)
 
     delete[] mFrameBuffer;
 
+    // Free the queue's memory usage
+    EnterCriticalSection(&mQueueLock);
+    size_t items = mColorQueue.size();
+    for (size_t i = 0; i < items; i++) {
+        std::pair<REFERENCE_TIME, COLORREF*>& pair = mColorQueue.front();
+        COLORREF* colors = pair.second;
+        delete[] colors;
+        mColorQueue.pop();
+    }
+    LeaveCriticalSection(&mQueueLock);
+
     if (mDevice) {
         delete mDevice;
         mDevice = NULL;
     }
-
+#ifdef LOG_ENABLED
     if (mLog) {
         delete mLog;
         mLog = NULL;
     }
+#endif
 }
 
 HRESULT CLightpack::CheckInputType(const CMediaType* mtIn)
@@ -151,21 +166,21 @@ void CLightpack::destroyThread()
 {
     CAutoLock lock(m_pLock);
 
-    EnterCriticalSection(&mBufferLock);
+    EnterCriticalSection(&mQueueLock);
     mThreadStopRequested = true;
-    LeaveCriticalSection(&mBufferLock);
+    LeaveCriticalSection(&mQueueLock);
 
-    WakeAllConditionVariable(&mShouldRunUpdate);
+    mDisplayLightEvent.Set();
 
     WaitForSingleObject(mhThread, INFINITE);
     CloseHandle(mhThread);
 }
 
-void CLightpack::updateLights() 
+void CLightpack::queueLight(REFERENCE_TIME startTime)
 {
     CAutoLock lock(m_pLock);
 
-    mDevice->pauseUpdating();
+    COLORREF* colors = new COLORREF[mScaledRects.size()];
     for (size_t i = 0; i < mScaledRects.size(); i++) {
         Lightpack::Rect& rect = mScaledRects[i];
         int totalPixels = rect.area();
@@ -183,34 +198,49 @@ void CLightpack::updateLights()
                 pixel += 4;
             }
         }
-        mDevice->setColor(i, (int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
-        //logf("Pixel: Led: %d  [%d %d %d]", (i + 1), (int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels))
+
+        colors[i] = RGB((int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
+        logf("Pixel: Led: %d  [%d %d %d]", (i + 1), (int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels))
+    }
+
+    EnterCriticalSection(&mQueueLock);
+    mColorQueue.push(std::make_pair(startTime, colors));
+    LeaveCriticalSection(&mQueueLock);
+}
+
+void CLightpack::displayLight(COLORREF* colors)
+{
+    CAutoLock lock(m_pLock);
+    mDevice->pauseUpdating();
+    for (size_t i = 0; i < mScaledRects.size(); i++) {
+        COLORREF color = colors[i];
+        mDevice->setColor(i, RED(color), GREEN(color), BLUE(color));
     }
     mDevice->resumeUpdating();
-    //logf("Elapsed: %f", timer.elapsed());
 }
 
 DWORD CLightpack::threadStart()
 {
     while (true) {
-        EnterCriticalSection(&mBufferLock);
-        mIsWorking = false;
-        mFrameReady = false;
+        WaitForSingleObject(mDisplayLightEvent, INFINITE);
 
-        // Wait for next frame of new data
-        while (!mFrameReady && !mThreadStopRequested) {
-            SleepConditionVariableCS(&mShouldRunUpdate, &mBufferLock, INFINITE);
-        }
+        EnterCriticalSection(&mQueueLock);
 
         if (mThreadStopRequested) {
-            LeaveCriticalSection(&mBufferLock);
+            LeaveCriticalSection(&mQueueLock);
             break;
         }
-        mIsWorking = true;
-        mFrameReady = false;
-        LeaveCriticalSection(&mBufferLock);
 
-        updateLights();
+        std::pair<REFERENCE_TIME, COLORREF*>& pair = mColorQueue.front();
+        COLORREF* colors = pair.second;
+        mColorQueue.pop();
+
+        LeaveCriticalSection(&mQueueLock);
+
+        logf("  Update colors [Stream Time: %lu]", getStreamTime());
+
+        displayLight(colors);
+        delete[] colors;
     }
     return 0;
 }
@@ -221,26 +251,55 @@ DWORD WINAPI CLightpack::ParsingThread(LPVOID lpvThreadParm)
     return pLightpack->threadStart();
 }
 
+bool CLightpack::ScheduleNextDisplay()
+{
+    EnterCriticalSection(&mQueueLock);
+    REFERENCE_TIME sampleTime = -1;
+    if (!mColorQueue.empty()) {
+        std::pair<REFERENCE_TIME, COLORREF*> pair = mColorQueue.front();
+        sampleTime = pair.first;
+    }
+    LeaveCriticalSection(&mQueueLock);
+    if (sampleTime == -1) {
+        return false;
+    }
+
+    logf("Schedule next time at %lu now %lu", ((CRefTime)sampleTime).Millisecs(), getStreamTime());
+
+    DWORD_PTR adviseTime;
+    HRESULT hr = m_pClock->AdviseTime(
+        m_tStart,
+        sampleTime,
+        (HEVENT)(HANDLE)mDisplayLightEvent,
+        &adviseTime);
+
+    if (SUCCEEDED(hr)) {
+        return true;
+    }
+    log("Failed to advise time");
+    return false;
+}
+
 HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
     if (mDevice != NULL && !mScaledRects.empty()) {
         if (mVideoType == MEDIASUBTYPE_RGB32) {
+            BYTE* pData = NULL;
+            pSample->GetPointer(&pData);
+            if (pData != NULL) {
+                CopyFrame(mFrameBuffer, pData, mWidth, mHeight);
 
-            // Copy and signal the thread to process the incoming data
-            EnterCriticalSection(&mBufferLock);
-            mFrameReady = false;
-            if (!mIsWorking) {
-                BYTE* pData = NULL;
-                pSample->GetPointer(&pData);
-                if (pData != NULL) {
-                    mFrameReady = true;
-                    CopyFrame(mFrameBuffer, pData, mWidth, mHeight);
+                // Get the time for this frame and queue it
+                REFERENCE_TIME startTime, endTime;
+                pSample->GetTime(&startTime, &endTime);
+                queueLight(startTime);
+
+                // Schedule if the start time is defined, otherwise it is still buffering
+                if (m_tStart) {
+                    ScheduleNextDisplay();
                 }
             }
-            LeaveCriticalSection(&mBufferLock);
-            if (mFrameReady) {
-                WakeConditionVariable(&mShouldRunUpdate);
-            }
+
         }
     }
     return S_OK;
