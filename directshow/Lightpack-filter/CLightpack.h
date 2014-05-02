@@ -6,7 +6,8 @@
 
 #include <vector>
 #include <queue>
-#include "copyframe.h"
+
+#include "gpu_memcpy_sse4.h"
 
 // TEMP
 #define LOG_ENABLED

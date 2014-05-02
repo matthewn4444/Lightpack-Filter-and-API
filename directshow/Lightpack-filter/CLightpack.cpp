@@ -46,7 +46,6 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
         log("Device connected")
     }
 
-
     startThread();
 }
 
@@ -237,8 +236,6 @@ DWORD CLightpack::threadStart()
 
         LeaveCriticalSection(&mQueueLock);
 
-        logf("  Update colors [Stream Time: %lu]", getStreamTime());
-
         displayLight(colors);
         delete[] colors;
     }
@@ -264,8 +261,6 @@ bool CLightpack::ScheduleNextDisplay()
         return false;
     }
 
-    logf("Schedule next time at %lu now %lu", ((CRefTime)sampleTime).Millisecs(), getStreamTime());
-
     DWORD_PTR adviseTime;
     HRESULT hr = m_pClock->AdviseTime(
         m_tStart,
@@ -287,7 +282,7 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
             BYTE* pData = NULL;
             pSample->GetPointer(&pData);
             if (pData != NULL) {
-                CopyFrame(mFrameBuffer, pData, mWidth, mHeight);
+                gpu_memcpy(mFrameBuffer, pData, pSample->GetSize());
 
                 // Get the time for this frame and queue it
                 REFERENCE_TIME startTime, endTime;

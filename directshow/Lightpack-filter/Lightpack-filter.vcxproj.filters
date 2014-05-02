@@ -37,7 +37,7 @@
     <ClInclude Include="log.h">
       <Filter>log</Filter>
     </ClInclude>
-    <ClInclude Include="copyframe.h">
+    <ClInclude Include="gpu_memcpy_sse4.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
