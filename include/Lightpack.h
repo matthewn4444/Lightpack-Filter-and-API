@@ -17,6 +17,10 @@ namespace Lightpack {
         Rect(int _x, int _y, int _width, int _height)
             : x(_x), y(_y), width(_width), height(_height) {}
         int x, y, width, height;
+
+        inline int area() {
+            return width * height;
+        }
     };
 
     // Basic LED structure
