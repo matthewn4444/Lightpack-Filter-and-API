@@ -1,9 +1,5 @@
 #include "CLightpack.h"
 
-#define RED(n)      n & 0xFF
-#define GREEN(n)    (n & 0xFF00) >> 8
-#define BLUE(n)     (n & 0xFF0000) >> 16
-
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 : CTransInPlaceFilter(FILTER_NAME, pUnk, CLSID_Lightpack, phr)
 , mDevice(NULL)
@@ -79,7 +75,8 @@ HRESULT CLightpack::CheckInputType(const CMediaType* mtIn)
         return E_FAIL;
     }
 
-    if (mtIn->subtype != MEDIASUBTYPE_RGB555 &&
+    if (mtIn->subtype != MEDIASUBTYPE_NV12 &&
+        mtIn->subtype != MEDIASUBTYPE_RGB555 &&
         mtIn->subtype != MEDIASUBTYPE_RGB565 &&
         mtIn->subtype != MEDIASUBTYPE_RGB24 &&
         mtIn->subtype != MEDIASUBTYPE_RGB32)
@@ -93,7 +90,6 @@ HRESULT CLightpack::CheckInputType(const CMediaType* mtIn)
     {
         return S_OK;
     }
-
     return E_FAIL;
 }
 
@@ -101,7 +97,6 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 {
     if (direction == PINDIR_INPUT)
     {
-        mVideoType = pmt->subtype;
         VIDEOINFOHEADER* pvih = (VIDEOINFOHEADER*)pmt->pbFormat;
         mVidHeader = *pvih;
 
@@ -112,6 +107,16 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
         // Scale all the rects to the size of the video
         if (mScaledRects.empty() && mWidth > 0 && mHeight > 0) {
+            if (MEDIASUBTYPE_RGB32 == pmt->subtype) {
+                mVideoType = VideoFormat::RGB32;
+            }
+            else if (MEDIASUBTYPE_NV12 == pmt->subtype) {
+                mVideoType = VideoFormat::NV12;
+            }
+            else {
+                mVideoType = VideoFormat::OTHER;
+            }
+
             int desktopWidth, desktopHeight;
             GetDesktopResolution(desktopWidth, desktopHeight);
 
@@ -229,25 +234,18 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
 
     COLORREF* colors = new COLORREF[mScaledRects.size()];
     for (size_t i = 0; i < mScaledRects.size(); i++) {
-        Lightpack::Rect& rect = mScaledRects[i];
-        int totalPixels = rect.area();
 
-        // Find the average color
-        unsigned int totalR = 0, totalG = 0, totalB = 0;
-        for (int r = 0; r < rect.height; r++) {
-            int y = rect.y + r;
-            BYTE* pixel = mFrameBuffer + (rect.x + y * mWidth) * 4;      // 4 bytes per pixel
-
-            for (int c = 0; c < rect.width; c++) {
-                totalB += pixel[0];
-                totalG += pixel[1];
-                totalR += pixel[2];
-                pixel += 4;
-            }
+        switch (mVideoType) {
+        case RGB32:
+            colors[i] = meanColorFromRGB32(mScaledRects[i]);
+            break;
+        case NV12:
+            colors[i] = meanColorFromNV12(mScaledRects[i]);
+            break;
+        default:
+            colors[i] = 0;
         }
-
-        colors[i] = RGB((int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
-        //logf("Pixel: Led: %d  [%d %d %d]", (i + 1), (int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels))
+        //logf("Pixel: %d [%d, %d, %d]", i, RED(colors[i]), GREEN(colors[i]), BLUE(colors[i]));
     }
 
     EnterCriticalSection(&mQueueLock);
@@ -371,7 +369,7 @@ bool CLightpack::ScheduleNextDisplay()
 HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
     if (mDevice != NULL && !mScaledRects.empty()) {
-        if (mVideoType == MEDIASUBTYPE_RGB32) {
+        if (mVideoType != VideoFormat::OTHER) {
             REFERENCE_TIME startTime, endTime;
             pSample->GetTime(&startTime, &endTime);
 

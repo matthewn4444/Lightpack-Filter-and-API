@@ -40,5 +40,8 @@
     <ClInclude Include="gpu_memcpy_sse4.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Converters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

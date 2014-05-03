@@ -8,6 +8,11 @@
 #include <queue>
 
 #include "gpu_memcpy_sse4.h"
+#include "Converters.h"
+
+#define RED(n)      n & 0xFF
+#define GREEN(n)    (n & 0xFF00) >> 8
+#define BLUE(n)     (n & 0xFF0000) >> 16
 
 // TEMP
 #define LOG_ENABLED
@@ -28,6 +33,9 @@
     logf("Elapsed: %I64d milliseconds", (getTime()-start)/10000);
 
 #define FILTER_NAME L"Lightpack"
+
+
+enum VideoFormat { RGB32, NV12, OTHER };
 
 static UINT64 getTime()
 {
@@ -74,6 +82,59 @@ public:
     static CUnknown *WINAPI CreateInstance(LPUNKNOWN pUnk, HRESULT *phr);
 
 private:
+    COLORREF meanColorFromRGB32(Lightpack::Rect& rect) {
+        const unsigned int totalPixels = rect.area();
+
+        unsigned int totalR = 0, totalG = 0, totalB = 0;
+        for (int r = 0; r < rect.height; r++) {
+            int y = rect.y + r;
+
+            BYTE* pixel = mFrameBuffer + (rect.x + y * mWidth) * 4;      // 4 bytes per pixel
+            for (int c = 0; c < rect.width; c++) {
+                totalB += pixel[0];
+                totalG += pixel[1];
+                totalR += pixel[2];
+                pixel += 4;
+            }
+        }
+        return RGB((int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
+    }
+
+    COLORREF meanColorFromNV12(Lightpack::Rect& rect) {
+        const unsigned int pixel_total = mWidth * mHeight;
+        const unsigned int totalPixels = rect.area();
+        BYTE* Y = mFrameBuffer;
+        BYTE* U = mFrameBuffer + pixel_total;
+        BYTE* V = mFrameBuffer + pixel_total + 1;
+        const int dUV = 2;
+
+        BYTE* U_pos = U;
+        BYTE* V_pos = V;
+
+        // YUV420 to RGB
+        unsigned int totalR = 0, totalG = 0, totalB = 0;
+        for (int r = 0; r < rect.height; r++) {
+            int y = r + rect.y;
+
+            Y = mFrameBuffer + y * mWidth + rect.x;
+            U = mFrameBuffer + pixel_total + (y / 2) * mWidth + (rect.x & 0x1 ? rect.x - 1 : rect.x);
+            V = U + 1;
+
+            for (int c = 0; c < rect.width; c++) {
+                COLORREF color = YUVToRGB(*(Y++), *U, *V);
+                totalR += RED(color);
+                totalG += GREEN(color);
+                totalB += BLUE(color);
+
+                if ((rect.x + c) & 0x1) {
+                    U += dUV;
+                    V += dUV;
+                }
+            }
+        }
+        return RGB((int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
+    }
+
     typedef std::pair<REFERENCE_TIME, COLORREF*> LightEntry;
 
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
@@ -84,7 +145,6 @@ private:
 
     bool ScheduleNextDisplay();
     CAMEvent mDisplayLightEvent;
-
 
     std::queue<LightEntry> mColorQueue;
 
@@ -120,7 +180,7 @@ private:
 
     Lightpack::LedDevice* mDevice;
 
-    GUID mVideoType;
+    VideoFormat mVideoType;
     int mStride;
     VIDEOINFOHEADER mVidHeader;
     int mWidth;
