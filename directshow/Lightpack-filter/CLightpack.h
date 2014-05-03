@@ -74,6 +74,8 @@ public:
     static CUnknown *WINAPI CreateInstance(LPUNKNOWN pUnk, HRESULT *phr);
 
 private:
+    typedef std::pair<REFERENCE_TIME, COLORREF*> LightEntry;
+
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
     void queueLight(REFERENCE_TIME startTime);
     void displayLight(COLORREF* colors);
@@ -83,7 +85,8 @@ private:
     bool ScheduleNextDisplay();
     CAMEvent mDisplayLightEvent;
 
-    std::queue<std::pair<REFERENCE_TIME, COLORREF*>> mColorQueue;
+
+    std::queue<LightEntry> mColorQueue;
 
     long getStreamTime() {
         if (!m_tStart) return 0;

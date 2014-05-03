@@ -291,7 +291,7 @@ DWORD CLightpack::threadStart()
             continue;
         }
 
-        std::pair<REFERENCE_TIME, COLORREF*>& pair = mColorQueue.front();
+        LightEntry& pair = mColorQueue.front();
         COLORREF* colors = pair.second;
         mColorQueue.pop();
 
@@ -324,7 +324,7 @@ void CLightpack::clearQueue()
         if (!mColorQueue.empty()) {
             size_t len = mColorQueue.size();
             for (; len > 0; len--) {
-                std::pair<REFERENCE_TIME, COLORREF*> pair = mColorQueue.front();
+                LightEntry& pair = mColorQueue.front();
                 COLORREF* colors = pair.second;
                 delete[] colors;
                 mColorQueue.pop();
@@ -340,7 +340,7 @@ bool CLightpack::ScheduleNextDisplay()
     EnterCriticalSection(&mQueueLock);
     REFERENCE_TIME sampleTime = -1;
     if (!mColorQueue.empty()) {
-        std::pair<REFERENCE_TIME, COLORREF*> pair = mColorQueue.front();
+        LightEntry& pair = mColorQueue.front();
         sampleTime = pair.first;
     }
     LeaveCriticalSection(&mQueueLock);
