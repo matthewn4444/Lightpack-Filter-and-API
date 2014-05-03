@@ -67,6 +67,10 @@ public:
     virtual HRESULT Transform(IMediaSample *pSample);
     virtual HRESULT SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt);
 
+    virtual STDMETHODIMP Run(REFERENCE_TIME StartTime);
+    virtual STDMETHODIMP Stop();
+    virtual STDMETHODIMP Pause();
+
     static CUnknown *WINAPI CreateInstance(LPUNKNOWN pUnk, HRESULT *phr);
 
 private:
@@ -74,16 +78,25 @@ private:
     void queueLight(REFERENCE_TIME startTime);
     void displayLight(COLORREF* colors);
 
+    void CancelNotification();
+
     bool ScheduleNextDisplay();
     CAMEvent mDisplayLightEvent;
+
     std::queue<std::pair<REFERENCE_TIME, COLORREF*>> mColorQueue;
 
     long getStreamTime() {
-        if (!m_tStart) return 0;        // Not running yet
+        if (!m_tStart) return 0;
         REFERENCE_TIME now;
         m_pClock->GetTime(&now);
         return (long)(now - m_tStart);
     }
+
+    long getStreamTimeMilliSec() {
+        return getStreamTime() / (UNITS / MILLISECONDS);
+    }
+
+    void clearQueue();
 
     // Thread function
     void startThread();
@@ -100,6 +113,7 @@ private:
     DWORD mThreadId;
     bool mThreadStopRequested;
     CRITICAL_SECTION mQueueLock;
+    CRITICAL_SECTION mAdviseLock;
 
     Lightpack::LedDevice* mDevice;
 
@@ -110,6 +124,7 @@ private:
     int mHeight;
 
     BYTE* mFrameBuffer;
+    std::queue<DWORD_PTR> mAdviseQueue;
 };
 
 #endif // __CLIGHTPACK__

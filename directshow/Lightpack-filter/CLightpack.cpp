@@ -33,6 +33,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     };
 
     InitializeCriticalSection(&mQueueLock);
+    InitializeCriticalSection(&mAdviseLock);
 
     mDevice = new Lightpack::LedDevice();
     if (!mDevice->open()) {
@@ -55,16 +56,7 @@ CLightpack::~CLightpack(void)
 
     delete[] mFrameBuffer;
 
-    // Free the queue's memory usage
-    EnterCriticalSection(&mQueueLock);
-    size_t items = mColorQueue.size();
-    for (size_t i = 0; i < items; i++) {
-        std::pair<REFERENCE_TIME, COLORREF*>& pair = mColorQueue.front();
-        COLORREF* colors = pair.second;
-        delete[] colors;
-        mColorQueue.pop();
-    }
-    LeaveCriticalSection(&mQueueLock);
+    CancelNotification();
 
     if (mDevice) {
         delete mDevice;
@@ -149,6 +141,62 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
     return S_OK;
 }
 
+STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
+{
+    logf("Run: %ld %lu %lu", getStreamTimeMilliSec(), ((CRefTime)StartTime).Millisecs(), ((CRefTime)m_tStart).Millisecs());
+    if (m_State == State_Running) {
+        return NOERROR;
+    }
+
+    HRESULT hr = CTransInPlaceFilter::Run(StartTime);
+    if (FAILED(hr)) {
+        log("Run failed");
+        return hr;
+    }
+
+    CancelNotification();
+    return NOERROR;
+}
+
+STDMETHODIMP CLightpack::Stop()
+{
+    logf("Stop %ld", getStreamTimeMilliSec());
+    CTransInPlaceFilter::Stop();
+    CancelNotification();
+    return NOERROR;
+}
+
+STDMETHODIMP CLightpack::Pause()
+{
+    logf("Pause %ld", getStreamTimeMilliSec());
+
+    HRESULT hr = CTransInPlaceFilter::Pause();
+    if (FAILED(hr)) {
+        log("Failed to pause");
+        return hr;
+    }
+
+    CancelNotification();
+    return NOERROR;
+}
+
+void CLightpack::CancelNotification()
+{
+    clearQueue();
+
+    // Clear all advise times from clock
+    if (!mAdviseQueue.empty()) {
+        EnterCriticalSection(&mAdviseLock);
+        if (!mAdviseQueue.empty()) {
+            m_pClock->Unadvise(mAdviseQueue.front());
+            mAdviseQueue.pop();
+        }
+        LeaveCriticalSection(&mAdviseLock);
+    }
+
+    mDisplayLightEvent.Reset();
+}
+
 void CLightpack::startThread()
 {
     CAutoLock lock(m_pLock);
@@ -199,12 +247,20 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
         }
 
         colors[i] = RGB((int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
-        logf("Pixel: Led: %d  [%d %d %d]", (i + 1), (int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels))
+        //logf("Pixel: Led: %d  [%d %d %d]", (i + 1), (int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels))
     }
 
     EnterCriticalSection(&mQueueLock);
-    mColorQueue.push(std::make_pair(startTime, colors));
-    LeaveCriticalSection(&mQueueLock);
+    // Render the first frame on startup while renderer buffers; happens only once
+    if (m_tStart == 0 && startTime == 0 && mColorQueue.empty()) {
+        LeaveCriticalSection(&mQueueLock);
+        displayLight(colors);
+        delete[] colors;
+    }
+    else {
+        mColorQueue.push(std::make_pair(startTime, colors));
+        LeaveCriticalSection(&mQueueLock);
+    }
 }
 
 void CLightpack::displayLight(COLORREF* colors)
@@ -230,14 +286,27 @@ DWORD CLightpack::threadStart()
             break;
         }
 
+        if (mColorQueue.empty()) {
+            LeaveCriticalSection(&mQueueLock);
+            continue;
+        }
+
         std::pair<REFERENCE_TIME, COLORREF*>& pair = mColorQueue.front();
         COLORREF* colors = pair.second;
         mColorQueue.pop();
 
         LeaveCriticalSection(&mQueueLock);
 
+        ASSERT(colors != NULL);
+        ASSERT(!mAdviseQueue.empty());
+
         displayLight(colors);
         delete[] colors;
+
+        EnterCriticalSection(&mAdviseLock);
+        m_pClock->Unadvise(mAdviseQueue.front());
+        mAdviseQueue.pop();
+        LeaveCriticalSection(&mAdviseLock);
     }
     return 0;
 }
@@ -246,6 +315,24 @@ DWORD WINAPI CLightpack::ParsingThread(LPVOID lpvThreadParm)
 {
     CLightpack* pLightpack = (CLightpack*)lpvThreadParm;
     return pLightpack->threadStart();
+}
+
+void CLightpack::clearQueue()
+{
+    if (!mColorQueue.empty()) {
+        EnterCriticalSection(&mQueueLock);
+        if (!mColorQueue.empty()) {
+            size_t len = mColorQueue.size();
+            for (; len > 0; len--) {
+                std::pair<REFERENCE_TIME, COLORREF*> pair = mColorQueue.front();
+                COLORREF* colors = pair.second;
+                delete[] colors;
+                mColorQueue.pop();
+            }
+        }
+        LeaveCriticalSection(&mQueueLock);
+    }
+    ASSERT(mColorQueue.empty());
 }
 
 bool CLightpack::ScheduleNextDisplay()
@@ -261,12 +348,18 @@ bool CLightpack::ScheduleNextDisplay()
         return false;
     }
 
-    DWORD_PTR adviseTime;
+    // Schedule next light
+    EnterCriticalSection(&mAdviseLock);
+    DWORD_PTR pAdvise;
     HRESULT hr = m_pClock->AdviseTime(
         m_tStart,
         sampleTime,
         (HEVENT)(HANDLE)mDisplayLightEvent,
-        &adviseTime);
+        &pAdvise);
+    mAdviseQueue.push(pAdvise);
+    LeaveCriticalSection(&mAdviseLock);
+
+    ASSERT(!mAdviseQueue.empty());
 
     if (SUCCEEDED(hr)) {
         return true;
@@ -279,22 +372,24 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
     if (mDevice != NULL && !mScaledRects.empty()) {
         if (mVideoType == MEDIASUBTYPE_RGB32) {
-            BYTE* pData = NULL;
-            pSample->GetPointer(&pData);
-            if (pData != NULL) {
-                gpu_memcpy(mFrameBuffer, pData, pSample->GetSize());
+            REFERENCE_TIME startTime, endTime;
+            pSample->GetTime(&startTime, &endTime);
 
-                // Get the time for this frame and queue it
-                REFERENCE_TIME startTime, endTime;
-                pSample->GetTime(&startTime, &endTime);
-                queueLight(startTime);
+            // Do not render old frames, they are discarded anyways
+            REFERENCE_TIME streamTime = getStreamTime();
+            if (!streamTime || startTime > streamTime) {
+                BYTE* pData = NULL;
+                pSample->GetPointer(&pData);
+                if (pData != NULL) {
+                    gpu_memcpy(mFrameBuffer, pData, pSample->GetSize());
+                    queueLight(startTime);
 
-                // Schedule if the start time is defined, otherwise it is still buffering
-                if (m_tStart) {
-                    ScheduleNextDisplay();
+                    // Schedule if the start time is defined, otherwise it is still buffering
+                    if (streamTime) {
+                        ScheduleNextDisplay();
+                    }
                 }
             }
-
         }
     }
     return S_OK;
