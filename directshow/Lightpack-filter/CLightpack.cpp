@@ -9,6 +9,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mhThread(INVALID_HANDLE_VALUE)
 , mThreadId(0)
 , mThreadStopRequested(false)
+, mStride(0)
 {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
@@ -90,6 +91,13 @@ HRESULT CLightpack::CheckInputType(const CMediaType* mtIn)
     {
         return S_OK;
     }
+
+    if ((mtIn->formattype == FORMAT_VideoInfo2) &&
+        (mtIn->cbFormat >= sizeof(VIDEOINFOHEADER2)) &&
+        (mtIn->pbFormat != NULL))
+    {
+        return S_OK;
+    }
     return E_FAIL;
 }
 
@@ -98,12 +106,15 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
     if (direction == PINDIR_INPUT)
     {
         VIDEOINFOHEADER* pvih = (VIDEOINFOHEADER*)pmt->pbFormat;
-        mVidHeader = *pvih;
-
-        BITMAPINFOHEADER bih = mVidHeader.bmiHeader;
-        mStride = bih.biBitCount / 8 * bih.biWidth;
         mWidth = pvih->bmiHeader.biWidth;
         mHeight = pvih->bmiHeader.biHeight;
+
+        if (!mWidth || !mHeight) {
+            // Try VIDEOINFOHEADER2
+            VIDEOINFOHEADER2* pvih2 = (VIDEOINFOHEADER2*)pmt->pbFormat;
+            mWidth = pvih2->bmiHeader.biWidth;
+            mHeight = pvih2->bmiHeader.biHeight;
+        }
 
         // Scale all the rects to the size of the video
         if (mScaledRects.empty() && mWidth > 0 && mHeight > 0) {
@@ -370,6 +381,25 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
     if (mDevice != NULL && !mScaledRects.empty()) {
         if (mVideoType != VideoFormat::OTHER) {
+            // Adapt changes in samples
+            AM_MEDIA_TYPE* pType;
+            if (SUCCEEDED(pSample->GetMediaType(&pType))) {
+                if (pType) {
+                    log(pType);
+                    // Get the newest stride
+                    if (pType->formattype == FORMAT_VideoInfo && pType->cbFormat >= sizeof(VIDEOINFOHEADER)) {
+                        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pType->pbFormat);
+                        mStride = pVih->bmiHeader.biWidth;
+                    }
+                    else if (pType->formattype == FORMAT_VideoInfo2 && pType->cbFormat >= sizeof(VIDEOINFOHEADER2)) {
+                        VIDEOINFOHEADER2 *pVih = reinterpret_cast<VIDEOINFOHEADER2*>(pType->pbFormat);
+                        mStride = pVih->bmiHeader.biWidth;
+                    }
+                    DeleteMediaType(pType);
+                }
+            }
+            ASSERT(mStride >= mWidth);
+
             REFERENCE_TIME startTime, endTime;
             pSample->GetTime(&startTime, &endTime);
 

@@ -2,6 +2,7 @@
 #define __CLIGHTPACK__
 
 #include <streams.h>
+#include <Dvdmedia.h>
 #include <Lightpack.h>
 
 #include <vector>
@@ -83,13 +84,14 @@ public:
 
 private:
     COLORREF meanColorFromRGB32(Lightpack::Rect& rect) {
+        ASSERT(mStride >= mWidth);
         const unsigned int totalPixels = rect.area();
 
         unsigned int totalR = 0, totalG = 0, totalB = 0;
         for (int r = 0; r < rect.height; r++) {
             int y = rect.y + r;
 
-            BYTE* pixel = mFrameBuffer + (rect.x + y * mWidth) * 4;      // 4 bytes per pixel
+            BYTE* pixel = mFrameBuffer + (rect.x + y * mStride) * 4;      // 4 bytes per pixel
             for (int c = 0; c < rect.width; c++) {
                 totalB += pixel[0];
                 totalG += pixel[1];
@@ -101,7 +103,8 @@ private:
     }
 
     COLORREF meanColorFromNV12(Lightpack::Rect& rect) {
-        const unsigned int pixel_total = mWidth * mHeight;
+        ASSERT(mStride >= mWidth);
+        const unsigned int pixel_total = mStride * mHeight;
         const unsigned int totalPixels = rect.area();
         BYTE* Y = mFrameBuffer;
         BYTE* U = mFrameBuffer + pixel_total;
@@ -116,8 +119,8 @@ private:
         for (int r = 0; r < rect.height; r++) {
             int y = r + rect.y;
 
-            Y = mFrameBuffer + y * mWidth + rect.x;
-            U = mFrameBuffer + pixel_total + (y / 2) * mWidth + (rect.x & 0x1 ? rect.x - 1 : rect.x);
+            Y = mFrameBuffer + y * mStride + rect.x;
+            U = mFrameBuffer + pixel_total + (y / 2) * mStride + (rect.x & 0x1 ? rect.x - 1 : rect.x);
             V = U + 1;
 
             for (int c = 0; c < rect.width; c++) {
@@ -182,7 +185,6 @@ private:
 
     VideoFormat mVideoType;
     int mStride;
-    VIDEOINFOHEADER mVidHeader;
     int mWidth;
     int mHeight;
 
