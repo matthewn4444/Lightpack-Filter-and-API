@@ -42,6 +42,8 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 
 CLightpack::~CLightpack(void)
 {
+    destroyThread();
+
     ASSERT(mThreadId == NULL);
     ASSERT(mhThread == INVALID_HANDLE_VALUE);
     ASSERT(mThreadStopRequested == false);
