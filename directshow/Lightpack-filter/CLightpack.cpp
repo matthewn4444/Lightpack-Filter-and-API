@@ -1,5 +1,7 @@
 #include "CLightpack.h"
 
+const DWORD CLightpack::sDeviceCheckElapseTime = 2000;
+
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 : CTransInPlaceFilter(FILTER_NAME, pUnk, CLSID_Lightpack, phr)
 , mDevice(NULL)
@@ -10,6 +12,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mThreadId(0)
 , mThreadStopRequested(false)
 , mStride(0)
+, mLastDeviceCheck(GetTickCount())
 {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
@@ -31,18 +34,9 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 
     InitializeCriticalSection(&mQueueLock);
     InitializeCriticalSection(&mAdviseLock);
+    InitializeCriticalSection(&mDeviceLock);
 
-    mDevice = new Lightpack::LedDevice();
-    if (!mDevice->open()) {
-        delete mDevice;
-        mDevice = 0;
-        log("Device not connected")
-    }
-    else {
-        mDevice->setBrightness(100);
-        mDevice->setSmooth(20);
-        log("Device connected")
-    }
+    connectDevice();
 }
 
 CLightpack::~CLightpack(void)
@@ -53,10 +47,7 @@ CLightpack::~CLightpack(void)
 
     delete[] mFrameBuffer;
 
-    if (mDevice) {
-        delete mDevice;
-        mDevice = NULL;
-    }
+    disconnectDevice();
 #ifdef LOG_ENABLED
     if (mLog) {
         delete mLog;
@@ -195,6 +186,40 @@ STDMETHODIMP CLightpack::Pause()
     return NOERROR;
 }
 
+void CLightpack::connectDevice()
+{
+    if (!mDevice) {
+        EnterCriticalSection(&mDeviceLock);
+        if (!mDevice) {
+            mDevice = new Lightpack::LedDevice();
+            if (!mDevice->open()) {
+                delete mDevice;
+                mDevice = 0;
+                log("Device not connected")
+            }
+            else {
+                mDevice->setBrightness(100);
+                mDevice->setSmooth(20);
+                log("Device connected")
+            }
+        }
+        LeaveCriticalSection(&mDeviceLock);
+    }
+}
+
+void CLightpack::disconnectDevice()
+{
+    if (mDevice) {
+        EnterCriticalSection(&mDeviceLock);
+        if (mDevice) {
+            delete mDevice;
+            mDevice = NULL;
+            log("Disconnected device");
+        }
+        LeaveCriticalSection(&mDeviceLock);
+    }
+}
+
 void CLightpack::CancelNotification()
 {
     clearQueue();
@@ -289,15 +314,28 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
     }
 }
 
-void CLightpack::displayLight(COLORREF* colors)
+bool CLightpack::displayLight(COLORREF* colors)
 {
-    CAutoLock lock(m_pLock);
-    mDevice->pauseUpdating();
-    for (size_t i = 0; i < mScaledRects.size(); i++) {
-        COLORREF color = colors[i];
-        mDevice->setColor(i, RED(color), GREEN(color), BLUE(color));
+    if (mDevice) {
+        EnterCriticalSection(&mDeviceLock);
+        bool deviceAval = mDevice != NULL;
+        if (deviceAval) {
+            mDevice->pauseUpdating();
+            for (size_t i = 0; i < mScaledRects.size(); i++) {
+                COLORREF color = colors[i];
+                if (mDevice->setColor(i, RED(color), GREEN(color), BLUE(color)) != Lightpack::RESULT::OK) {
+                    // Device is/was disconnected
+                    LeaveCriticalSection(&mDeviceLock);
+                    disconnectDevice();
+                    return false;
+                }
+            }
+            mDevice->resumeUpdating();
+        }
+        LeaveCriticalSection(&mDeviceLock);
+        return deviceAval;
     }
-    mDevice->resumeUpdating();
+    return false;
 }
 
 DWORD CLightpack::threadStart()
@@ -326,13 +364,17 @@ DWORD CLightpack::threadStart()
         ASSERT(colors != NULL);
         ASSERT(!mAdviseQueue.empty());
 
-        displayLight(colors);
+        bool success = displayLight(colors);
         delete[] colors;
 
         EnterCriticalSection(&mAdviseLock);
         m_pClock->Unadvise(mAdviseQueue.front());
         mAdviseQueue.pop();
         LeaveCriticalSection(&mAdviseLock);
+
+        if (!success) {
+            // User has unplugged or issues communicating to the device
+        }
     }
     return 0;
 }
@@ -396,25 +438,33 @@ bool CLightpack::ScheduleNextDisplay()
 
 HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
-    if (mDevice != NULL && !mScaledRects.empty()) {
-        if (mVideoType != VideoFormat::OTHER) {
-            // Adapt changes in samples
-            AM_MEDIA_TYPE* pType;
-            if (SUCCEEDED(pSample->GetMediaType(&pType))) {
-                if (pType) {
-                    log(pType);
-                    // Get the newest stride
-                    if (pType->formattype == FORMAT_VideoInfo && pType->cbFormat >= sizeof(VIDEOINFOHEADER)) {
-                        VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pType->pbFormat);
-                        mStride = pVih->bmiHeader.biWidth;
-                    }
-                    else if (pType->formattype == FORMAT_VideoInfo2 && pType->cbFormat >= sizeof(VIDEOINFOHEADER2)) {
-                        VIDEOINFOHEADER2 *pVih = reinterpret_cast<VIDEOINFOHEADER2*>(pType->pbFormat);
-                        mStride = pVih->bmiHeader.biWidth;
-                    }
-                    DeleteMediaType(pType);
-                }
+    // Adapt changes in samples
+    AM_MEDIA_TYPE* pType;
+    if (SUCCEEDED(pSample->GetMediaType(&pType))) {
+        if (pType) {
+            log(pType);
+            // Get the newest stride
+            if (pType->formattype == FORMAT_VideoInfo && pType->cbFormat >= sizeof(VIDEOINFOHEADER)) {
+                VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pType->pbFormat);
+                mStride = pVih->bmiHeader.biWidth;
             }
+            else if (pType->formattype == FORMAT_VideoInfo2 && pType->cbFormat >= sizeof(VIDEOINFOHEADER2)) {
+                VIDEOINFOHEADER2 *pVih = reinterpret_cast<VIDEOINFOHEADER2*>(pType->pbFormat);
+                mStride = pVih->bmiHeader.biWidth;
+            }
+            DeleteMediaType(pType);
+        }
+    }
+
+    if (mDevice == NULL) {
+        // Reconnect device every 2 seconds if not connected
+        DWORD now = GetTickCount();
+        if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
+            connectDevice();
+            mLastDeviceCheck = now;
+        }
+    } else {
+        if (!mScaledRects.empty() && mVideoType != VideoFormat::OTHER) {
             ASSERT(mStride >= mWidth);
 
             REFERENCE_TIME startTime, endTime;

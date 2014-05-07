@@ -83,6 +83,8 @@ public:
     static CUnknown *WINAPI CreateInstance(LPUNKNOWN pUnk, HRESULT *phr);
 
 private:
+    static const DWORD sDeviceCheckElapseTime;      // Check every 2 seconds
+
     COLORREF meanColorFromRGB32(Lightpack::Rect& rect) {
         ASSERT(mStride >= mWidth);
         const unsigned int totalPixels = rect.area();
@@ -142,7 +144,9 @@ private:
 
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
     void queueLight(REFERENCE_TIME startTime);
-    void displayLight(COLORREF* colors);
+    bool displayLight(COLORREF* colors);
+    void connectDevice();
+    void disconnectDevice();
 
     void CancelNotification();
 
@@ -180,6 +184,7 @@ private:
     bool mThreadStopRequested;
     CRITICAL_SECTION mQueueLock;
     CRITICAL_SECTION mAdviseLock;
+    CRITICAL_SECTION mDeviceLock;
 
     Lightpack::LedDevice* mDevice;
 
@@ -187,6 +192,8 @@ private:
     int mStride;
     int mWidth;
     int mHeight;
+
+    DWORD mLastDeviceCheck;
 
     BYTE* mFrameBuffer;
     std::queue<DWORD_PTR> mAdviseQueue;
