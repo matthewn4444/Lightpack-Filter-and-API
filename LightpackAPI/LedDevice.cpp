@@ -54,14 +54,13 @@ namespace Lightpack {
 
     RESULT LedDevice::setColor(int led, int red, int green, int blue) {
         if (led < 0 || led >= (int)mCurrentColors.size()) {
-            return OK;
+            return FAIL;
         }
-        bool flag = true;
         mCurrentColors[led] = RGB(red, green, blue);
         if (!updateLeds()) {
-            flag = false;
+            return FAIL;
         }
-        return flag ? OK : FAIL;
+        return OK;
     }
 
     RESULT LedDevice::setColorToAll(int red, int green, int blue) {
@@ -69,6 +68,9 @@ namespace Lightpack {
     }
 
     RESULT LedDevice::setSmooth(int value) {
+        if (mDevices.empty() && !tryToReopenDevice()) {
+            return FAIL;
+        }
         mWriteBuffer[WRITE_BUFFER_INDEX_DATA_START] = (unsigned char)value;
 
         bool flag = true;
@@ -232,6 +234,9 @@ namespace Lightpack {
     }
 
     bool LedDevice::updateLeds() {
+        if (mDevices.empty() && !tryToReopenDevice()) {
+            return false;
+        }
         if (!mEnableUpdating) {
             return true;
         }
