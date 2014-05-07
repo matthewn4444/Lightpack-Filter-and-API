@@ -13,6 +13,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mThreadStopRequested(false)
 , mStride(0)
 , mLastDeviceCheck(GetTickCount())
+, mThreadCleanUpRequested(false)
 {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
@@ -201,6 +202,7 @@ void CLightpack::connectDevice()
                 mDevice->setBrightness(100);
                 mDevice->setSmooth(20);
                 log("Device connected")
+                startThread();
             }
         }
         LeaveCriticalSection(&mDeviceLock);
@@ -215,6 +217,7 @@ void CLightpack::disconnectDevice()
             delete mDevice;
             mDevice = NULL;
             log("Disconnected device");
+            // DO NOT REMOVE THREAD HERE, there will be a deadlock
         }
         LeaveCriticalSection(&mDeviceLock);
     }
@@ -248,6 +251,7 @@ void CLightpack::startThread()
     ASSERT(mhThread == INVALID_HANDLE_VALUE);
 
     mhThread = CreateThread(NULL, 0, ParsingThread, (void*) this, 0, &mThreadId);
+    mThreadCleanUpRequested = false;
 
     ASSERT(mhThread);
     if (mhThread == NULL) {
@@ -278,6 +282,7 @@ void CLightpack::destroyThread()
     mThreadId = 0;
     mhThread = INVALID_HANDLE_VALUE;
     mThreadStopRequested = false;
+    mThreadCleanUpRequested = false;
     CancelNotification();
 }
 
@@ -314,28 +319,26 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
     }
 }
 
-bool CLightpack::displayLight(COLORREF* colors)
+void CLightpack::displayLight(COLORREF* colors)
 {
     if (mDevice) {
         EnterCriticalSection(&mDeviceLock);
-        bool deviceAval = mDevice != NULL;
-        if (deviceAval) {
+        if (mDevice) {
             mDevice->pauseUpdating();
             for (size_t i = 0; i < mScaledRects.size(); i++) {
                 COLORREF color = colors[i];
                 if (mDevice->setColor(i, RED(color), GREEN(color), BLUE(color)) != Lightpack::RESULT::OK) {
                     // Device is/was disconnected
                     LeaveCriticalSection(&mDeviceLock);
+                    mThreadCleanUpRequested = true;
                     disconnectDevice();
-                    return false;
+                    return;
                 }
             }
             mDevice->resumeUpdating();
         }
         LeaveCriticalSection(&mDeviceLock);
-        return deviceAval;
     }
-    return false;
 }
 
 DWORD CLightpack::threadStart()
@@ -364,17 +367,13 @@ DWORD CLightpack::threadStart()
         ASSERT(colors != NULL);
         ASSERT(!mAdviseQueue.empty());
 
-        bool success = displayLight(colors);
+        displayLight(colors);
         delete[] colors;
 
         EnterCriticalSection(&mAdviseLock);
         m_pClock->Unadvise(mAdviseQueue.front());
         mAdviseQueue.pop();
         LeaveCriticalSection(&mAdviseLock);
-
-        if (!success) {
-            // User has unplugged or issues communicating to the device
-        }
     }
     return 0;
 }
@@ -438,6 +437,12 @@ bool CLightpack::ScheduleNextDisplay()
 
 HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
+    // See if the thread needs to be destroyed requested from the thread
+    if (mThreadCleanUpRequested) {
+        mThreadCleanUpRequested = false;
+        destroyThread();
+    }
+
     // Adapt changes in samples
     AM_MEDIA_TYPE* pType;
     if (SUCCEEDED(pSample->GetMediaType(&pType))) {

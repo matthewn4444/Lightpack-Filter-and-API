@@ -144,7 +144,7 @@ private:
 
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
     void queueLight(REFERENCE_TIME startTime);
-    bool displayLight(COLORREF* colors);
+    void displayLight(COLORREF* colors);
     void connectDevice();
     void disconnectDevice();
 
@@ -182,6 +182,7 @@ private:
     HANDLE mhThread;
     DWORD mThreadId;
     bool mThreadStopRequested;
+    bool mThreadCleanUpRequested;
     CRITICAL_SECTION mQueueLock;
     CRITICAL_SECTION mAdviseLock;
     CRITICAL_SECTION mDeviceLock;
