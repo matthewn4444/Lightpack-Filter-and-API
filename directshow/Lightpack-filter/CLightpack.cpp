@@ -43,17 +43,15 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
         mDevice->setSmooth(20);
         log("Device connected")
     }
-
-    startThread();
 }
 
 CLightpack::~CLightpack(void)
 {
-    destroyThread();
+    ASSERT(mThreadId == NULL);
+    ASSERT(mhThread == INVALID_HANDLE_VALUE);
+    ASSERT(mThreadStopRequested == false);
 
     delete[] mFrameBuffer;
-
-    CancelNotification();
 
     if (mDevice) {
         delete mDevice;
@@ -171,6 +169,8 @@ STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
     }
 
     CancelNotification();
+
+    startThread();
     return NOERROR;
 }
 
@@ -191,8 +191,7 @@ STDMETHODIMP CLightpack::Pause()
         log("Failed to pause");
         return hr;
     }
-
-    CancelNotification();
+    destroyThread();
     return NOERROR;
 }
 
@@ -215,7 +214,13 @@ void CLightpack::CancelNotification()
 
 void CLightpack::startThread()
 {
+    if (mThreadId != NULL && mhThread != INVALID_HANDLE_VALUE) {
+        return;
+    }
+
     CAutoLock lock(m_pLock);
+    ASSERT(mThreadId == NULL);
+    ASSERT(mhThread == INVALID_HANDLE_VALUE);
 
     mhThread = CreateThread(NULL, 0, ParsingThread, (void*) this, 0, &mThreadId);
 
@@ -227,7 +232,13 @@ void CLightpack::startThread()
 
 void CLightpack::destroyThread()
 {
+    if (mThreadId == NULL && mhThread == INVALID_HANDLE_VALUE) {
+        return;
+    }
+
     CAutoLock lock(m_pLock);
+    ASSERT(mThreadId != NULL);
+    ASSERT(mhThread != INVALID_HANDLE_VALUE);
 
     EnterCriticalSection(&mQueueLock);
     mThreadStopRequested = true;
@@ -237,6 +248,12 @@ void CLightpack::destroyThread()
 
     WaitForSingleObject(mhThread, INFINITE);
     CloseHandle(mhThread);
+
+    // Reset Values
+    mThreadId = 0;
+    mhThread = INVALID_HANDLE_VALUE;
+    mThreadStopRequested = false;
+    CancelNotification();
 }
 
 void CLightpack::queueLight(REFERENCE_TIME startTime)
