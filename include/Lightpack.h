@@ -4,11 +4,17 @@
 #include <string.h>
 #include <vector>
 
+#define MAKE_RGB(r,g,b) ((Lightpack::RGBCOLOR)(unsigned char)(r)|((unsigned char)(g)<<8)|((unsigned char)(b)<<16))
+#define GET_RED(n)      n & 0xFF
+#define GET_GREEN(n)    (n & 0xFF00) >> 8
+#define GET_BLUE(n)     (n & 0xFF0000) >> 16
+
 struct hid_device_;
 typedef struct hid_device_ hid_device;
 
 namespace Lightpack {
     enum RESULT { OK, FAIL, BUSY, NOT_LOCKED, IDLE };
+    typedef unsigned int RGBCOLOR;
 
     // Basic rect structure
     struct Rect {
@@ -146,8 +152,6 @@ namespace Lightpack {
         static const double DefaultGamma;        // 2.2
 
     private:
-        typedef unsigned int RGBCOLOR;
-
         bool openDevice(unsigned short vid, unsigned short pid);
 
         bool writeBufferToDeviceWithCheck(int command, hid_device *phid_device);

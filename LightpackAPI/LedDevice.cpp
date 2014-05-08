@@ -7,11 +7,6 @@
 #define WRITE_BUFFER_INDEX_COMMAND      1
 #define WRITE_BUFFER_INDEX_DATA_START   2
 
-#define RGB(r,g,b) ((RGBCOLOR)(unsigned char)(r)|((unsigned char)(g)<<8)|((unsigned char)(b)<<16))
-#define RED(n)      n & 0xFF
-#define GREEN(n)    (n & 0xFF00) >> 8
-#define BLUE(n)     (n & 0xFF0000) >> 16
-
 namespace Lightpack {
     const int LedDevice::LedsPerDevice = 10;
     const int LedDevice::DefaultBrightness = 100;
@@ -56,7 +51,7 @@ namespace Lightpack {
         if (led < 0 || led >= (int)mCurrentColors.size()) {
             return FAIL;
         }
-        mCurrentColors[led] = RGB(red, green, blue);
+        mCurrentColors[led] = MAKE_RGB(red, green, blue);
         if (!updateLeds()) {
             return FAIL;
         }
@@ -64,7 +59,7 @@ namespace Lightpack {
     }
 
     RESULT LedDevice::setColorToAll(int red, int green, int blue) {
-        return setColorToAll(RGB(red, green, blue)) ? OK : FAIL;
+        return setColorToAll(MAKE_RGB(red, green, blue)) ? OK : FAIL;
     }
 
     RESULT LedDevice::setSmooth(int value) {
@@ -255,9 +250,9 @@ namespace Lightpack {
                 RGBCOLOR color = mLedsOn ? mCurrentColors[d * 10 + i] : 0;
                 buffIndex = WRITE_BUFFER_INDEX_DATA_START + kLedRemap[i] * kSizeOfLedColor;
 
-                int r = RED(color);
-                int g = GREEN(color);
-                int b = BLUE(color);
+                int r = GET_RED(color);
+                int g = GET_GREEN(color);
+                int b = GET_BLUE(color);
 
                 colorAdjustments(r, g, b);
 
