@@ -11,10 +11,6 @@
 #include "gpu_memcpy_sse4.h"
 #include "Converters.h"
 
-#define RED(n)      n & 0xFF
-#define GREEN(n)    (n & 0xFF00) >> 8
-#define BLUE(n)     (n & 0xFF0000) >> 16
-
 // TEMP
 #define LOG_ENABLED
 
@@ -85,7 +81,7 @@ public:
 private:
     static const DWORD sDeviceCheckElapseTime;      // Check every 2 seconds
 
-    COLORREF meanColorFromRGB32(Lightpack::Rect& rect) {
+    Lightpack::RGBCOLOR meanColorFromRGB32(Lightpack::Rect& rect) {
         ASSERT(mStride >= mWidth);
         const unsigned int totalPixels = rect.area();
 
@@ -104,7 +100,7 @@ private:
         return RGB((int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
     }
 
-    COLORREF meanColorFromNV12(Lightpack::Rect& rect) {
+    Lightpack::RGBCOLOR meanColorFromNV12(Lightpack::Rect& rect) {
         ASSERT(mStride >= mWidth);
         const unsigned int pixel_total = mStride * mHeight;
         const unsigned int totalPixels = rect.area();
@@ -126,10 +122,10 @@ private:
             V = U + 1;
 
             for (int c = 0; c < rect.width; c++) {
-                COLORREF color = YUVToRGB(*(Y++), *U, *V);
-                totalR += RED(color);
-                totalG += GREEN(color);
-                totalB += BLUE(color);
+                Lightpack::RGBCOLOR color = YUVToRGB(*(Y++), *U, *V);
+                totalR += GET_RED(color);
+                totalG += GET_GREEN(color);
+                totalB += GET_BLUE(color);
 
                 if ((rect.x + c) & 0x1) {
                     U += dUV;
@@ -140,11 +136,11 @@ private:
         return RGB((int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
     }
 
-    typedef std::pair<REFERENCE_TIME, COLORREF*> LightEntry;
+    typedef std::pair<REFERENCE_TIME, Lightpack::RGBCOLOR*> LightEntry;
 
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
     void queueLight(REFERENCE_TIME startTime);
-    void displayLight(COLORREF* colors);
+    void displayLight(Lightpack::RGBCOLOR* colors);
     void connectDevice();
     void disconnectDevice();
 

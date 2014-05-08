@@ -292,7 +292,7 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
 {
     CAutoLock lock(m_pLock);
 
-    COLORREF* colors = new COLORREF[mScaledRects.size()];
+    Lightpack::RGBCOLOR* colors = new Lightpack::RGBCOLOR[mScaledRects.size()];
     for (size_t i = 0; i < mScaledRects.size(); i++) {
 
         switch (mVideoType) {
@@ -321,15 +321,15 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
     }
 }
 
-void CLightpack::displayLight(COLORREF* colors)
+void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 {
     if (mDevice) {
         EnterCriticalSection(&mDeviceLock);
         if (mDevice) {
             mDevice->pauseUpdating();
             for (size_t i = 0; i < mScaledRects.size(); i++) {
-                COLORREF color = colors[i];
-                if (mDevice->setColor(i, RED(color), GREEN(color), BLUE(color)) != Lightpack::RESULT::OK) {
+                Lightpack::RGBCOLOR color = colors[i];
+                if (mDevice->setColor(i, GET_RED(color), GET_GREEN(color), GET_BLUE(color)) != Lightpack::RESULT::OK) {
                     // Device is/was disconnected
                     LeaveCriticalSection(&mDeviceLock);
                     mThreadCleanUpRequested = true;
@@ -361,7 +361,7 @@ DWORD CLightpack::threadStart()
         }
 
         LightEntry& pair = mColorQueue.front();
-        COLORREF* colors = pair.second;
+        Lightpack::RGBCOLOR* colors = pair.second;
         mColorQueue.pop();
 
         LeaveCriticalSection(&mQueueLock);
@@ -394,7 +394,7 @@ void CLightpack::clearQueue()
             size_t len = mColorQueue.size();
             for (; len > 0; len--) {
                 LightEntry& pair = mColorQueue.front();
-                COLORREF* colors = pair.second;
+                Lightpack::RGBCOLOR* colors = pair.second;
                 delete[] colors;
                 mColorQueue.pop();
             }
