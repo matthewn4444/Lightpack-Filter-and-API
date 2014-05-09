@@ -141,7 +141,7 @@ private:
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
     void queueLight(REFERENCE_TIME startTime);
     void displayLight(Lightpack::RGBCOLOR* colors);
-    void connectDevice();
+    bool connectDevice();
     void disconnectDevice();
 
     void CancelNotification();
@@ -183,7 +183,7 @@ private:
     CRITICAL_SECTION mAdviseLock;
     CRITICAL_SECTION mDeviceLock;
 
-    Lightpack::LedDevice* mDevice;
+    Lightpack::LedBase* mDevice;
 
     VideoFormat mVideoType;
     int mStride;

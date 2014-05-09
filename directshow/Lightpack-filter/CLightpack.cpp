@@ -1,5 +1,9 @@
 #include "CLightpack.h"
 
+#define DEFAULT_HOST "127.0.0.1"
+#define DEFAULT_PORT 3636
+#define DEFAULT_APIKEY "{cb832c47-0a85-478c-8445-0b20e3c28cdd}"
+
 const DWORD CLightpack::sDeviceCheckElapseTime = 2000;
 
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
@@ -37,7 +41,25 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     InitializeCriticalSection(&mAdviseLock);
     InitializeCriticalSection(&mDeviceLock);
 
-    connectDevice();
+    // Try to connect to the lights directly, if fails the try to connect to Prismatik
+    if (!connectDevice()) {
+        ASSERT(mDevice == NULL);
+        log("Try to connect to Prismatik");
+        EnterCriticalSection(&mDeviceLock);
+        mDevice = new Lightpack::PrismatikClient(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY);       // TODO get values from settings file
+        if (((Lightpack::PrismatikClient*)mDevice)->connect() != Lightpack::RESULT::OK
+            || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
+            log("Failed to also connect to Prismatik.");
+            delete mDevice;
+            mDevice = NULL;
+        }
+        else {
+            mDevice->setSmooth(20);
+            mDevice->setBrightness(100);
+            log("Connected to Prismatik.");
+        }
+        LeaveCriticalSection(&mDeviceLock);
+    }
 }
 
 CLightpack::~CLightpack(void)
@@ -189,16 +211,18 @@ STDMETHODIMP CLightpack::Pause()
     return NOERROR;
 }
 
-void CLightpack::connectDevice()
+bool CLightpack::connectDevice()
 {
     if (!mDevice) {
         EnterCriticalSection(&mDeviceLock);
         if (!mDevice) {
             mDevice = new Lightpack::LedDevice();
-            if (!mDevice->open()) {
+            if (!((Lightpack::LedDevice*)mDevice)->open()) {
                 delete mDevice;
                 mDevice = 0;
                 log("Device not connected")
+                LeaveCriticalSection(&mDeviceLock);
+                return false;
             }
             else {
                 mDevice->setBrightness(100);
@@ -209,6 +233,7 @@ void CLightpack::connectDevice()
         }
         LeaveCriticalSection(&mDeviceLock);
     }
+    return true;
 }
 
 void CLightpack::disconnectDevice()
