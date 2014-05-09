@@ -201,6 +201,13 @@ namespace Lightpack {
                 pimpl->socket() << mCmdCache;
                 readResultLine();
             }
+            // Make sure that the leds map is long enough as the amount of LEDs exist
+            size_t leds = getCountLeds();
+            if (mLedMap.size() < leds) {
+                for (size_t i = mLedMap.size(); i < leds; i++) {
+                    mLedMap.push_back(i + 1);
+                }
+            }
         }
         catch (std::exception&) {
             printf("Lightpack API server is missing!\n");
