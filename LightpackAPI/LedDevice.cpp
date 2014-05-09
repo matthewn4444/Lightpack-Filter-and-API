@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "../include/Lightpack.h"
 #include "hidapi\hidapi.h"
 #include "device\commands.h"
@@ -16,7 +17,6 @@ namespace Lightpack {
         : mGamma(DefaultGamma)
         , mBrightness(DefaultBrightness)
         , mLedsOn(true)
-        , mEnableUpdating(true)
     {
     }
 
@@ -47,6 +47,10 @@ namespace Lightpack {
         mDevices.clear();
     }
 
+    RESULT LedDevice::setColor(int led, RGBCOLOR color) {
+        return setColor(led, GET_RED(color), GET_GREEN(color), GET_BLUE(color));
+    }
+
     RESULT LedDevice::setColor(int led, int red, int green, int blue) {
         if (led < 0 || led >= (int)mCurrentColors.size()) {
             return FAIL;
@@ -58,8 +62,45 @@ namespace Lightpack {
         return OK;
     }
 
+    RESULT LedDevice::setColors(std::vector<RGBCOLOR>& colors) {
+        if (colors.empty()) {
+            return OK;
+        }
+        for (size_t i = 0; i < std::min(colors.size(), mDevices.size() * LedsPerDevice); i++) {
+            if (colors[i] < 0) {
+                continue;
+            }
+            mCurrentColors[i] = colors[i];
+        }
+        if (!updateLeds()) {
+            return FAIL;
+        }
+        return OK;
+    }
+
+    RESULT LedDevice::setColors(const RGBCOLOR* colors, size_t length) {
+        if (!length) {
+            return OK;
+        }
+        for (size_t i = 0; i < std::min(length, getCountLeds()); i++) {
+            if (colors[i] < 0) {
+                continue;
+            }
+            mCurrentColors[i] = colors[i];
+        }
+        if (!updateLeds()) {
+            return FAIL;
+        }
+        return OK;
+    }
+
+    RESULT LedDevice::setColorToAll(RGBCOLOR color) {
+        mCurrentColors.assign(mCurrentColors.size(), color);
+        return updateLeds() ? OK : FAIL;
+    }
+
     RESULT LedDevice::setColorToAll(int red, int green, int blue) {
-        return setColorToAll(MAKE_RGB(red, green, blue)) ? OK : FAIL;
+        return setColorToAll(MAKE_RGB(red, green, blue));
     }
 
     RESULT LedDevice::setSmooth(int value) {
@@ -223,17 +264,9 @@ namespace Lightpack {
         return bytes_read >= 0;
     }
 
-    bool LedDevice::setColorToAll(RGBCOLOR color) {
-        mCurrentColors.assign(mCurrentColors.size(), color);
-        return updateLeds();
-    }
-
     bool LedDevice::updateLeds() {
         if (mDevices.empty() && !tryToReopenDevice()) {
             return false;
-        }
-        if (!mEnableUpdating) {
-            return true;
         }
 
         int buffIndex = WRITE_BUFFER_INDEX_DATA_START;

@@ -211,7 +211,40 @@ namespace Lightpack {
 
     RESULT PrismatikClient::setColor(int n, int r, int g, int b) {
         sprintf(mCmdCache, CMD_SET_COLOR, (n + 1), r, g, b);
-        printf("%s\n", mCmdCache);
+        pimpl->socket() << mCmdCache;
+        return getResult();
+    }
+
+    RESULT PrismatikClient::setColor(int n, RGBCOLOR color) {
+        return setColor(n, GET_RED(color), GET_GREEN(color), GET_BLUE(color));
+    }
+
+    RESULT PrismatikClient::setColors(std::vector<RGBCOLOR>& colors) {
+        std::stringstream ss;
+        for (size_t i = 0; i < std::min(mLedMap.size(), colors.size()); i++) {
+            RGBCOLOR color = colors[i];
+            if (color < 0) {
+                continue;
+            }
+            ss << mLedMap[i] << "-" << (GET_RED(color)) << "," << (GET_GREEN(color)) << "," << (GET_BLUE(color)) << ";";
+        }
+        std::string& tmp = ss.str();
+        sprintf(mCmdCache, CMD_SET_COLOR_TO_ALL, tmp.c_str());
+        pimpl->socket() << mCmdCache;
+        return getResult();
+    }
+
+    RESULT PrismatikClient::setColors(const RGBCOLOR* colors, size_t length) {
+        std::stringstream ss;
+        for (size_t i = 0; i < std::min(mLedMap.size(), length); i++) {
+            RGBCOLOR color = colors[i];
+            if (color < 0) {
+                continue;
+            }
+            ss << mLedMap[i] << "-" << (GET_RED(color)) << "," << (GET_GREEN(color)) << "," << (GET_BLUE(color)) << ";";
+        }
+        std::string& tmp = ss.str();
+        sprintf(mCmdCache, CMD_SET_COLOR_TO_ALL, tmp.c_str());
         pimpl->socket() << mCmdCache;
         return getResult();
     }
@@ -225,6 +258,10 @@ namespace Lightpack {
         sprintf(mCmdCache, CMD_SET_COLOR_TO_ALL, tmp.c_str());
         pimpl->socket() << mCmdCache;
         return getResult();
+    }
+
+    RESULT PrismatikClient::setColorToAll(RGBCOLOR color) {
+        return setColorToAll(GET_RED(color), GET_GREEN(color), GET_BLUE(color));
     }
 
     RESULT PrismatikClient::setGamma(double g) {

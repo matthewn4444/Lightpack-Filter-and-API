@@ -17,10 +17,14 @@ int main()
 {
     LedDevice device;
     if (device.open()) {
-        device.setSmooth(100);
-        device.setBrightness(50);
-        device.setColorToAll(255, 255, 0);
-        device.setColor(4, 255, 0, 0);
+        test("Smooth", device.setSmooth(100) == OK);
+        test("Brightness", device.setBrightness(20) == OK);
+        test("Color at all", device.setColorToAll(255, 255, 0) == OK);
+        test("Color", device.setColor(4, 255, 0, 0) == OK);
+        vector<RGBCOLOR> thing{ MAKE_RGB(0, 255, 0), -1, MAKE_RGB(0, 255, 255), MAKE_RGB(100, 255, 50), -1, -1, -1, -1, 255 };
+        test("Set colors", device.setColors(thing) == OK);
+        // Color order you should see
+        // Green, yellow, blue, light green, red, yellow, yellow, yellow, red, yellow
         system("pause");
     }
     else {
@@ -42,6 +46,9 @@ int main()
                 test("Get Profile", light.getProfile() == "Lightpack");
                 test("Color all", light.setColorToAll(0, 255, 0) == Lightpack::OK);
                 test("Color ", light.setColor(1, 255, 0, 0) == Lightpack::OK);
+
+                vector<RGBCOLOR> thing{ MAKE_RGB(0, 255, 0), -1, MAKE_RGB(0, 255, 255), MAKE_RGB(100, 255, 50), -1, -1, -1, -1, 255 };
+                test("Color some", light.setColors(thing) == Lightpack::OK);
 
                 vector<string> profiles = light.getProfiles();
                 cout << "Profiles:" << endl;

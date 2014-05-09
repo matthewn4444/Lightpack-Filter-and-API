@@ -14,7 +14,7 @@ typedef struct hid_device_ hid_device;
 
 namespace Lightpack {
     enum RESULT { OK, FAIL, BUSY, NOT_LOCKED, IDLE };
-    typedef unsigned int RGBCOLOR;
+    typedef int RGBCOLOR;
 
     // Basic rect structure
     struct Rect {
@@ -46,7 +46,12 @@ namespace Lightpack {
         virtual size_t getCountLeds() = 0;
 
         virtual RESULT setColor(int n, int red, int green, int blue) = 0;
+        virtual RESULT setColor(int n, RGBCOLOR color) = 0;
+        virtual RESULT setColors(std::vector<RGBCOLOR>& colors) = 0;
+        virtual RESULT setColors(const RGBCOLOR* colors, size_t length) = 0;
         virtual RESULT setColorToAll(int red, int green, int blue) = 0;
+        virtual RESULT setColorToAll(RGBCOLOR color) = 0;
+
         virtual RESULT setGamma(double value) = 0;
         virtual RESULT setBrightness(int value) = 0;
         virtual RESULT setSmooth(int value) = 0;
@@ -70,8 +75,13 @@ namespace Lightpack {
 
         RESULT connect();
 
-        RESULT setColor(int n, int r, int g, int b);
-        RESULT setColorToAll(int r, int g, int b);
+        RESULT setColor(int n, int red, int green, int blue);
+        RESULT setColor(int n, RGBCOLOR color);
+        RESULT setColors(std::vector<RGBCOLOR>& colors);
+        RESULT setColors(const RGBCOLOR* colors, size_t length);
+        RESULT setColorToAll(int red, int green, int blue);
+        RESULT setColorToAll(RGBCOLOR color);
+
         RESULT setGamma(double g);
         RESULT setSmooth(int s);
         RESULT setBrightness(int s);
@@ -122,8 +132,12 @@ namespace Lightpack {
         bool tryToReopenDevice();
         void closeDevices();
 
-        RESULT setColor(int led, int red, int green, int blue);
+        RESULT setColor(int n, int red, int green, int blue);
+        RESULT setColor(int n, RGBCOLOR color);
+        RESULT setColors(std::vector<RGBCOLOR>& colors);
+        RESULT setColors(const RGBCOLOR* colors, size_t length);
         RESULT setColorToAll(int red, int green, int blue);
+        RESULT setColorToAll(RGBCOLOR color);
 
         RESULT setSmooth(int value);
         RESULT setGamma(double value);
@@ -133,15 +147,6 @@ namespace Lightpack {
 
         inline size_t getCountLeds() {
             return mCurrentColors.size();
-        }
-
-        inline void pauseUpdating() {
-            mEnableUpdating = false;
-        }
-
-        inline void resumeUpdating() {
-            mEnableUpdating = true;
-            updateLeds();
         }
 
         RESULT turnOff();
@@ -160,8 +165,6 @@ namespace Lightpack {
         bool readDataFromDeviceWithCheck();
         bool readDataFromDevice();
 
-        bool setColorToAll(RGBCOLOR color);
-
         bool updateLeds();
         void allocateColors();
         void colorAdjustments(int& red12bit, int& green12bit, int& blue12bit);
@@ -176,7 +179,6 @@ namespace Lightpack {
         double mGamma;
         int mBrightness;
         bool mLedsOn;
-        bool mEnableUpdating;
     };
 };
 
