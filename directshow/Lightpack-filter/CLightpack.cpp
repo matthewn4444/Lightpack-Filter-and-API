@@ -326,18 +326,13 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
     if (mDevice) {
         EnterCriticalSection(&mDeviceLock);
         if (mDevice) {
-            mDevice->pauseUpdating();
-            for (size_t i = 0; i < mScaledRects.size(); i++) {
-                Lightpack::RGBCOLOR color = colors[i];
-                if (mDevice->setColor(i, GET_RED(color), GET_GREEN(color), GET_BLUE(color)) != Lightpack::RESULT::OK) {
-                    // Device is/was disconnected
-                    LeaveCriticalSection(&mDeviceLock);
-                    mThreadCleanUpRequested = true;
-                    disconnectDevice();
-                    return;
-                }
+            if (mDevice->setColors(colors, mScaledRects.size()) != Lightpack::RESULT::OK) {
+                // Device is/was disconnected
+                LeaveCriticalSection(&mDeviceLock);
+                mThreadCleanUpRequested = true;
+                disconnectDevice();
+                return;
             }
-            mDevice->resumeUpdating();
         }
         LeaveCriticalSection(&mDeviceLock);
     }
