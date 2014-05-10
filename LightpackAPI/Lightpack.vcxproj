@@ -84,12 +84,12 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\..\Programming\libs\dlib-18.7\dlib\all\source.cpp" />
     <ClCompile Include="hidapi\hid.c" />
     <ClCompile Include="inih\cpp\INIReader.cpp" />
     <ClCompile Include="inih\ini.c" />
     <ClCompile Include="LedDevice.cpp" />
     <ClCompile Include="PrismatikClient.cpp" />
+    <ClCompile Include="source.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Lightpack.h" />
