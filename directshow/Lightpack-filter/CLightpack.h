@@ -165,9 +165,9 @@ private:
     void clearQueue();
 
     // Thread function
-    void startThread();
-    void destroyThread();
-    DWORD threadStart();
+    void startLightThread();
+    void destroyLightThread();
+    DWORD lightThreadStart();
 #ifdef LOG_ENABLED
     Log* mLog;
 #endif
@@ -175,10 +175,10 @@ private:
     std::vector<Lightpack::Rect> mScaledRects;
 
     // Threading variables
-    HANDLE mhThread;
-    DWORD mThreadId;
-    bool mThreadStopRequested;
-    bool mThreadCleanUpRequested;
+    HANDLE mhLightThread;
+    DWORD mLightThreadId;
+    bool mLightThreadStopRequested;
+    bool mLightThreadCleanUpRequested;
     CRITICAL_SECTION mQueueLock;
     CRITICAL_SECTION mAdviseLock;
     CRITICAL_SECTION mDeviceLock;

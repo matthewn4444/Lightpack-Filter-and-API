@@ -12,12 +12,12 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mWidth(0)
 , mHeight(0)
 , mFrameBuffer(0)
-, mhThread(INVALID_HANDLE_VALUE)
-, mThreadId(0)
-, mThreadStopRequested(false)
+, mhLightThread(INVALID_HANDLE_VALUE)
+, mLightThreadId(0)
+, mLightThreadStopRequested(false)
 , mStride(0)
 , mLastDeviceCheck(GetTickCount())
-, mThreadCleanUpRequested(false)
+, mLightThreadCleanUpRequested(false)
 {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
@@ -64,11 +64,11 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 
 CLightpack::~CLightpack(void)
 {
-    destroyThread();
+    destroyLightThread();
 
-    ASSERT(mThreadId == NULL);
-    ASSERT(mhThread == INVALID_HANDLE_VALUE);
-    ASSERT(mThreadStopRequested == false);
+    ASSERT(mLightThreadId == NULL);
+    ASSERT(mhLightThread == INVALID_HANDLE_VALUE);
+    ASSERT(mLightThreadStopRequested == false);
 
     delete[] mFrameBuffer;
 
@@ -186,7 +186,7 @@ STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
 
     CancelNotification();
 
-    startThread();
+    startLightThread();
     return NOERROR;
 }
 
@@ -207,7 +207,7 @@ STDMETHODIMP CLightpack::Pause()
         log("Failed to pause");
         return hr;
     }
-    destroyThread();
+    destroyLightThread();
     return NOERROR;
 }
 
@@ -228,7 +228,7 @@ bool CLightpack::connectDevice()
                 mDevice->setBrightness(100);
                 mDevice->setSmooth(20);
                 log("Device connected")
-                startThread();
+                startLightThread();
             }
         }
         LeaveCriticalSection(&mDeviceLock);
@@ -267,49 +267,49 @@ void CLightpack::CancelNotification()
     mDisplayLightEvent.Reset();
 }
 
-void CLightpack::startThread()
+void CLightpack::startLightThread()
 {
-    if (mThreadId != NULL && mhThread != INVALID_HANDLE_VALUE) {
+    if (mLightThreadId != NULL && mhLightThread != INVALID_HANDLE_VALUE) {
         return;
     }
 
     CAutoLock lock(m_pLock);
-    ASSERT(mThreadId == NULL);
-    ASSERT(mhThread == INVALID_HANDLE_VALUE);
+    ASSERT(mLightThreadId == NULL);
+    ASSERT(mhLightThread == INVALID_HANDLE_VALUE);
 
-    mhThread = CreateThread(NULL, 0, ParsingThread, (void*) this, 0, &mThreadId);
-    mThreadCleanUpRequested = false;
+    mhLightThread = CreateThread(NULL, 0, ParsingThread, (void*) this, 0, &mLightThreadId);
+    mLightThreadCleanUpRequested = false;
 
-    ASSERT(mhThread);
-    if (mhThread == NULL) {
+    ASSERT(mhLightThread);
+    if (mhLightThread == NULL) {
         log("Failed to create thread");
     }
 }
 
-void CLightpack::destroyThread()
+void CLightpack::destroyLightThread()
 {
-    if (mThreadId == NULL && mhThread == INVALID_HANDLE_VALUE) {
+    if (mLightThreadId == NULL && mhLightThread == INVALID_HANDLE_VALUE) {
         return;
     }
 
     CAutoLock lock(m_pLock);
-    ASSERT(mThreadId != NULL);
-    ASSERT(mhThread != INVALID_HANDLE_VALUE);
+    ASSERT(mLightThreadId != NULL);
+    ASSERT(mhLightThread != INVALID_HANDLE_VALUE);
 
     EnterCriticalSection(&mQueueLock);
-    mThreadStopRequested = true;
+    mLightThreadStopRequested = true;
     LeaveCriticalSection(&mQueueLock);
 
     mDisplayLightEvent.Set();
 
-    WaitForSingleObject(mhThread, INFINITE);
-    CloseHandle(mhThread);
+    WaitForSingleObject(mhLightThread, INFINITE);
+    CloseHandle(mhLightThread);
 
     // Reset Values
-    mThreadId = 0;
-    mhThread = INVALID_HANDLE_VALUE;
-    mThreadStopRequested = false;
-    mThreadCleanUpRequested = false;
+    mLightThreadId = 0;
+    mhLightThread = INVALID_HANDLE_VALUE;
+    mLightThreadStopRequested = false;
+    mLightThreadCleanUpRequested = false;
     CancelNotification();
 }
 
@@ -354,7 +354,7 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
             if (mDevice->setColors(colors, mScaledRects.size()) != Lightpack::RESULT::OK) {
                 // Device is/was disconnected
                 LeaveCriticalSection(&mDeviceLock);
-                mThreadCleanUpRequested = true;
+                mLightThreadCleanUpRequested = true;
                 disconnectDevice();
                 return;
             }
@@ -363,14 +363,14 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
     }
 }
 
-DWORD CLightpack::threadStart()
+DWORD CLightpack::lightThreadStart()
 {
     while (true) {
         WaitForSingleObject(mDisplayLightEvent, INFINITE);
 
         EnterCriticalSection(&mQueueLock);
 
-        if (mThreadStopRequested) {
+        if (mLightThreadStopRequested) {
             LeaveCriticalSection(&mQueueLock);
             break;
         }
@@ -403,7 +403,7 @@ DWORD CLightpack::threadStart()
 DWORD WINAPI CLightpack::ParsingThread(LPVOID lpvThreadParm)
 {
     CLightpack* pLightpack = (CLightpack*)lpvThreadParm;
-    return pLightpack->threadStart();
+    return pLightpack->lightThreadStart();
 }
 
 void CLightpack::clearQueue()
@@ -460,9 +460,9 @@ bool CLightpack::ScheduleNextDisplay()
 HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
     // See if the thread needs to be destroyed requested from the thread
-    if (mThreadCleanUpRequested) {
-        mThreadCleanUpRequested = false;
-        destroyThread();
+    if (mLightThreadCleanUpRequested) {
+        mLightThreadCleanUpRequested = false;
+        destroyLightThread();
     }
 
     // Adapt changes in samples
