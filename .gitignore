@@ -5,6 +5,7 @@
 *.suo
 *.user
 *.sln.docstates
+config.gypi
 
 # Build results
 [Dd]ebug/
