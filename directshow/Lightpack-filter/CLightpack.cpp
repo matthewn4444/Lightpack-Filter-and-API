@@ -44,19 +44,19 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     // Try to connect to the lights directly, if fails the try to connect to Prismatik
     if (!connectDevice()) {
         ASSERT(mDevice == NULL);
-        log("Try to connect to Prismatik");
+        _log("Try to connect to Prismatik");
         EnterCriticalSection(&mDeviceLock);
         mDevice = new Lightpack::PrismatikClient(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY);       // TODO get values from settings file
         if (((Lightpack::PrismatikClient*)mDevice)->connect() != Lightpack::RESULT::OK
             || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
-            log("Failed to also connect to Prismatik.");
+            _log("Failed to also connect to Prismatik.");
             delete mDevice;
             mDevice = NULL;
         }
         else {
             mDevice->setSmooth(20);
             mDevice->setBrightness(100);
-            log("Connected to Prismatik.");
+            _log("Connected to Prismatik.");
         }
         LeaveCriticalSection(&mDeviceLock);
     }
@@ -145,12 +145,12 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
             int desktopWidth, desktopHeight;
             GetDesktopResolution(desktopWidth, desktopHeight);
 
-            //logf("Desktop: %d %d", desktopWidth, desktopHeight);
+            //_logf("Desktop: %d %d", desktopWidth, desktopHeight);
 
             float scaleX = (float)mWidth / desktopWidth;
             float scaleY = (float)mHeight / desktopHeight;
 
-            //logf("Scale: %f %f", scaleX, scaleY);
+            //_logf("Scale: %f %f", scaleX, scaleY);
 
             for (size_t i = 0; i < mLedArea.size(); i++) {
                 Lightpack::Rect rect = mLedArea[i];
@@ -159,7 +159,7 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
                     x, y, ( x + w >= mWidth ? mWidth - x : w ), ( y + h >= mHeight ? mHeight - y : h )
                 });
 
-                //logf("%d [%d %d %d %d]", i, x, y, w, h);
+                //_logf("%d [%d %d %d %d]", i, x, y, w, h);
             }
 
             if (!mFrameBuffer) {
@@ -173,14 +173,14 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
 STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
 {
-    logf("Run: %ld %lu %lu", getStreamTimeMilliSec(), ((CRefTime)StartTime).Millisecs(), ((CRefTime)m_tStart).Millisecs());
+    _logf("Run: %ld %lu %lu", getStreamTimeMilliSec(), ((CRefTime)StartTime).Millisecs(), ((CRefTime)m_tStart).Millisecs());
     if (m_State == State_Running) {
         return NOERROR;
     }
 
     HRESULT hr = CTransInPlaceFilter::Run(StartTime);
     if (FAILED(hr)) {
-        log("Run failed");
+        _log("Run failed");
         return hr;
     }
 
@@ -192,7 +192,7 @@ STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
 
 STDMETHODIMP CLightpack::Stop()
 {
-    logf("Stop %ld", getStreamTimeMilliSec());
+    _logf("Stop %ld", getStreamTimeMilliSec());
     CTransInPlaceFilter::Stop();
     CancelNotification();
     return NOERROR;
@@ -200,11 +200,11 @@ STDMETHODIMP CLightpack::Stop()
 
 STDMETHODIMP CLightpack::Pause()
 {
-    logf("Pause %ld", getStreamTimeMilliSec());
+    _logf("Pause %ld", getStreamTimeMilliSec());
 
     HRESULT hr = CTransInPlaceFilter::Pause();
     if (FAILED(hr)) {
-        log("Failed to pause");
+        _log("Failed to pause");
         return hr;
     }
     destroyLightThread();
@@ -220,14 +220,14 @@ bool CLightpack::connectDevice()
             if (!((Lightpack::LedDevice*)mDevice)->open()) {
                 delete mDevice;
                 mDevice = 0;
-                log("Device not connected")
+                _log("Device not connected")
                 LeaveCriticalSection(&mDeviceLock);
                 return false;
             }
             else {
                 mDevice->setBrightness(100);
                 mDevice->setSmooth(20);
-                log("Device connected")
+                _log("Device connected")
                 startLightThread();
             }
         }
@@ -243,7 +243,7 @@ void CLightpack::disconnectDevice()
         if (mDevice) {
             delete mDevice;
             mDevice = NULL;
-            log("Disconnected device");
+            _log("Disconnected device");
             // DO NOT REMOVE THREAD HERE, there will be a deadlock
         }
         LeaveCriticalSection(&mDeviceLock);
@@ -282,7 +282,7 @@ void CLightpack::startLightThread()
 
     ASSERT(mhLightThread);
     if (mhLightThread == NULL) {
-        log("Failed to create thread");
+        _log("Failed to create thread");
     }
 }
 
@@ -330,7 +330,7 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
         default:
             colors[i] = 0;
         }
-        //logf("Pixel: %d [%d, %d, %d]", i, RED(colors[i]), GREEN(colors[i]), BLUE(colors[i]));
+        //_logf("Pixel: %d [%d, %d, %d]", i, RED(colors[i]), GREEN(colors[i]), BLUE(colors[i]));
     }
 
     EnterCriticalSection(&mQueueLock);
@@ -453,7 +453,7 @@ bool CLightpack::ScheduleNextDisplay()
     if (SUCCEEDED(hr)) {
         return true;
     }
-    log("Failed to advise time");
+    _log("Failed to advise time");
     return false;
 }
 
@@ -469,7 +469,7 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
     AM_MEDIA_TYPE* pType;
     if (SUCCEEDED(pSample->GetMediaType(&pType))) {
         if (pType) {
-            log(pType);
+            _log(pType);
             // Get the newest stride
             if (pType->formattype == FORMAT_VideoInfo && pType->cbFormat >= sizeof(VIDEOINFOHEADER)) {
                 VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pType->pbFormat);
