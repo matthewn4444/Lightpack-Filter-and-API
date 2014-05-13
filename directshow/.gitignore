@@ -1,0 +1,9 @@
+# Directshow graphs
+*.grf
+
+# Windows Link Files
+*.lnk
+
+# Logs
+log.txt
+*.log
