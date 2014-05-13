@@ -43,5 +43,8 @@
     <ClInclude Include="Converters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="socket.hpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

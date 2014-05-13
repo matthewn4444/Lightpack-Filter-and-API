@@ -52,7 +52,7 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>lightpack</TargetName>
     <TargetExt>.ax</TargetExt>
-    <IncludePath>../../include;$(IncludePath)</IncludePath>
+    <IncludePath>../../include;C:\Programming\libs\dlib-18.7;$(IncludePath)</IncludePath>
     <LibraryPath>../../lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -103,6 +103,7 @@
     <ClInclude Include="Converters.h" />
     <ClInclude Include="gpu_memcpy_sse4.h" />
     <ClInclude Include="log.h" />
+    <ClInclude Include="socket.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

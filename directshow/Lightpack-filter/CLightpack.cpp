@@ -1,8 +1,14 @@
+#include <sstream>
 #include "CLightpack.h"
 
+// Connection to Prismatik
 #define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_PORT 3636
 #define DEFAULT_APIKEY "{cb832c47-0a85-478c-8445-0b20e3c28cdd}"
+
+// Connection to GUI
+#define DEFAULT_GUI_HOST "127.0.0.1"
+#define DEFAULT_GUI_PORT "6000"
 
 const DWORD CLightpack::sDeviceCheckElapseTime = 2000;
 
@@ -15,6 +21,9 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mhLightThread(INVALID_HANDLE_VALUE)
 , mLightThreadId(0)
 , mLightThreadStopRequested(false)
+, mhCommThread(INVALID_HANDLE_VALUE)
+, mCommThreadId(0)
+, mCommThreadStopRequested(false)
 , mStride(0)
 , mLastDeviceCheck(GetTickCount())
 , mLightThreadCleanUpRequested(false)
@@ -41,6 +50,9 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     InitializeCriticalSection(&mAdviseLock);
     InitializeCriticalSection(&mDeviceLock);
 
+    // Start the communication thread
+    startCommThread();
+
     // Try to connect to the lights directly, if fails the try to connect to Prismatik
     if (!connectDevice()) {
         ASSERT(mDevice == NULL);
@@ -65,10 +77,15 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 CLightpack::~CLightpack(void)
 {
     destroyLightThread();
+    destroyCommThread();
 
     ASSERT(mLightThreadId == NULL);
     ASSERT(mhLightThread == INVALID_HANDLE_VALUE);
     ASSERT(mLightThreadStopRequested == false);
+
+    ASSERT(mCommThreadId == NULL);
+    ASSERT(mhCommThread == INVALID_HANDLE_VALUE);
+    ASSERT(mCommThreadStopRequested == false);
 
     delete[] mFrameBuffer;
 
@@ -182,6 +199,10 @@ STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
     if (FAILED(hr)) {
         _log("Run failed");
         return hr;
+    }
+
+    if (mCommThreadStopRequested) {
+        destroyCommThread();
     }
 
     CancelNotification();
@@ -313,6 +334,48 @@ void CLightpack::destroyLightThread()
     CancelNotification();
 }
 
+void CLightpack::startCommThread()
+{
+    if (mCommThreadId != NULL && mhCommThread != INVALID_HANDLE_VALUE) {
+        return;
+    }
+
+    CAutoLock lock(m_pLock);
+    ASSERT(mCommThreadId == NULL);
+    ASSERT(mhCommThread == INVALID_HANDLE_VALUE);
+
+    mhCommThread = CreateThread(NULL, 0, CommunicationThread, (void*) this, 0, &mCommThreadId);
+
+    ASSERT(mhCommThread);
+    if (mhCommThread == NULL) {
+        _log("Failed to create communication thread");
+    }
+    _log("Communication thread started")
+}
+
+void CLightpack::destroyCommThread()
+{
+    if (mCommThreadId == NULL && mhCommThread == INVALID_HANDLE_VALUE) {
+        return;
+    }
+
+    CAutoLock lock(m_pLock);
+    ASSERT(mCommThreadId != NULL);
+    ASSERT(mhCommThread != INVALID_HANDLE_VALUE);
+
+
+    mCommThreadStopRequested = true;
+    WaitForSingleObject(mhCommThread, INFINITE);
+    CloseHandle(mhCommThread);
+
+    // Reset Values
+    mCommThreadId = 0;
+    mhCommThread = INVALID_HANDLE_VALUE;
+    mCommThreadStopRequested = false;
+
+    _log("Destroy Communication thread")
+}
+
 void CLightpack::queueLight(REFERENCE_TIME startTime)
 {
     CAutoLock lock(m_pLock);
@@ -400,10 +463,43 @@ DWORD CLightpack::lightThreadStart()
     return 0;
 }
 
+void CLightpack::parseMessage(const char* message)
+{
+    _logf("\tFrom GUI: %s", message);
+    // TODO
+}
+
+DWORD CLightpack::commThreadStart()
+{
+    _log("Running communication thread");
+    // Trying to connect
+    Socket socket;
+    if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
+        char buffer[512];
+        while (!mCommThreadStopRequested) {
+            if (socket.Receive(buffer, 500)) {
+                parseMessage(buffer);
+            }
+        }
+    }
+    else {
+        _log("Failed to connect to gui");
+        // TODO run the exe and then try to reconnect, when fail leave
+    }
+    mCommThreadStopRequested = true;
+    return 0;
+}
+
 DWORD WINAPI CLightpack::ParsingThread(LPVOID lpvThreadParm)
 {
     CLightpack* pLightpack = (CLightpack*)lpvThreadParm;
     return pLightpack->lightThreadStart();
+}
+
+DWORD WINAPI CLightpack::CommunicationThread(LPVOID lpvThreadParm)
+{
+    CLightpack* pLightpack = (CLightpack*)lpvThreadParm;
+    return pLightpack->commThreadStart();
 }
 
 void CLightpack::clearQueue()

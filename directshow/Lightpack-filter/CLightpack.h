@@ -1,6 +1,8 @@
 #ifndef __CLIGHTPACK__
 #define __CLIGHTPACK__
 
+#include "socket.hpp"
+
 #include <streams.h>
 #include <Dvdmedia.h>
 #include <Lightpack.h>
@@ -139,6 +141,8 @@ private:
     typedef std::pair<REFERENCE_TIME, Lightpack::RGBCOLOR*> LightEntry;
 
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
+    static DWORD WINAPI CommunicationThread(LPVOID lpvThreadParm);
+
     void queueLight(REFERENCE_TIME startTime);
     void displayLight(Lightpack::RGBCOLOR* colors);
     bool connectDevice();
@@ -168,6 +172,12 @@ private:
     void startLightThread();
     void destroyLightThread();
     DWORD lightThreadStart();
+
+    void startCommThread();
+    void destroyCommThread();
+    DWORD commThreadStart();
+
+    void parseMessage(const char* message);
 #ifdef LOG_ENABLED
     Log* mLog;
 #endif
@@ -182,6 +192,11 @@ private:
     CRITICAL_SECTION mQueueLock;
     CRITICAL_SECTION mAdviseLock;
     CRITICAL_SECTION mDeviceLock;
+
+    // Communication thread to the GUI
+    HANDLE mhCommThread;
+    DWORD mCommThreadId;
+    bool mCommThreadStopRequested;
 
     Lightpack::LedBase* mDevice;
 
