@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <streams.h>
+#include <Dvdmedia.h>
 
 using namespace std;
 
