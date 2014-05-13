@@ -53,25 +53,11 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     // Start the communication thread
     startCommThread();
 
-    // Try to connect to the lights directly, if fails the try to connect to Prismatik
-    if (!connectDevice()) {
-        ASSERT(mDevice == NULL);
-        log("Try to connect to Prismatik");
-        EnterCriticalSection(&mDeviceLock);
-        mDevice = new Lightpack::PrismatikClient(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY);       // TODO get values from settings file
-        if (((Lightpack::PrismatikClient*)mDevice)->connect() != Lightpack::RESULT::OK
-            || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
-            log("Failed to also connect to Prismatik.");
-            delete mDevice;
-            mDevice = NULL;
-        }
-        else {
-            mDevice->setSmooth(20);
-            mDevice->setBrightness(100);
-            log("Connected to Prismatik.");
-        }
-        LeaveCriticalSection(&mDeviceLock);
-    }
+    // Try to connect to the lights directly,
+    // if fails the try to connect to Prismatik in the thread
+    connectDevice();
+
+    startLightThread();
 }
 
 CLightpack::~CLightpack(void)
@@ -207,7 +193,12 @@ STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
 
     CancelNotification();
 
-    startLightThread();
+    EnterCriticalSection(&mDeviceLock);
+    bool deviceExists = mDevice != NULL;
+    LeaveCriticalSection(&mDeviceLock);
+    if (deviceExists) {
+        startLightThread();
+    }
     return NOERROR;
 }
 
@@ -428,6 +419,29 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 
 DWORD CLightpack::lightThreadStart()
 {
+    // Try to connect to device
+    if (mDevice == NULL) {
+        EnterCriticalSection(&mDeviceLock);
+        if (mDevice == NULL) {
+            log("Try to connect to Prismatik");
+            mDevice = new Lightpack::PrismatikClient(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY);       // TODO get values from settings file
+            if (((Lightpack::PrismatikClient*)mDevice)->connect() != Lightpack::RESULT::OK
+                || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
+                log("Failed to also connect to Prismatik.");
+                delete mDevice;
+                mDevice = NULL;
+                LeaveCriticalSection(&mDeviceLock);
+                return 0;
+            }
+            else {
+                mDevice->setSmooth(20);
+                mDevice->setBrightness(100);
+                log("Connected to Prismatik.");
+            }
+        }
+        LeaveCriticalSection(&mDeviceLock);
+    }
+
     while (true) {
         WaitForSingleObject(mDisplayLightEvent, INFINITE);
 
