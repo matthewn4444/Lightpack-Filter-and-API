@@ -18,18 +18,18 @@
 
 #ifdef LOG_ENABLED
 #include "log.h"
-#define _logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
-#define _log(x) if (mLog != 0) { mLog->log(x); }
+#define logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
+#define log(x) if (mLog != 0) { mLog->log(x); }
 #else
 #include "log.h"
-#define _logf(...)
-#define _log(x)
+#define logf(...)
+#define log(x)
 #endif
 
 #define TIME_START UINT64 start = getTime();
 
 #define TIME_PRINT \
-    _logf("Elapsed: %I64d milliseconds", (getTime()-start)/10000);
+    logf("Elapsed: %I64d milliseconds", (getTime()-start)/10000);
 
 #define FILTER_NAME L"Lightpack"
 

@@ -10,8 +10,8 @@
 
 #include "log.h"
 
-#define _logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
-#define _log(x) if (mLog != 0) { mLog->log(x); }
+#define logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
+#define log(x) if (mLog != 0) { mLog->log(x); }
 
 #define DEFAULT_BUFLEN 512
 
@@ -22,7 +22,6 @@ public:
     {
         InitSocket();
         mLog = new Log("socket.txt");
-        mLog->log("yaya");
     }
 
     ~Socket() {
@@ -123,12 +122,12 @@ public:
         }
         else if (iResult == 0) {
             buffer = '\0';
-            _logf("Connection closed\n");
+            logf("Connection closed\n");
             return false;
         }
         else {
             buffer = '\0';
-            _logf("recv failed with error: %d\n", WSAGetLastError());
+            logf("recv failed with error: %d\n", WSAGetLastError());
             return false;
         }
     }
