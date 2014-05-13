@@ -177,7 +177,7 @@ private:
     void destroyCommThread();
     DWORD commThreadStart();
 
-    void parseMessage(const char* message);
+    void receiveMessages(Socket& socket);
 #ifdef LOG_ENABLED
     Log* mLog;
 #endif

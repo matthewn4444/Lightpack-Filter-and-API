@@ -463,10 +463,15 @@ DWORD CLightpack::lightThreadStart()
     return 0;
 }
 
-void CLightpack::parseMessage(const char* message)
+void CLightpack::receiveMessages(Socket& socket)
 {
-    logf("\tFrom GUI: %s", message);
-    // TODO
+    char buffer[512];
+    while (!mCommThreadStopRequested) {
+        if (socket.Receive(buffer, 500)) {
+            logf("\tFrom GUI: %s", buffer);
+            // Parse each message
+        }
+    }
 }
 
 DWORD CLightpack::commThreadStart()
@@ -475,16 +480,16 @@ DWORD CLightpack::commThreadStart()
     // Trying to connect
     Socket socket;
     if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
-        char buffer[512];
-        while (!mCommThreadStopRequested) {
-            if (socket.Receive(buffer, 500)) {
-                parseMessage(buffer);
-            }
-        }
+        receiveMessages(socket);
     }
     else {
-        log("Failed to connect to gui");
-        // TODO run the exe and then try to reconnect, when fail leave
+        // Run the application (if already running this does nothing), try to connect, if fail then give up
+        ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", L"..\\directshow\\Lightpack-filter-gui", SW_SHOW);   // TODO change this when gui is complete
+        if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
+            receiveMessages(socket);
+        } else {
+            log("Failed to connect to gui");
+        }
     }
     mCommThreadStopRequested = true;
     return 0;
