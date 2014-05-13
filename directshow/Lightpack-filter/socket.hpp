@@ -8,6 +8,10 @@
 #include <stdio.h>
 #include <string>
 
+#pragma comment (lib, "Ws2_32.lib")
+#pragma comment (lib, "Mswsock.lib")
+#pragma comment (lib, "AdvApi32.lib")
+
 #include "log.h"
 
 #define logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
