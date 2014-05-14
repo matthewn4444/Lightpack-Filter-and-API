@@ -46,9 +46,6 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     InitializeCriticalSection(&mAdviseLock);
     InitializeCriticalSection(&mDeviceLock);
 
-    // Start the communication thread
-    startCommThread();
-
     // Try to connect to the lights directly,
     // if fails the try to connect to Prismatik in the thread
     connectDevice();
@@ -374,6 +371,7 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 DWORD CLightpack::lightThreadStart()
 {
     // Try to connect to device
+    bool isConnected = false;
     if (mDevice == NULL) {
         EnterCriticalSection(&mDeviceLock);
         if (mDevice == NULL) {
@@ -385,18 +383,21 @@ DWORD CLightpack::lightThreadStart()
                 delete mDevice;
                 mDevice = NULL;
                 LeaveCriticalSection(&mDeviceLock);
-                return 0;
             }
             else {
                 mDevice->setSmooth(20);
                 mDevice->setBrightness(100);
+                isConnected = true;
                 log("Connected to Prismatik.");
             }
         }
         LeaveCriticalSection(&mDeviceLock);
     }
 
-    while (true) {
+    // Start the communication thread guarenteed after device is connected or not
+    startCommThread();
+
+    while (isConnected) {
         WaitForSingleObject(mDisplayLightEvent, INFINITE);
 
         EnterCriticalSection(&mQueueLock);
