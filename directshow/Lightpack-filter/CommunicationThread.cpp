@@ -1,5 +1,7 @@
 #include "CLightpack.h"
 
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+
 // Connection to GUI
 #define DEFAULT_GUI_HOST "127.0.0.1"
 #define DEFAULT_GUI_PORT "6000"
@@ -153,13 +155,22 @@ DWORD CLightpack::commThreadStart()
         receiveMessages(socket);
     }
     else {
-        // Run the application (if already running this does nothing), try to connect, if fail then give up
-        ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", L"..\\directshow\\Lightpack-filter-gui", SW_SHOW);   // TODO change this when gui is complete
-        if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
-            receiveMessages(socket);
+        WCHAR wDllPath[MAX_PATH] = { 0 };
+        if (GetModuleFileName((HINSTANCE)&__ImageBase, wDllPath, _countof(wDllPath)) != ERROR_INSUFFICIENT_BUFFER) {
+            std::wstring temp(wDllPath);
+            std::wstring axPath = temp.substr(0, temp.find_last_of('\\'));
+
+            // Run the application (if already running this does nothing), try to connect, if fail then give up
+            ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", axPath.c_str(), SW_SHOW);   // TODO change this when gui is complete
+            if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
+                receiveMessages(socket);
+            }
+            else {
+                log("Failed to connect to gui");
+            }
         }
         else {
-            log("Failed to connect to gui");
+            log("Failed parse this directory");
         }
     }
     mCommThreadStopRequested = true;
