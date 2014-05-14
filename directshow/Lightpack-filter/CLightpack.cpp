@@ -6,10 +6,6 @@
 #define DEFAULT_PORT 3636
 #define DEFAULT_APIKEY "{cb832c47-0a85-478c-8445-0b20e3c28cdd}"
 
-// Connection to GUI
-#define DEFAULT_GUI_HOST "127.0.0.1"
-#define DEFAULT_GUI_PORT "6000"
-
 const DWORD CLightpack::sDeviceCheckElapseTime = 2000;
 
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
@@ -325,48 +321,6 @@ void CLightpack::destroyLightThread()
     CancelNotification();
 }
 
-void CLightpack::startCommThread()
-{
-    if (mCommThreadId != NULL && mhCommThread != INVALID_HANDLE_VALUE) {
-        return;
-    }
-
-    CAutoLock lock(m_pLock);
-    ASSERT(mCommThreadId == NULL);
-    ASSERT(mhCommThread == INVALID_HANDLE_VALUE);
-
-    mhCommThread = CreateThread(NULL, 0, CommunicationThread, (void*) this, 0, &mCommThreadId);
-
-    ASSERT(mhCommThread);
-    if (mhCommThread == NULL) {
-        log("Failed to create communication thread");
-    }
-    log("Communication thread started")
-}
-
-void CLightpack::destroyCommThread()
-{
-    if (mCommThreadId == NULL && mhCommThread == INVALID_HANDLE_VALUE) {
-        return;
-    }
-
-    CAutoLock lock(m_pLock);
-    ASSERT(mCommThreadId != NULL);
-    ASSERT(mhCommThread != INVALID_HANDLE_VALUE);
-
-
-    mCommThreadStopRequested = true;
-    WaitForSingleObject(mhCommThread, INFINITE);
-    CloseHandle(mhCommThread);
-
-    // Reset Values
-    mCommThreadId = 0;
-    mhCommThread = INVALID_HANDLE_VALUE;
-    mCommThreadStopRequested = false;
-
-    log("Destroy Communication thread")
-}
-
 void CLightpack::queueLight(REFERENCE_TIME startTime)
 {
     CAutoLock lock(m_pLock);
@@ -477,48 +431,10 @@ DWORD CLightpack::lightThreadStart()
     return 0;
 }
 
-void CLightpack::receiveMessages(Socket& socket)
-{
-    char buffer[512];
-    while (!mCommThreadStopRequested) {
-        if (socket.Receive(buffer, 500)) {
-            logf("\tFrom GUI: %s", buffer);
-            // Parse each message
-        }
-    }
-}
-
-DWORD CLightpack::commThreadStart()
-{
-    log("Running communication thread");
-    // Trying to connect
-    Socket socket;
-    if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
-        receiveMessages(socket);
-    }
-    else {
-        // Run the application (if already running this does nothing), try to connect, if fail then give up
-        ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", L"..\\directshow\\Lightpack-filter-gui", SW_SHOW);   // TODO change this when gui is complete
-        if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
-            receiveMessages(socket);
-        } else {
-            log("Failed to connect to gui");
-        }
-    }
-    mCommThreadStopRequested = true;
-    return 0;
-}
-
 DWORD WINAPI CLightpack::ParsingThread(LPVOID lpvThreadParm)
 {
     CLightpack* pLightpack = (CLightpack*)lpvThreadParm;
     return pLightpack->lightThreadStart();
-}
-
-DWORD WINAPI CLightpack::CommunicationThread(LPVOID lpvThreadParm)
-{
-    CLightpack* pLightpack = (CLightpack*)lpvThreadParm;
-    return pLightpack->commThreadStart();
 }
 
 void CLightpack::clearQueue()

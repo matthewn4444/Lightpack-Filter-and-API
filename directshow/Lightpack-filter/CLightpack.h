@@ -33,6 +33,16 @@
 
 #define FILTER_NAME L"Lightpack"
 
+// These messages are uses in the communication channel to the GUI
+#define COMM_MSG_COUNT_LEDS     0
+#define COMM_MSG_SET_COLOR      1
+#define COMM_MSG_SET_ALL_COLOR  2
+#define COMM_MSG_SET_RECTS      3
+#define COMM_MSG_SET_BRIGHTNESS 4
+#define COMM_MSG_SET_SMOOTH     5
+#define COMM_MSG_SET_GAMMA      6
+#define COMM_MSG_TURN_OFF       7
+#define COMM_MSG_TURN_ON        8
 
 enum VideoFormat { RGB32, NV12, OTHER };
 

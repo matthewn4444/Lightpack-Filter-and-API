@@ -96,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CLightpack.cpp" />
+    <ClCompile Include="CommunicationThread.cpp" />
     <ClCompile Include="Setup.cpp" />
   </ItemGroup>
   <ItemGroup>

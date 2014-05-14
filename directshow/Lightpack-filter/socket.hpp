@@ -25,12 +25,15 @@ public:
         : mRecvTimeout(0)
     {
         InitSocket();
-        mLog = new Log("socket.txt");
+        mLog = 0;
+        //mLog = new Log("socket.txt");
     }
 
     ~Socket() {
-        mLog->flush();
-        delete mLog;
+        if (mLog) {
+            mLog->flush();
+            delete mLog;
+        }
         Close();
         WSACleanup();
     }
@@ -93,6 +96,22 @@ public:
         }
     }
 
+    bool Send(char* message) {
+        int length = strlen(message);
+        if (mConnectSocket == INVALID_SOCKET || length == 0) {
+            return false;
+        }
+
+        if (send(mConnectSocket, message, length, 0) == SOCKET_ERROR
+            && shutdown(mConnectSocket, SD_SEND) == SOCKET_ERROR) {
+            printf("send failed with error: %d\n", WSAGetLastError());
+            Close();
+            WSACleanup();
+            return false;
+        }
+        return true;
+    }
+
     // Not safe for large character buffers
     bool Receive(char* buffer, int timeout = 0) {
         if (mConnectSocket == INVALID_SOCKET) {
@@ -105,11 +124,12 @@ public:
             setsockopt(mConnectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(int));
         }
         int iResult;
+        int length = sizeof(buffer) > DEFAULT_BUFLEN ? sizeof(buffer) : DEFAULT_BUFLEN;
 
-        iResult = recv(mConnectSocket, buffer, DEFAULT_BUFLEN, 0);
+        iResult = recv(mConnectSocket, buffer, length, 0);
         if (iResult > 0) {
             int n = -1;
-            for (int i = 0; i < DEFAULT_BUFLEN; i++) {
+            for (int i = 0; i < length; i++) {
                 if (buffer[i] == '\n') {
                     n = i;
                     break;
