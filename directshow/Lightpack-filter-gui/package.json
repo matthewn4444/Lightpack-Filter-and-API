@@ -1,0 +1,11 @@
+{
+    "name" : "demo",
+    "main" : "index.html",
+    "window": {
+        "title": "node-webkit demo",
+        "toolbar": false,
+        "width": 850,
+        "min_width": 600,
+        "min_height": 400
+    }
+}

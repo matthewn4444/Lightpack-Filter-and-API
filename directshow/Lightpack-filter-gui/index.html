@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+        * { font-family:Arial; }
+        #controls { margin-top:20px; }
+        #controls, #controls * { font-size:18px; }
+        </style>
+        <title>Node webkit socket test</title>
+        <script src='jquery-2.1.1.min.js'></script>
+    </head>
+    <body>
+        <h1>Node webkit socket test</h1>
+        <div id='output' style='width:100%; overflow-y:auto; border: 1px solid black;height:300px;padding:30px;box-sizing:border-box;'></div>
+        <div id='controls'>
+            <button id='toggleOnOff'>Turn Off</button>
+            <button id='randomColor'>Set Random Color</button>
+            <button id='randomColorAll'>Set Random Color All</button>
+            Brightness:
+            <select id='brightness'>
+                <option value='100'>100%</option>
+                <option value='90'>90%</option>
+                <option value='80'>80%</option>
+                <option value='70'>70%</option>
+                <option value='60'>60%</option>
+                <option value='50'>50%</option>
+                <option value='40'>40%</option>
+                <option value='30'>30%</option>
+                <option value='20'>20%</option>
+                <option value='10'>10%</option>
+            </select>
+            Smooth
+            <select id='smooth'>
+                <option value='100'>100%</option>
+                <option value='90'>90%</option>
+                <option value='80'>80%</option>
+                <option value='70'>70%</option>
+                <option value='60'>60%</option>
+                <option value='50'>50%</option>
+                <option value='40'>40%</option>
+                <option value='30'>30%</option>
+                <option value='20'>20%</option>
+                <option value='10'>10%</option>
+            </select>
+        </div>
+        <script src="script.js"></script>
+    </body>
+</html>

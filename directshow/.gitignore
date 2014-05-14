@@ -7,3 +7,9 @@
 # Logs
 log.txt
 *.log
+
+# Node Files
+*.dll
+*.exe
+nw.pak
+
