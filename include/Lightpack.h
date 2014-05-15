@@ -64,7 +64,7 @@ namespace Lightpack {
     public:
         enum STATUS { ON, OFF, DEVICE_ERROR, UNKNOWN };
 
-        PrismatikClient(const std::string& host, unsigned int port, const std::vector<int>& ledMap, const std::string& apikey = "");
+        PrismatikClient();
         ~PrismatikClient();
 
         std::vector<std::string> getProfiles();
@@ -73,7 +73,7 @@ namespace Lightpack {
         size_t getCountLeds();
         RESULT getAPIStatus();
 
-        RESULT connect();
+        RESULT connect(const std::string& host, unsigned int port, const std::vector<int>& ledMap, const std::string& apikey = "");
 
         RESULT setColor(int n, int red, int green, int blue);
         RESULT setColor(int n, RGBCOLOR color);
@@ -115,10 +115,7 @@ namespace Lightpack {
         static char sCacheHomeDirectory[1024];
 
         // Private variables
-        std::string mHost;
-        unsigned int mPort;
         std::vector<int> mLedMap;
-        std::string mApiKey;
         char mCmdCache[1024];
         std::vector<Led> mLeds;
     };

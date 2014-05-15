@@ -45,12 +45,8 @@ namespace Lightpack {
 
     char PrismatikClient::sCacheHomeDirectory[1024] = {};
 
-    PrismatikClient::PrismatikClient(const std::string& host, unsigned int port, const std::vector<int>& ledMap, const std::string& apikey)
-        : mHost(host)
-        , mPort(port)
-        , mLedMap(ledMap)
-        , mApiKey(apikey)
-        , pimpl(new socket_impl())
+    PrismatikClient::PrismatikClient()
+        : pimpl(new socket_impl())
     {
     }
 
@@ -189,15 +185,16 @@ namespace Lightpack {
         return readResultValue() == "busy" ? BUSY : IDLE;
     }
 
-    RESULT PrismatikClient::connect() {
-        if (mPort <= 0 || mHost.empty()) {
+    RESULT PrismatikClient::connect(const std::string& host, unsigned int port, const std::vector<int>& ledMap, const std::string& apikey) {
+        if (port <= 0 || host.empty()) {
             return FAIL;
         }
+        mLedMap = ledMap;
         try {
-            pimpl->socket().open(mHost + ":" + std::to_string(mPort));
+            pimpl->socket().open(host + ":" + std::to_string(port));
             readResultLine();
-            if (!mApiKey.empty()) {
-                sprintf(mCmdCache, CMD_API_KEY, mApiKey.c_str());
+            if (!apikey.empty()) {
+                sprintf(mCmdCache, CMD_API_KEY, apikey.c_str());
                 pimpl->socket() << mCmdCache;
                 readResultLine();
             }

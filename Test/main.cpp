@@ -30,10 +30,10 @@ int main()
     else {
         cout << "Failed to connect to the leds, try to connect to client" << endl;
 
-        PrismatikClient light(HOST, PORT, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, APIKEY);
+        PrismatikClient light;
         try {
             // Test all the functions in the Lightpack API
-            if (light.connect() == Lightpack::OK) {
+            if (light.connect(HOST, PORT, {}, APIKEY) == Lightpack::OK) {
                 cout << "Connected" << endl;
                 test("Lock", light.lock() == Lightpack::OK);
                 test("Number of LEDs", light.getCountLeds() == 10);

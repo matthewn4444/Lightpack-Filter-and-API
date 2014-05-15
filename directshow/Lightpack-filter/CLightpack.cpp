@@ -376,8 +376,8 @@ DWORD CLightpack::lightThreadStart()
         EnterCriticalSection(&mDeviceLock);
         if (mDevice == NULL) {
             log("Try to connect to Prismatik");
-            mDevice = new Lightpack::PrismatikClient(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY);       // TODO get values from settings file
-            if (((Lightpack::PrismatikClient*)mDevice)->connect() != Lightpack::RESULT::OK
+            mDevice = new Lightpack::PrismatikClient();
+            if (((Lightpack::PrismatikClient*)mDevice)->connect(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY) != Lightpack::RESULT::OK
                 || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
                 log("Failed to also connect to Prismatik.");
                 delete mDevice;
