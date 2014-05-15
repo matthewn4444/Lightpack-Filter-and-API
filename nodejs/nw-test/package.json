@@ -1,0 +1,9 @@
+{
+    "name" : "lightpack node-webkit test",
+    "main" : "index.html",
+    "window": {
+        "toolbar": false,
+        "min_width": 600,
+        "min_height": 400
+    }
+}

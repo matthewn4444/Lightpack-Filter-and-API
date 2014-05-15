@@ -1,6 +1,18 @@
-#!/usr/bin/env node
 var assert = require('assert');
-var lightpack = require('./vs13/Release/lightpack');
+var lightpack = require('./lightpack');
+
+function log(/*...*/) {
+    var div = document.createElement("div");
+    var text = "[empty string]";
+    if (arguments.length) {
+        text = arguments[0].toString();
+        for (var i = 1; i < arguments.length; i++) {
+            text += " " + arguments[i];
+        }
+    }
+    div.appendChild(document.createTextNode(text));
+    document.getElementById("output").appendChild(div);
+}
 
 // Check the static variables
 assert.equal(10, lightpack.LedsPerDevice);
@@ -9,7 +21,7 @@ assert.equal(2.2, lightpack.DefaultGamma);
 
 var connected = lightpack.open();
 if (!connected) {
-    console.log("Failed: Please connect the lightpack usb device.");
+    log("Failed: Please connect the lightpack usb device.");
 } else {
     assert.ok(lightpack.setSmooth(0));
     assert.ok(lightpack.setColorToAll(0));
@@ -21,7 +33,7 @@ if (!connected) {
     
     // If there is only one device
     assert.ok(lightpack.getCountLeds() > 0);
-    console.log("There are", lightpack.getCountLeds(), "leds");
+    log("There are", lightpack.getCountLeds(), "leds");
 
     assert.ok(lightpack.setSmooth(200));
     assert.ok(lightpack.setBrightness(75));
@@ -46,6 +58,7 @@ if (!connected) {
                     [0, 255, 0],
                     [0, 0, 255]
                 ]));
+                log("All tests pass!");
             }, 1000);
         }, 500);
     }, 1000);

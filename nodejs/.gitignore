@@ -1,0 +1,4 @@
+# For the NW-GYP
+*.vcxproj
+config.gypi
+*.node

@@ -2,55 +2,66 @@
 #include <v8.h>
 #include <Lightpack.h>
 
-using namespace v8;
+using v8::Handle;
+using v8::Array;
+using v8::Value;
+using v8::Local;
 
-#define REG_FUNC(expName, func) \
-    exports->Set(String::NewSymbol(#expName), FunctionTemplate::New(func)->GetFunction());
-
-#define REG_NUMBER(expName, number) \
-    exports->Set(String::NewSymbol(#expName), Number::New(number));
+#define NODE_SET_NUMBER(expName, number) \
+    exports->Set(v8::String::NewSymbol(#expName), v8::Number::New(number));
 
 #define ARG2INT(i) \
-    (int)Local<Integer>::Cast(args[i])->Int32Value()
+    (int)v8::Local<v8::Integer>::Cast(args[i])->Int32Value()
 
 #define ARG2DOUBLE(i) \
-    (double)Local<Integer>::Cast(args[i])->Value()
+    (double)Local<v8::Integer>::Cast(args[i])->Value()
 
+// Function helpers
+// TODO make this work with node-gyp as well
+#define __ret               void
+#define PASS_ARGS           const v8::FunctionCallbackInfo<Value>&
+#define GET_SCOPE(s)        v8::Isolate* isolate = v8::Isolate::GetCurrent(); v8::HandleScope s(isolate);
+#define RETURN(a, x)        a.GetReturnValue().Set(x)
+
+// Lazy way to create Node extension functions
+#define LAZY_DECLARE(name, arguments) __ret name(PASS_ARGS arguments) { GET_SCOPE(scope);
+#define LAZY_RETURN(arguments, value) RETURN(arguments, value); }
+#define LAZY_RETURN_BOOL(arguments, value) RETURN(arguments, value ? v8::True() : v8::False()); }
+#define LAZY_RETURN_UNDEFINED(arguments) RETURN(arguments, v8::Undefined()); }
+
+
+// Static variable to run lightpack functions
 static Lightpack::LedDevice sDevice;
 
-Handle<Value> Open(const Arguments& args) {
-    HandleScope scope;
-    bool openned = sDevice.open();
-    return scope.Close(Boolean::New(openned));
+LAZY_DECLARE(Open, args) {
+    LAZY_RETURN_BOOL(args, sDevice.open());
 }
 
-Handle<Value> TryToReopenDevice(const Arguments& args) {
-    HandleScope scope;
-    bool openned = sDevice.tryToReopenDevice();
-    return scope.Close(Boolean::New(openned));
+LAZY_DECLARE(TryToReopenDevice, args) {
+    LAZY_RETURN_BOOL(args, sDevice.tryToReopenDevice());
 }
 
-Handle<Value> CloseDevices(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(CloseDevices, args) {
     sDevice.closeDevices();
-    return scope.Close(Undefined());
+    LAZY_RETURN_UNDEFINED(args);
 }
 
-Handle<Value> SetColor(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(SetColor, args) {
+    sDevice.closeDevices();
+    bool success = false;
     if (args.Length() >= 4 && args[0]->IsNumber() && args[1]->IsNumber() && args[2]->IsNumber()) {
         Lightpack::RESULT result = sDevice.setColor(ARG2INT(0), ARG2INT(1), ARG2INT(2), ARG2INT(3));
-        return scope.Close(Boolean::New(result == Lightpack::RESULT::OK));
+        success = result == Lightpack::RESULT::OK;
     }
     else if (args.Length() >= 2 && args[0]->IsNumber() && args[1]->IsNumber()) {
         Lightpack::RESULT result = sDevice.setColor(ARG2INT(0), ARG2INT(1));
-        return scope.Close(Boolean::New(result == Lightpack::RESULT::OK));
+        success = result == Lightpack::RESULT::OK;
     }
-    return scope.Close(Boolean::New(false));
+    LAZY_RETURN_BOOL(args, success);
 }
 
-Handle<Value> SetColors(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(SetColors, args) {
+    bool success = false;
     if (args.Length() > 0 && args[0]->IsArray()) {
         Handle<Array> colors = Handle<Array>::Cast(args[0]);
         size_t length = colors->Length();
@@ -67,7 +78,7 @@ Handle<Value> SetColors(const Arguments& args) {
                 }
             }
             else if (val->IsNumber()) {
-                pColors[i] = (Lightpack::RGBCOLOR)Local<Integer>::Cast(colors->Get(i))->Int32Value();
+                pColors[i] = (Lightpack::RGBCOLOR)Local<v8::Integer>::Cast(colors->Get(i))->Int32Value();
             }
             else {
                 pColors[i] = -1;        // Ignore, same comment as above
@@ -75,102 +86,102 @@ Handle<Value> SetColors(const Arguments& args) {
         }
         Lightpack::RESULT result = sDevice.setColors(pColors, length);
         delete[] pColors;
-        return scope.Close(Boolean::New(result == Lightpack::RESULT::OK));
+        success = result == Lightpack::RESULT::OK;
     }
-    return scope.Close(Boolean::New(false));
+    LAZY_RETURN_BOOL(args, success);
 }
 
-Handle<Value> SetColorToAll(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(SetColorToAll, args) {
+    bool success = false;
     if (args.Length() >= 3 && args[0]->IsNumber() && args[1]->IsNumber() && args[2]->IsNumber()) {
         Lightpack::RESULT result = sDevice.setColorToAll(ARG2INT(0), ARG2INT(1), ARG2INT(2));
-        return scope.Close(Boolean::New(result == Lightpack::RESULT::OK));
+        success = result == Lightpack::RESULT::OK;
     }
     else if (args.Length() >= 1 && args[0]->IsNumber()) {
         Lightpack::RESULT result = sDevice.setColorToAll(ARG2INT(0));
-        return scope.Close(Boolean::New(result == Lightpack::RESULT::OK));
+        success = result == Lightpack::RESULT::OK;
     }
-    return scope.Close(Boolean::New(false));
+    LAZY_RETURN_BOOL(args, success);
 }
 
-Handle<Value> SetSmooth(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(SetSmooth, args) {
+    bool success = false;
     if (args.Length() > 0 && args[0]->IsNumber()) {
-        return scope.Close(Boolean::New(sDevice.setSmooth(ARG2INT(0)) == Lightpack::RESULT::OK));
+        success = sDevice.setSmooth(ARG2INT(0)) == Lightpack::RESULT::OK;
     }
-    return scope.Close(Boolean::New(false));
+    LAZY_RETURN_BOOL(args, success);
 }
 
-Handle<Value> SetGamma(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(SetGamma, args) {
+    bool success = false;
     if (args.Length() > 0 && args[0]->IsNumber()) {
-        return scope.Close(Boolean::New(sDevice.setGamma(ARG2DOUBLE(0)) == Lightpack::RESULT::OK));
+        success = sDevice.setGamma(ARG2DOUBLE(0)) == Lightpack::RESULT::OK;
     }
-    return scope.Close(Boolean::New(false));
+    LAZY_RETURN_BOOL(args, success);
 }
 
-Handle<Value> SetBrightness(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(SetBrightness, args) {
+    bool success = false;
     if (args.Length() > 0 && args[0]->IsNumber()) {
-        return scope.Close(Boolean::New(sDevice.setBrightness(ARG2INT(0)) == Lightpack::RESULT::OK));
+        success = sDevice.setBrightness(ARG2INT(0)) == Lightpack::RESULT::OK;
     }
-    return scope.Close(Boolean::New(false));
+    LAZY_RETURN_BOOL(args, success);
 }
 
-Handle<Value> SetColorDepth(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(SetColorDepth, args) {
+    bool success = false;
     if (args.Length() > 0 && args[0]->IsNumber()) {
-        return scope.Close(Boolean::New(sDevice.setColorDepth(ARG2INT(0))));
+        success = sDevice.setColorDepth(ARG2INT(0));
     }
-    return scope.Close(Boolean::New(false));
+    LAZY_RETURN_BOOL(args, success);
 }
 
-Handle<Value> SetRefreshDelay(const Arguments& args) {
-    HandleScope scope;
+LAZY_DECLARE(SetRefreshDelay, args) {
+    bool success = false;
     if (args.Length() > 0 && args[0]->IsNumber()) {
-        return scope.Close(Boolean::New(sDevice.setRefreshDelay(ARG2INT(0))));
+        success = sDevice.setRefreshDelay(ARG2INT(0));
     }
-    return scope.Close(Boolean::New(false));
+    LAZY_RETURN_BOOL(args, success);
 }
 
-Handle<Value> GetCountLeds(const Arguments& args) {
-    HandleScope scope;
-    return scope.Close(Number::New(sDevice.getCountLeds()));
+LAZY_DECLARE(GetCountLeds, args) {
+    LAZY_RETURN(args, v8::Number::New(sDevice.getCountLeds()));
 }
 
-Handle<Value> TurnOff(const Arguments& args) {
-    HandleScope scope;
-    return scope.Close(Boolean::New(sDevice.turnOff() == Lightpack::RESULT::OK));
+LAZY_DECLARE(TurnOff, args) {
+    LAZY_RETURN_BOOL(args, sDevice.turnOff() == Lightpack::RESULT::OK);
 }
 
-Handle<Value> TurnOn(const Arguments& args) {
-    HandleScope scope;
-    return scope.Close(Boolean::New(sDevice.turnOn() == Lightpack::RESULT::OK));
+LAZY_DECLARE(TurnOn, args) {
+    LAZY_RETURN_BOOL(args, sDevice.turnOn() == Lightpack::RESULT::OK);
 }
 
-void init(Handle<Object> exports) {
-    REG_FUNC(open, Open)
-    REG_FUNC(tryToReopenDevice, TryToReopenDevice)
-    REG_FUNC(closeDevices, CloseDevices)
 
-    REG_FUNC(setColor, SetColor)
-    REG_FUNC(setColors, SetColors)
-    REG_FUNC(setColorToAll, SetColorToAll)
+void init(Handle<v8::Object> exports) {
+    NODE_SET_METHOD(exports, "open", Open);
 
-    REG_FUNC(setSmooth, SetSmooth)
-    REG_FUNC(setGamma, SetGamma)
-    REG_FUNC(setBrightness, SetBrightness)
-    REG_FUNC(setColorDepth, SetColorDepth)
-    REG_FUNC(setRefreshDelay, SetRefreshDelay)
+    NODE_SET_METHOD(exports, "open", Open);
+    NODE_SET_METHOD(exports, "tryToReopenDevice", TryToReopenDevice);
+    NODE_SET_METHOD(exports, "closeDevices", CloseDevices);
 
-    REG_FUNC(getCountLeds, GetCountLeds)
+    NODE_SET_METHOD(exports, "setColor", SetColor);
+    NODE_SET_METHOD(exports, "setColors", SetColors);
+    NODE_SET_METHOD(exports, "setColorToAll", SetColorToAll);
 
-    REG_FUNC(turnOff, TurnOff)
-    REG_FUNC(turnOn, TurnOn)
+    NODE_SET_METHOD(exports, "setSmooth", SetSmooth);
+    NODE_SET_METHOD(exports, "setGamma", SetGamma);
+    NODE_SET_METHOD(exports, "setBrightness", SetBrightness);
+    NODE_SET_METHOD(exports, "setColorDepth", SetColorDepth);
+    NODE_SET_METHOD(exports, "setRefreshDelay", SetRefreshDelay);
 
-    REG_NUMBER(LedsPerDevice, Lightpack::LedDevice::LedsPerDevice)
-    REG_NUMBER(DefaultBrightness, Lightpack::LedDevice::DefaultBrightness)
-    REG_NUMBER(DefaultGamma, Lightpack::LedDevice::DefaultGamma)
+    NODE_SET_METHOD(exports, "getCountLeds", GetCountLeds);
+
+    NODE_SET_METHOD(exports, "turnOff", TurnOff);
+    NODE_SET_METHOD(exports, "turnOn", TurnOn);
+
+    NODE_SET_NUMBER(LedsPerDevice, Lightpack::LedDevice::LedsPerDevice);
+    NODE_SET_NUMBER(DefaultBrightness, Lightpack::LedDevice::DefaultBrightness);
+    NODE_SET_NUMBER(DefaultGamma, Lightpack::LedDevice::DefaultGamma);
 }
 
 NODE_MODULE(lightpack, init)
