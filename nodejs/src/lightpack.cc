@@ -7,6 +7,10 @@ using v8::Array;
 using v8::Value;
 using v8::Local;
 
+// ===========================================================================================
+//      Macros to simplify programming
+// ===========================================================================================
+
 #define NODE_SET_NUMBER(expName, number) \
     exports->Set(v8::String::NewSymbol(#expName), v8::Number::New(number));
 
@@ -29,6 +33,9 @@ using v8::Local;
 #define LAZY_RETURN_BOOL(arguments, value) RETURN(arguments, value ? v8::True() : v8::False()); }
 #define LAZY_RETURN_UNDEFINED(arguments) RETURN(arguments, v8::Undefined()); }
 
+// ===========================================================================================
+//      Lightpack device
+// ===========================================================================================
 
 // Static variable to run lightpack functions
 static Lightpack::LedDevice sDevice;
@@ -156,10 +163,11 @@ LAZY_DECLARE(TurnOn, args) {
     LAZY_RETURN_BOOL(args, sDevice.turnOn() == Lightpack::RESULT::OK);
 }
 
+// ===========================================================================================
+//      Initialization
+// ===========================================================================================
 
 void init(Handle<v8::Object> exports) {
-    NODE_SET_METHOD(exports, "open", Open);
-
     NODE_SET_METHOD(exports, "open", Open);
     NODE_SET_METHOD(exports, "tryToReopenDevice", TryToReopenDevice);
     NODE_SET_METHOD(exports, "closeDevices", CloseDevices);
