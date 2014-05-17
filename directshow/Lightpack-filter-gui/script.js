@@ -4,9 +4,9 @@ function log(/*...*/) {
     var div = document.createElement("div");
     var text = "[empty string]";
     if (arguments.length) {
-        text = arguments[0].toString();
+        text = typeof(arguments[0]) == "undefined" ? "undefined" : arguments[0].toString();
         for (var i = 1; i < arguments.length; i++) {
-            text += " " + arguments[i];
+            text += " " + (typeof(arguments[i]) == "undefined" ? "undefined" : arguments[i]);
         }
     }
     div.appendChild(document.createTextNode(text));
