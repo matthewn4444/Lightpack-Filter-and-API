@@ -6,6 +6,8 @@ var LOCALHOST = "127.0.0.1",
 var ledMap = [],
     numLeds = 0;
     
+var errorListener = null;
+
 // Events
 var EVENT_CONNECTION = 0,
     EVENT_API_KEY = 1,
@@ -130,26 +132,43 @@ socket.on("error", function(err){
         var item = queue.shift();
         var callback = item.callback;
         if (item.event == EVENT_CONNECTION) {
-            callback.call(exports, false);
+            if (callback) {
+                callback.call(exports, false);
+            }
             isRunning = false;
             runNextEvent();
             return;
         }
     }
+    if (errorListener) {
+        errorListener.apply(exports, arguments);
+    }
     isRunning = false;
-    throw err;
 });
 
-function connect(opts, callback) {
+function connect(/* [opts], [callback] */) {
+    // Parse Arguments
+    var callback = null, opts = null;
+    if (arguments.length) {
+        if (typeof(arguments[0]) == "object") {
+            opts = arguments[0];
+            if (arguments.length >= 2 && typeof(arguments[1]) == "function") {
+                callback = arguments[1];
+            }
+        } else if (typeof(arguments[0]) == "function") {
+            callback = arguments[0];
+        }
+    }
+
     if (isConnected) {
         if (callback) {
             callback.call(exports, true);
         }
     } else {
-        var host = opts.host || LOCALHOST,
-            port = opts.port || DEFAULT_PORT, 
-            ledMap = opts.ledMap || [], 
-            apikey = opts.apikey || "";
+        var host = opts && opts.host || LOCALHOST,
+            port = opts && opts.port || DEFAULT_PORT,
+            ledMap = opts && opts.ledMap || [],
+            apikey = opts && opts.apikey || "";
 
         if (port <= 0 || !host.trim().length) {
             return callback.call(exports, false);
@@ -244,6 +263,12 @@ function setColor(i, r, g, b, callback) {
         queueEvent(EVENT_SET_COLOR, "setcolor:" + ledMap[i] + "-" + r + "," + g + "," + b + ";", callback);
     } else if (callback) {
         callback.call(exports, false);
+    }
+}
+
+function on(event, fn) {
+    if (event == "error") {
+        errorListener = fn;
     }
 }
 

@@ -6,6 +6,18 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define DEFAULT_GUI_HOST "127.0.0.1"
 #define DEFAULT_GUI_PORT "6000"
 
+// These messages are uses in the communication channel to the GUI
+#define COMM_MSG_COUNT_LEDS     0
+#define COMM_MSG_SET_COLOR      1
+#define COMM_MSG_SET_ALL_COLOR  2
+#define COMM_MSG_SET_RECTS      3
+#define COMM_MSG_SET_BRIGHTNESS 4
+#define COMM_MSG_SET_SMOOTH     5
+#define COMM_MSG_SET_GAMMA      6
+#define COMM_MSG_TURN_OFF       7
+#define COMM_MSG_TURN_ON        8
+#define COMM_MSG_CONNECT        9
+
 void CLightpack::startCommThread()
 {
     if (mCommThreadId != NULL && mhCommThread != INVALID_HANDLE_VALUE) {
@@ -34,7 +46,6 @@ void CLightpack::destroyCommThread()
     ASSERT(mCommThreadId != NULL);
     ASSERT(mhCommThread != INVALID_HANDLE_VALUE);
 
-
     mCommThreadStopRequested = true;
     WaitForSingleObject(mhCommThread, INFINITE);
     CloseHandle(mhCommThread);
@@ -50,14 +61,15 @@ void CLightpack::receiveMessages(Socket& socket)
     char buffer[512];
     while (!mCommThreadStopRequested) {
         if (socket.Receive(buffer, 500) && strlen(buffer) > 0) {
+            int messageType = buffer[0] - '0';
+            int result = EOF;
             if (mDevice != NULL) {
                 // Parse each message
-                int messageType = buffer[0] - '0';
                 int leds, n, r, g, b;
-                bool result = EOF;
                 switch (messageType) {
                     // Format: <0>
                     case COMM_MSG_COUNT_LEDS:
+                        result = 0;
                         EnterCriticalSection(&mDeviceLock);
                         leds = mDevice->getCountLeds();
                         LeaveCriticalSection(&mDeviceLock);
@@ -130,16 +142,25 @@ void CLightpack::receiveMessages(Socket& socket)
                         sprintf(buffer, "%d", result);
                         break;
                 }
-                // Failed to parse the message
-                if (result == EOF) {
-                    buffer[0] = '0';
-                    buffer[1] = '\0';
+            }
+            // Format: <9>
+            else if (messageType == COMM_MSG_CONNECT) {
+                // Reconnect to all devices if not connected already
+                result = 0;
+                if (mDevice == NULL) {
+                    // Try directly else try Prismatik
+                    if (!connectDevice() && !connectPrismatik()) {
+                        result = EOF;
+                    }
                 }
             }
-            else {
+
+            // Failed to parse the message
+            if (result == EOF) {
                 buffer[0] = '0';
                 buffer[1] = '\0';
             }
+
             // Respond back to the server
             socket.Send(buffer);
         }

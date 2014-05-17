@@ -1,27 +1,33 @@
-var light = require("./lightpack-server");
+var light = require("./lightpack/lightpack-api");
 
-var HOST = "127.0.0.1",
-    PORT = 6000;
-    
-var numLeds = 0;
-
-function log(text) {
+function log(/*...*/) {
     var div = document.createElement("div");
+    var text = "[empty string]";
+    if (arguments.length) {
+        text = arguments[0].toString();
+        for (var i = 1; i < arguments.length; i++) {
+            text += " " + arguments[i];
+        }
+    }
     div.appendChild(document.createTextNode(text));
     document.getElementById("output").appendChild(div);
 }
 
-var server = light.Server(document);
-server.listen(PORT, HOST, function(){
-    log("Running socket server 6000 " + server.address().address);
-});
-
-light.on("connection", function(){
-    log("light connected");
-    light.getCountLeds(function(num){
-        numLeds = num;
-        log("Read " + num + " leds");
-    });
+// Connect the lights
+var numLeds = 0;
+light.a(document);
+light.connect(function(isConnected){
+    if (isConnected) {
+        log("got connected");
+        light.setSmooth(255, function(){
+            light.getCountLeds(function(n){
+                numLeds = n;
+                log("Got", n, "leds");
+            });
+        });
+    } else {
+        log("not connected");
+    }
 });
 
 // GUI stuff

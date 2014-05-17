@@ -56,19 +56,21 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 CLightpack::~CLightpack(void)
 {
     destroyLightThread();
-    destroyCommThread();
 
     ASSERT(mLightThreadId == NULL);
     ASSERT(mhLightThread == INVALID_HANDLE_VALUE);
     ASSERT(mLightThreadStopRequested == false);
 
+    delete[] mFrameBuffer;
+
+    disconnectAllDevices();
+    ASSERT(mDevice == NULL);
+
+    destroyCommThread();
+
     ASSERT(mCommThreadId == NULL);
     ASSERT(mhCommThread == INVALID_HANDLE_VALUE);
     ASSERT(mCommThreadStopRequested == false);
-
-    delete[] mFrameBuffer;
-
-    disconnectDevice();
 #ifdef LOG_ENABLED
     if (mLog) {
         delete mLog;
@@ -241,7 +243,33 @@ bool CLightpack::connectDevice()
     return true;
 }
 
-void CLightpack::disconnectDevice()
+bool CLightpack::connectPrismatik()
+{
+    if (mDevice == NULL) {
+        EnterCriticalSection(&mDeviceLock);
+        if (mDevice == NULL) {
+            log("Try to connect to Prismatik");
+            mDevice = new Lightpack::PrismatikClient();
+            if (((Lightpack::PrismatikClient*)mDevice)->connect(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY) != Lightpack::RESULT::OK
+                || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
+                log("Failed to also connect to Prismatik.");
+                delete mDevice;
+                mDevice = NULL;
+                LeaveCriticalSection(&mDeviceLock);
+                return false;
+            }
+            else {
+                mDevice->setSmooth(20);
+                mDevice->setBrightness(100);
+                log("Connected to Prismatik.");
+            }
+        }
+        LeaveCriticalSection(&mDeviceLock);
+    }
+    return true;
+}
+
+void CLightpack::disconnectAllDevices()
 {
     if (mDevice) {
         EnterCriticalSection(&mDeviceLock);
@@ -360,7 +388,7 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
                 // Device is/was disconnected
                 LeaveCriticalSection(&mDeviceLock);
                 mLightThreadCleanUpRequested = true;
-                disconnectDevice();
+                disconnectAllDevices();
                 return;
             }
         }
