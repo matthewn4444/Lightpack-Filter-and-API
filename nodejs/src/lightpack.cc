@@ -54,9 +54,8 @@ LAZY_DECLARE(CloseDevices, args) {
 }
 
 LAZY_DECLARE(SetColor, args) {
-    sDevice.closeDevices();
     bool success = false;
-    if (args.Length() >= 4 && args[0]->IsNumber() && args[1]->IsNumber() && args[2]->IsNumber()) {
+    if (args.Length() >= 4 && args[0]->IsNumber() && args[1]->IsNumber() && args[2]->IsNumber() && args[3]->IsNumber()) {
         Lightpack::RESULT result = sDevice.setColor(ARG2INT(0), ARG2INT(1), ARG2INT(2), ARG2INT(3));
         success = result == Lightpack::RESULT::OK;
     }
