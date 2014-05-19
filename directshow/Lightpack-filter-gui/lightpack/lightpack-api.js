@@ -12,8 +12,8 @@ var server = null;
 var listeners = {
     connect: null,
     disconnect: null,
-    disable: null,
-    enable: null,
+    play: null,
+    pause: null,
 };
 
 var document = null;
@@ -51,12 +51,23 @@ function startServer(port, host) {
     server.listen(port, host, function(){
         log("Running socket server", host, ":", port);
     });
-    filter.on("connection", filterConnected);
+    filter.on("connect", filterConnected)
 
     // The filter is gone, now we must reconnect either device or client
-    filter.on("disconnected", function(){
+    .on("disconnect", function(){
         currentObj = null;
         connect();
+    })
+
+    // Handle when playing and not playing video
+    .on("play", function(){
+        if (listeners.play) {
+            listeners.play.call(exports);
+        }
+    }).on("pause", function(){
+        if (listeners.pause) {
+            listeners.pause.call(exports);
+        }
     });
 }
 

@@ -8,8 +8,12 @@ var currentSocketName = null;
 var server = null;
 
 // Listeners
-var connectionListener = null;
-var disconnectionListener = null;
+var listeners = {
+    connect: null,
+    disconnect: null,
+    play: null,
+    pause: null
+};
 
 // Events
 var EVENT_MSG_COUNT_LEDS =      0,
@@ -41,8 +45,8 @@ function startServer() {
         if (clients.length == 1) {
             currentSocketName = socket.name;
             // Notify connected listener
-            if (connectionListener) {
-                connectionListener.call(exports, socket);
+            if (listeners.connect) {
+                listeners.connect.call(exports, socket);
             }
         }
 
@@ -81,6 +85,16 @@ function startServer() {
                         runQueue();
                     }
                     break;
+                case EVENT_REC_IS_RUNNING:
+                    if (listeners.play) {
+                        listeners.play.call(exports);
+                    }
+                    break;
+                case EVENT_REC_IS_PAUSED:
+                    if (listeners.pause) {
+                        listeners.pause.call(exports);
+                    }
+                    break;
             }
         });
 
@@ -91,12 +105,16 @@ function startServer() {
             // New socket, when the disconnected socket was the current one
             if (clients.length == 1 && currentSocketName == socket.name) {
                 currentSocketName = clients[0].name;
-                if (connectionListener) {
-                    connectionListener.call(exports, clients[0]);
+                if (listeners.connect) {
+                    listeners.connect.call(exports, clients[0]);
                 }
-            } else if (clients.length == 0 && disconnectionListener) {
-                disconnectionListener.call(exports);
+            } else if (clients.length == 0 && listeners.disconnect) {
+                listeners.disconnect.call(exports);
             }
+        });
+
+        socket.on("error", function(e){
+            console.log(e)
         });
     });
     return server;
@@ -157,14 +175,13 @@ function signalReconnect(callback) {
     queueEvent(EVENT_MSG_CONNECT, null, callback);
 }
 
-function on(event, fn) {
-    if (typeof(fn) == "function") {
-        if (event == "connection") {
-            connectionListener = fn;
-        } else if (event == "disconnected") {
-            disconnectionListener = fn;
+function on(eventName, fn) {
+    if (fn == null || typeof(fn) == "function") {
+        if (listeners.hasOwnProperty(eventName)) {
+            listeners[eventName] = fn;
         }
     }
+    return exports;
 }
 
 exports.Server = startServer;
