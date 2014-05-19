@@ -173,11 +173,14 @@ private:
     void destroyLightThread();
     DWORD lightThreadStart();
 
+    // Communication thread
     void startCommThread();
     void destroyCommThread();
     DWORD commThreadStart();
+    bool mShouldSendPlayEvent;
+    bool mShouldSendPauseEvent;
 
-    void receiveMessages(Socket& socket);
+    void handleMessages(Socket& socket);
 #ifdef LOG_ENABLED
     Log* mLog;
 #endif
@@ -192,6 +195,7 @@ private:
     CRITICAL_SECTION mQueueLock;
     CRITICAL_SECTION mAdviseLock;
     CRITICAL_SECTION mDeviceLock;
+    CRITICAL_SECTION mCommSendLock;
 
     // Communication thread to the GUI
     HANDLE mhCommThread;
@@ -206,6 +210,7 @@ private:
     int mHeight;
 
     DWORD mLastDeviceCheck;
+    bool mIsRunning;
 
     BYTE* mFrameBuffer;
     std::queue<DWORD_PTR> mAdviseQueue;

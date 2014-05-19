@@ -6,6 +6,8 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define DEFAULT_GUI_HOST "127.0.0.1"
 #define DEFAULT_GUI_PORT "6000"
 
+#define RECV_TIMEOUT 200
+
 // These messages are uses in the communication channel to the GUI
 #define COMM_REC_COUNT_LEDS     0
 #define COMM_REC_SET_COLOR      1
@@ -61,11 +63,32 @@ void CLightpack::destroyCommThread()
     mCommThreadStopRequested = false;
 }
 
-void CLightpack::receiveMessages(Socket& socket)
+void CLightpack::handleMessages(Socket& socket)
 {
     char buffer[512];
     while (!mCommThreadStopRequested) {
-        if (socket.Receive(buffer, 500) && strlen(buffer) > 0) {
+        // Handle send events
+        EnterCriticalSection(&mCommSendLock);
+        if (mShouldSendPauseEvent) {
+            mShouldSendPauseEvent = false;
+            LeaveCriticalSection(&mCommSendLock);
+            sprintf(buffer, "%d", COMM_SEND_PAUSED);
+            socket.Send(buffer);
+        }
+        else if (mShouldSendPlayEvent) {
+            mShouldSendPlayEvent = false;
+            LeaveCriticalSection(&mCommSendLock);
+            sprintf(buffer, "%d", COMM_SEND_PLAYING);
+            socket.Send(buffer);
+        }
+        else {
+            mShouldSendPlayEvent = false;
+            mShouldSendPauseEvent = false;
+            LeaveCriticalSection(&mCommSendLock);
+        }
+
+        // Handle Receiving events
+        if (socket.Receive(buffer, RECV_TIMEOUT) && strlen(buffer) > 0) {
             int messageType = buffer[0] - '0';
             int result = EOF;
             if (mDevice != NULL) {
@@ -180,7 +203,7 @@ DWORD CLightpack::commThreadStart()
     // Trying to connect
     Socket socket;
     if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
-        receiveMessages(socket);
+        handleMessages(socket);
     }
     else {
         WCHAR wDllPath[MAX_PATH] = { 0 };
@@ -191,7 +214,7 @@ DWORD CLightpack::commThreadStart()
             // Run the application (if already running this does nothing), try to connect, if fail then give up
             ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", axPath.c_str(), SW_SHOW);   // TODO change this when gui is complete
             if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
-                receiveMessages(socket);
+                handleMessages(socket);
             }
             else {
                 log("Failed to connect to gui");

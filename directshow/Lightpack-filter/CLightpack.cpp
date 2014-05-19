@@ -23,6 +23,9 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mStride(0)
 , mLastDeviceCheck(GetTickCount())
 , mLightThreadCleanUpRequested(false)
+, mShouldSendPlayEvent(false)
+, mShouldSendPauseEvent(false)
+, mIsRunning(false)
 {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
@@ -45,6 +48,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     InitializeCriticalSection(&mQueueLock);
     InitializeCriticalSection(&mAdviseLock);
     InitializeCriticalSection(&mDeviceLock);
+    InitializeCriticalSection(&mCommSendLock);
 
     // Try to connect to the lights directly,
     // if fails the try to connect to Prismatik in the thread
@@ -194,6 +198,12 @@ STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
     if (deviceExists) {
         startLightThread();
     }
+
+    EnterCriticalSection(&mCommSendLock);
+    mShouldSendPlayEvent = mIsRunning == false;
+    LeaveCriticalSection(&mCommSendLock);
+
+    mIsRunning = true;
     return NOERROR;
 }
 
@@ -215,6 +225,12 @@ STDMETHODIMP CLightpack::Pause()
         return hr;
     }
     destroyLightThread();
+
+    EnterCriticalSection(&mCommSendLock);
+    mShouldSendPauseEvent = mIsRunning == true;
+    LeaveCriticalSection(&mCommSendLock);
+
+    mIsRunning = false;
     return NOERROR;
 }
 

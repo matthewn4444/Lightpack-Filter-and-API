@@ -27,6 +27,10 @@ light.on("connect", function(){
     }).setSmooth(255);
 }).on("disconnect", function(){
     log("Lights have disconnected");
+}).on("play", function(){
+    log("Filter is playing");
+}).on("pause", function(){
+    log("Filter was paused");
 }).connect();
 
 //  ============================================
