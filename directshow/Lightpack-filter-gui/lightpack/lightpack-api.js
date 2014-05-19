@@ -9,6 +9,14 @@ var currentObj = null;
 var isConnected = false;
 var server = null;
 
+// Default States, these will change based on the config file
+var states = {
+    brightness: 100,
+    gamma: 2.2,
+    smooth: 255,
+    colors: []  // TODO
+};
+
 var listeners = {
     connect: null,
     disconnect: null,
@@ -133,6 +141,17 @@ function notifyConnect() {
         listeners.connect.call(exports);
     }
     isConnected = true;
+
+    // Since connected to new device, we should apply the current states
+    setSmooth(states.smooth, function(success){
+        if (success) {
+            setGamma(states.gamma, function(success){
+                if (success) {
+                    setBrightness(states.brightness);
+                }
+            });
+        }
+    });
 }
 
 function notifyDisconnect() {
@@ -162,7 +181,7 @@ function proxyFunc(callback, args) {
             // If crash next line, you did not make the function same name to call this
             currentObj[fnName].apply(this, args);
         } else if (callback) {
-            callback.call(exports, false);
+            disconnect(callback);
         }
     } else {
         throw new Error("proxyFunc was called incorrectly!");
@@ -183,15 +202,36 @@ function setColorToAll(r, g, b, callback) {
 }
 
 function setGamma(value, callback) {
-    return proxyFunc(callback, [value]);
+    return proxyFunc(function(success){
+        if (success) {
+            states.gamma = value;
+        }
+        if (callback) {
+            callback.call(exports, success);
+        }
+    }, [value]);
 }
 
 function setSmooth(value, callback) {
-    return proxyFunc(callback, [value]);
+    return proxyFunc(function(success){
+        if (success) {
+            states.smooth = value;
+        }
+        if (callback) {
+            callback.call(exports, success);
+        }
+    }, [value]);
 }
 
 function setBrightness(value, callback) {
-    return proxyFunc(callback, [value]);
+    return proxyFunc(function(success){
+        if (success) {
+            states.brightness = value;
+        }
+        if (callback) {
+            callback.call(exports, success);
+        }
+    }, [value]);
 }
 
 function turnOn(callback) {
