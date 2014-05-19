@@ -147,52 +147,59 @@ function notifyDisconnect() {
 //  ============================================
 //  Functions
 //  ============================================
-function proxyFunc(fnName, args, callback) {
-    args = args || [];
-    if (currentObj == device) {
-        var ret = device[fnName].apply(this, args);
-        if (callback) {
-            callback.call(exports, ret);
+function proxyFunc(callback, args) {
+    if (arguments.callee.caller && arguments.callee.caller.name) {
+        var fnName = arguments.callee.caller.name;
+        args = args || [];
+        if (currentObj == device) {
+            // If crash next line, you did not make the function same name to call this
+            var ret = device[fnName].apply(this, args);
+            if (callback) {
+                callback.call(exports, ret);
+            }
+        } else if (currentObj) {
+            args.push(callback);
+            // If crash next line, you did not make the function same name to call this
+            currentObj[fnName].apply(this, args);
+        } else if (callback) {
+            callback.call(exports, false);
         }
-    } else if (currentObj) {
-        args.push(callback);
-        currentObj[fnName].apply(this, args);
-    } else if (callback) {
-        callback.call(exports, false);
+    } else {
+        throw new Error("proxyFunc was called incorrectly!");
     }
     return exports;
 }
 
 function getCountLeds(callback) {
-    return proxyFunc("getCountLeds", null, callback);
+    return proxyFunc(callback);
 }
 
 function setColor(n, r, g, b, callback) {
-    return proxyFunc("setColor", [n, r, g, b], callback);
+    return proxyFunc(callback, [n, r, g, b]);
 }
 
 function setColorToAll(r, g, b, callback) {
-    return proxyFunc("setColorToAll", [r, g, b], callback);
+    return proxyFunc(callback, [r, g, b]);
 }
 
 function setGamma(value, callback) {
-    return proxyFunc("setGamma", [value], callback);
+    return proxyFunc(callback, [value]);
 }
 
 function setSmooth(value, callback) {
-    return proxyFunc("setSmooth", [value], callback);
+    return proxyFunc(callback, [value]);
 }
 
 function setBrightness(value, callback) {
-    return proxyFunc("setBrightness", [value], callback);
+    return proxyFunc(callback, [value]);
 }
 
 function turnOn(callback) {
-    return proxyFunc("turnOn", null, callback);
+    return proxyFunc(callback);
 }
 
 function turnOff(callback) {
-    return proxyFunc("turnOff", null, callback);
+    return proxyFunc(callback);
 }
 
 function connect(opts) {
