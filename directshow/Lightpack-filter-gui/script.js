@@ -13,24 +13,25 @@ function log(/*...*/) {
     document.getElementById("output").appendChild(div);
 }
 
-// Connect the lights
+//  ============================================
+//  Handle Lightpack
+//  ============================================
 var numLeds = 0;
 light.a(document);
-light.connect(function(isConnected){
-    if (isConnected) {
-        log("got connected");
-        light.setSmooth(255, function(){
-            light.getCountLeds(function(n){
-                numLeds = n;
-                log("Got", n, "leds");
-            });
-        });
-    } else {
-        log("not connected");
-    }
-});
 
-// GUI stuff
+light.on("connect", function(){
+    log("Lights have connected");
+    light.getCountLeds(function(n){
+        log("Got", n, "leds");
+        numLeds = n;
+    }).setSmooth(255);
+}).on("disconnect", function(){
+    log("Lights have disconnected");
+}).connect();
+
+//  ============================================
+//  GUI stuff
+//  ============================================
 function rand(max) {
     return Math.floor((Math.random() * max));
 }
