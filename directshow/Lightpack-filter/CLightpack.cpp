@@ -415,7 +415,7 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 DWORD CLightpack::lightThreadStart()
 {
     // Try to connect to device
-    bool isConnected = false;
+    bool isConnected = true;
     if (mDevice == NULL) {
         EnterCriticalSection(&mDeviceLock);
         if (mDevice == NULL) {
@@ -427,11 +427,11 @@ DWORD CLightpack::lightThreadStart()
                 delete mDevice;
                 mDevice = NULL;
                 LeaveCriticalSection(&mDeviceLock);
+                isConnected = false;
             }
             else {
                 mDevice->setSmooth(20);
                 mDevice->setBrightness(100);
-                isConnected = true;
                 log("Connected to Prismatik.");
             }
         }
