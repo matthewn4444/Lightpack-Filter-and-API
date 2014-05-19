@@ -23,6 +23,11 @@ var EVENT_MSG_COUNT_LEDS =      0,
     EVENT_MSG_TURN_ON =         8;
     EVENT_MSG_CONNECT =         9;
 
+// Receive events
+var EVENT_REC_RETURN =          0,
+    EVENT_REC_IS_RUNNING =      1,
+    EVENT_REC_IS_PAUSED =       2;
+
 function clamp(val, min, max) {
     return Math.max(Math.min(val, max), min);
 }
@@ -47,27 +52,35 @@ function startServer() {
             if (data == "") {
                 return;// log(socket.name + "> Failed [no data]")
             }
-            if (queue.length) {
-                var obj = queue.shift();
-                var callback = obj.callback;
-                if (callback) {
-                    switch(obj.event) {
-                        case EVENT_MSG_COUNT_LEDS:
-                            console.log(data)
-                            callback.call(exports, parseInt(data, 10));
-                            break;
-                        case EVENT_MSG_SET_BRIGHTNESS:
-                        case EVENT_MSG_SET_GAMMA:
-                        case EVENT_MSG_SET_SMOOTH:
-                        case EVENT_MSG_SET_ALL_COLOR:
-                        case EVENT_MSG_SET_COLOR:
-                        case EVENT_MSG_CONNECT:
-                            callback.call(exports, data == '0');
-                            break;
+            var retEvt = parseInt(data.charAt(0), 10);
+            data = data.substring(1);
+            console.log("ret->",data);
+            switch(retEvt) {
+                case EVENT_REC_RETURN:
+                    if (queue.length) {
+                        var obj = queue.shift();
+                        var callback = obj.callback;
+                        if (callback) {
+                            switch(obj.event) {
+                                case EVENT_MSG_COUNT_LEDS:
+                                    callback.call(exports, parseInt(data, 10));
+                                    break;
+                                case EVENT_MSG_SET_BRIGHTNESS:
+                                case EVENT_MSG_SET_GAMMA:
+                                case EVENT_MSG_SET_SMOOTH:
+                                case EVENT_MSG_SET_ALL_COLOR:
+                                case EVENT_MSG_SET_COLOR:
+                                case EVENT_MSG_CONNECT:
+                                case EVENT_MSG_TURN_ON:
+                                case EVENT_MSG_TURN_OFF:
+                                    callback.call(exports, data == '1');
+                                    break;
+                            }
+                        }
+                        isRunning = false;
+                        runQueue();
                     }
-                }
-                isRunning = false;
-                runQueue();
+                    break;
             }
         });
 
