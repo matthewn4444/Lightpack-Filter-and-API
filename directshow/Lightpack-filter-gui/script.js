@@ -22,10 +22,8 @@ light.a(document);
 
 light.on("connect", function(){
     log("Lights have connected");
-    light.getCountLeds(function(n){
-        log("Got", n, "leds");
-        numLeds = n;
-    }).setSmooth(255);
+    numLeds = light.getCountLeds();
+    log("Got", numLeds, "Leds");
 }).on("disconnect", function(){
     log("Lights have disconnected");
 }).on("play", function(){

@@ -11,10 +11,11 @@ var server = null;
 
 // Default States, these will change based on the config file
 var states = {
+    numberOfLeds: 0,
     brightness: 100,
     gamma: 2.2,
     smooth: 255,
-    colors: []  // TODO
+    colors: []
 };
 
 var listeners = {
@@ -137,20 +138,37 @@ function internalDisconnect(callback) {
 //  Notify events
 //  ============================================
 function notifyConnect() {
-    if (listeners.connect && !isConnected) {
-        listeners.connect.call(exports);
+    function runConnected() {
+        if (listeners.connect && !isConnected) {
+            listeners.connect.call(exports);
+        }
+        isConnected = true;
     }
-    isConnected = true;
 
     // Since connected to new device, we should apply the current states
-    setSmooth(states.smooth, function(success){
-        if (success) {
-            setGamma(states.gamma, function(success){
-                if (success) {
-                    setBrightness(states.brightness);
-                }
-            });
-        }
+    getCountLeds(function(n) {
+        states.numberOfLeds = n;
+        setSmooth(states.smooth, function(success) {
+            if (success) {
+                setGamma(states.gamma, function(success) {
+                    if (success) {
+                        setBrightness(states.brightness, function(success) {
+                            if (success) {
+                                if (states.colors.length) {
+                                    setColors(states.colors, function(success) {
+                                        if (success) {
+                                            runConnected();
+                                        }
+                                    });
+                                } else {
+                                    runConnected();
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+        });
     });
 }
 
@@ -161,6 +179,7 @@ function notifyDisconnect() {
     }
     isConnected = false;
     currentObj = null;
+    states.numberOfLeds = 0;
 }
 
 //  ============================================
@@ -194,15 +213,45 @@ function getCountLeds(callback) {
 }
 
 function setColor(n, r, g, b, callback) {
-    return proxyFunc(callback, [n, r, g, b]);
+    log(n, r, g, b)
+    return proxyFunc(function(success) {
+        // Keep track of the colors
+        if (success && n < states.numberOfLeds) {
+            states.colors[n] = [r, g, b];
+        }
+        if (callback) {
+            callback.call(exports, success);
+        }
+    }, [n, r, g, b]);
 }
 
 function setColors(colorArr, callback) {
-    return proxyFunc(callback, [colorArr]);
+    return proxyFunc(function(success) {
+        if (success) {
+            // Keep track of the colors
+            for (var i = 0; i < states.numberOfLeds; i++) {
+                if (colorArr[i] == -1) continue;
+                states.colors[i] = colorArr[i];
+            }
+        }
+        if (callback) {
+            callback.call(exports, success);
+        }
+    }, [colorArr]);
 }
 
 function setColorToAll(r, g, b, callback) {
-    return proxyFunc(callback, [r, g, b]);
+    return proxyFunc(function(success) {
+        if (success) {
+            // Keep track of the colors
+            for (var i = 0; i < states.numberOfLeds; i++) {
+                states.colors[i] = [r, g, b];
+            }
+        }
+        if (callback) {
+            callback.call(exports, success);
+        }
+    }, [r, g, b]);
 }
 
 function setGamma(value, callback) {
@@ -292,7 +341,7 @@ function on(eventName, fn) {
 // Implementation
 exports.connect = connect;
 exports.disconnect = disconnect;
-exports.getCountLeds = getCountLeds;
+exports.getCountLeds = function(){ return states.numberOfLeds; };
 exports.setColor = setColor;
 exports.setColors = setColors;
 exports.setColorToAll = setColorToAll;
