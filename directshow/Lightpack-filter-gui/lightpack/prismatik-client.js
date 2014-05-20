@@ -6,7 +6,9 @@ var LOCALHOST = "127.0.0.1",
 var ledMap = [],
     numLeds = 0;
     
-var errorListener = null;
+var listeners = {
+    error: null,
+};
 
 // Events
 var EVENT_CONNECTION = 0,
@@ -128,6 +130,7 @@ socket.on("data", function(data){
 });
 
 socket.on("error", function(err){
+    socket.end();
     if (isRunning && queue.length) {
         var item = queue.shift();
         var callback = item.callback;
@@ -140,8 +143,8 @@ socket.on("error", function(err){
             return;
         }
     }
-    if (errorListener) {
-        errorListener.apply(exports, arguments);
+    if (listeners.error) {
+        listeners.error.apply(exports, arguments);
     }
     isRunning = false;
 });
@@ -285,10 +288,13 @@ function setColor(i, r, g, b, callback) {
     }
 }
 
-function on(event, fn) {
-    if (event == "error") {
-        errorListener = fn;
+function on(eventName, fn) {
+    if (fn == null || typeof(fn) == "function") {
+        if (listeners.hasOwnProperty(eventName)) {
+            listeners[eventName] = fn;
+        }
     }
+    return exports;
 }
 
 exports.connect = connect;
@@ -308,7 +314,4 @@ exports.unlock = unlock;
 exports.turnOn = turnOn;
 exports.turnOff = turnOff;
 exports.disconnect = disconnect;
-
-
-
-
+exports.on = on;

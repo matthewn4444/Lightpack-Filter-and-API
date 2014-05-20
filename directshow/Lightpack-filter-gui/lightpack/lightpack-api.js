@@ -80,6 +80,13 @@ function startServer(port, host) {
     });
 }
 
+// Handle Prismatik disconnections
+client.on("error", function(){
+    // When disconnected we should try to reconnect to the device
+    currentObj = null;
+    connect();
+});
+
 function connectDevice() {
     if (device.open()) {
         console.log("connected to device");
