@@ -270,12 +270,12 @@ function setColors(colorArr, callback) {
         var val = colorArr[i];
         if (val == -1) continue;
         var color;
-        if (val instanceof Array) {
+        if (val.join) {
             color = val[0] + "," + val[1] + "," + val[2];
         } else {
             color = val & 0xFF + "," + (val & 0xFF00) >> 8 + "," + (val & 0xFF0000) >> 16;
         }
-        query += ledMap[i] + "-" + color;
+        query += ledMap[i] + "-" + color + ";";
     }
     queueEvent(EVENT_SET_COLOR, query, callback);
 }
@@ -308,6 +308,7 @@ exports.setGamma = setGamma;
 exports.setSmooth = setSmooth;
 exports.setBrightness = setBrightness;
 exports.setColorToAll = setColorToAll;
+exports.setColors = setColors;
 exports.setColor = setColor;
 exports.lock = lock;
 exports.unlock = unlock;
