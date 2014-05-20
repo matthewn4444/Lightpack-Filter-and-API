@@ -166,6 +166,8 @@ namespace Lightpack {
         void allocateColors();
         void colorAdjustments(int& red12bit, int& green12bit, int& blue12bit);
 
+        bool isBufferAllBlack();
+
         // Private variables
         std::vector<hid_device*> mDevices;
         std::vector<RGBCOLOR> mCurrentColors;

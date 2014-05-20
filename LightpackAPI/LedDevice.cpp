@@ -145,11 +145,17 @@ namespace Lightpack {
 
     RESULT LedDevice::setGamma(double value) {
         mGamma = value;
+        if (isBufferAllBlack()) {
+            return !mDevices.empty() ? OK : FAIL;
+        }
         return updateLeds() ? OK : FAIL;
     }
 
     RESULT LedDevice::setBrightness(int value) {
         mBrightness = value;
+        if (isBufferAllBlack()) {
+            return !mDevices.empty() ? OK : FAIL;
+        }
         return updateLeds() ? OK : FAIL;
     }
 
@@ -309,6 +315,16 @@ namespace Lightpack {
             memset(mWriteBuffer, 0, sizeof(mWriteBuffer));
         }
         return flag;
+    }
+
+    bool LedDevice::isBufferAllBlack() {
+        // Check the current color buffer, if all 0, then dont update; could be new allocated buffer
+        for (size_t i = 0; i < mCurrentColors.size(); i++) {
+            if (mCurrentColors[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void LedDevice::allocateColors() {
