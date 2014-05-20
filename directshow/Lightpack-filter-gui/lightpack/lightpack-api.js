@@ -130,6 +130,41 @@ function filterConnected() {
     });
 }
 
+function internalConnect(callback, opts) {
+    var maxAttempts = 2;
+    log("Run connect");
+    callback = callback || function(){};
+    opts = opts || { apikey: API_KEY };
+    function rConnect(attempt) {
+        // Return if already connected
+        if (currentObj != null) {
+            return callback(true);
+        }
+        log("Trying to connect to either device or prismatik")
+        if (!connectDevice()) {
+            connectToPrismatik(opts, function(isConnected) {
+                if (!isConnected) {
+                    if (attempt + 1 < maxAttempts) {
+                        setTimeout(function(){
+                            rConnect(attempt + 1);
+                        }, 500);
+                    } else {
+                        // After all the attempts, we have failed to connect
+                        notifyDisconnect();
+                        callback(false);
+                    }
+                } else {
+                    callback(true);
+                }
+            });
+        } else {
+            callback(true);
+        }
+    }
+    rConnect(0);
+    return exports;
+}
+
 function internalDisconnect(callback) {
     if (currentObj == device) {
         log("Disconnected from device");
@@ -138,6 +173,7 @@ function internalDisconnect(callback) {
         log("Disconnected from Prismatik");
         return client.disconnect(callback);
     }
+    currentObj = null;
     callback();
 }
 
@@ -145,12 +181,13 @@ function internalDisconnect(callback) {
 //  Notify events
 //  ============================================
 function notifyConnect() {
+    var wasConnected = isConnected;
     function runConnected() {
-        if (listeners.connect && !isConnected) {
+        if (listeners.connect && !wasConnected) {
             listeners.connect.call(exports);
         }
-        isConnected = true;
     }
+    isConnected = true;
 
     // Since connected to new device, we should apply the current states
     getCountLeds(function(n) {
@@ -193,21 +230,39 @@ function notifyDisconnect() {
 //  Functions
 //  ============================================
 function proxyFunc(callback, args) {
+    function handleReturnValue(success) {
+        if (success === false && currentObj) {
+            // For device: once disconnected, we should try to reconnect or fail
+            internalDisconnect(callback);
+        }
+        if (callback) {
+            callback.apply(exports, arguments);
+        }
+    }
+
     if (arguments.callee.caller && arguments.callee.caller.name) {
         var fnName = arguments.callee.caller.name;
         args = args || [];
-        if (currentObj == device) {
-            // If crash next line, you did not make the function same name to call this
-            var ret = device[fnName].apply(this, args);
-            if (callback) {
-                callback.call(exports, ret);
+
+        function runProxy() {
+            if (currentObj == device) {
+                // If crash next line, you did not make the function same name to call this
+                var ret = device[fnName].apply(exports, args);
+                handleReturnValue(ret);
+            } else if (currentObj) {
+                args.push(handleReturnValue);
+                // If crash next line, you did not make the function same name to call this
+                currentObj[fnName].apply(exports, args);
+            } else if (callback) {
+                callback.call(exports, false);
             }
-        } else if (currentObj) {
-            args.push(callback);
-            // If crash next line, you did not make the function same name to call this
-            currentObj[fnName].apply(this, args);
-        } else if (callback) {
-            disconnect(callback);
+        }
+
+        // If not connected yet try to connect
+        if (!isConnected) {
+            internalConnect(runProxy);
+        } else {
+            runProxy();
         }
     } else {
         throw new Error("proxyFunc was called incorrectly!");
@@ -303,32 +358,7 @@ function turnOff(callback) {
 }
 
 function connect(opts) {
-    var maxAttempts = 3;
-    log("Run connect")
-    opts = opts || { apikey: API_KEY };
-    function rConnect(attempt) {
-        // Return if already connected
-        if (currentObj != null) {
-            return;
-        }
-        log("Trying to connect to either device or prismatik")
-        if (!connectDevice()) {
-            connectToPrismatik(opts, function(isConnected) {
-                if (!isConnected) {
-                    if (attempt + 1 < maxAttempts) {
-                        setTimeout(function(){
-                            rConnect(attempt + 1);
-                        }, 500);
-                    } else {
-                        // After all the attempts, we have failed to connect
-                        notifyDisconnect();
-                    }
-                }
-            });
-        }
-    }
-    rConnect(0);
-    return exports;
+    return internalConnect(null, opts);
 }
 
 function disconnect() {
