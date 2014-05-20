@@ -1,4 +1,5 @@
 var light = require("./lightpack/lightpack-api");
+//require('nw.gui').Window.get().showDevTools()
 
 function log(/*...*/) {
     var div = document.createElement("div");
@@ -63,6 +64,16 @@ $("#randomColor").click(function(){
         var color = randomColor();
         var randLed = rand(numLeds);
         light.setColor(randLed, color[0], color[1], color[2]);
+    }
+});
+
+$("#randomEachColorAll").click(function(){
+    if (numLeds) {
+        var colors = [];
+        for (var i = 0; i < numLeds; i++) {
+            colors.push(randomColor());
+        }
+        light.setColors(colors);
     }
 });
 

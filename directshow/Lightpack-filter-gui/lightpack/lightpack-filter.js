@@ -18,14 +18,15 @@ var listeners = {
 // Events
 var EVENT_MSG_COUNT_LEDS =      0,
     EVENT_MSG_SET_COLOR =       1,
-    EVENT_MSG_SET_ALL_COLOR =   2,
-    EVENT_MSG_SET_RECTS =       3,
-    EVENT_MSG_SET_BRIGHTNESS =  4,
-    EVENT_MSG_SET_SMOOTH =      5,
-    EVENT_MSG_SET_GAMMA =       6,
-    EVENT_MSG_TURN_OFF =        7,
-    EVENT_MSG_TURN_ON =         8;
-    EVENT_MSG_CONNECT =         9;
+    EVENT_MSG_SET_COLORS =      2,
+    EVENT_MSG_SET_ALL_COLOR =   3,
+    EVENT_MSG_SET_RECTS =       4,
+    EVENT_MSG_SET_BRIGHTNESS =  5,
+    EVENT_MSG_SET_SMOOTH =      6,
+    EVENT_MSG_SET_GAMMA =       7,
+    EVENT_MSG_TURN_OFF =        8,
+    EVENT_MSG_TURN_ON =         9,
+    EVENT_MSG_CONNECT =         10;
 
 // Receive events
 var EVENT_REC_RETURN =          0,
@@ -73,6 +74,7 @@ function startServer() {
                                 case EVENT_MSG_SET_GAMMA:
                                 case EVENT_MSG_SET_SMOOTH:
                                 case EVENT_MSG_SET_ALL_COLOR:
+                                case EVENT_MSG_SET_COLORS:
                                 case EVENT_MSG_SET_COLOR:
                                 case EVENT_MSG_CONNECT:
                                 case EVENT_MSG_TURN_ON:
@@ -130,7 +132,8 @@ function runQueue() {
 
 function queueEvent(eventId, data, callback) {
     if (clients.length) {
-        var q = "" + eventId + (data ? data : "") + "\n";
+        var eventCode = String.fromCharCode('a'.charCodeAt(0) + eventId);
+        var q = "" + eventCode + (data ? data : "") + "\n";
         var obj = { event: eventId, query: q, callback: callback };
         queue.push(obj);
         runQueue();
@@ -141,6 +144,21 @@ function queueEvent(eventId, data, callback) {
 
 function setColor(n, r, g, b, callback) {
     queueEvent(EVENT_MSG_SET_COLOR, [n, r, g, b].join(","), callback);
+}
+
+function setColors(colorArr, callback) {
+    if (!colorArr || !colorArr.length) {
+        throw new Error("Incorrect arguments or empty color array!");
+    }
+    var colors = [];
+    for (var i = 0; i < colorArr.length; i++) {
+        var color = colorArr[i];
+        if (color.join) {
+            color = (color[0] & 0xFF) | ((color[1] & 0xFF) << 8) | ((color[2] & 0xFF) << 16);
+        }
+        colors.push(color);
+    }
+    queueEvent(EVENT_MSG_SET_COLORS, colors.join(","), callback);
 }
 
 function setColorToAll(r, g, b, callback) {
@@ -187,6 +205,7 @@ function on(eventName, fn) {
 exports.Server = startServer;
 exports.getCountLeds = getCountLeds;
 exports.setColor = setColor;
+exports.setColors = setColors;
 exports.setColorToAll = setColorToAll;
 exports.setGamma = setGamma;
 exports.setSmooth = setSmooth;

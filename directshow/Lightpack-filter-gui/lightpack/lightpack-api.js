@@ -197,6 +197,10 @@ function setColor(n, r, g, b, callback) {
     return proxyFunc(callback, [n, r, g, b]);
 }
 
+function setColors(colorArr, callback) {
+    return proxyFunc(callback, [colorArr]);
+}
+
 function setColorToAll(r, g, b, callback) {
     return proxyFunc(callback, [r, g, b]);
 }
@@ -290,6 +294,7 @@ exports.connect = connect;
 exports.disconnect = disconnect;
 exports.getCountLeds = getCountLeds;
 exports.setColor = setColor;
+exports.setColors = setColors;
 exports.setColorToAll = setColorToAll;
 exports.setGamma = setGamma;
 exports.setSmooth = setSmooth;

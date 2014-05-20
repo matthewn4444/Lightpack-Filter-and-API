@@ -258,6 +258,25 @@ function setColorToAll(r, g, b, callback) {
     }
 }
 
+function setColors(colorArr, callback) {
+    if (!colorArr || !colorArr.length) {
+        return callback.call(exports, false);
+    }
+    var query = "setcolor:";
+    for (var i = 0; i < Math.min(numLeds, colorArr.length); i++) {
+        var val = colorArr[i];
+        if (val == -1) continue;
+        var color;
+        if (val instanceof Array) {
+            color = val[0] + "," + val[1] + "," + val[2];
+        } else {
+            color = val & 0xFF + "," + (val & 0xFF00) >> 8 + "," + (val & 0xFF0000) >> 16;
+        }
+        query += ledMap[i] + "-" + color;
+    }
+    queueEvent(EVENT_SET_COLOR, query, callback);
+}
+
 function setColor(i, r, g, b, callback) {
     if (i < numLeds) {
         queueEvent(EVENT_SET_COLOR, "setcolor:" + ledMap[i] + "-" + r + "," + g + "," + b + ";", callback);

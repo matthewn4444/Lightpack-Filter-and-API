@@ -1,4 +1,5 @@
 #include "CLightpack.h"
+#include <sstream>
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
@@ -11,14 +12,15 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 // These messages are uses in the communication channel to the GUI
 #define COMM_REC_COUNT_LEDS     0
 #define COMM_REC_SET_COLOR      1
-#define COMM_REC_SET_ALL_COLOR  2
-#define COMM_REC_SET_RECTS      3
-#define COMM_REC_SET_BRIGHTNESS 4
-#define COMM_REC_SET_SMOOTH     5
-#define COMM_REC_SET_GAMMA      6
-#define COMM_REC_TURN_OFF       7
-#define COMM_REC_TURN_ON        8
-#define COMM_REC_CONNECT        9
+#define COMM_REC_SET_COLORS     2
+#define COMM_REC_SET_ALL_COLOR  3
+#define COMM_REC_SET_RECTS      4
+#define COMM_REC_SET_BRIGHTNESS 5
+#define COMM_REC_SET_SMOOTH     6
+#define COMM_REC_SET_GAMMA      7
+#define COMM_REC_TURN_OFF       8
+#define COMM_REC_TURN_ON        9
+#define COMM_REC_CONNECT        10
 
 // These messages are used to send data back to the server
 #define COMM_SEND_RETURN        0
@@ -89,7 +91,7 @@ void CLightpack::handleMessages(Socket& socket)
 
         // Handle Receiving events
         if (socket.Receive(buffer, RECV_TIMEOUT) && strlen(buffer) > 0) {
-            int messageType = buffer[0] - '0';
+            int messageType = buffer[0] - 'a';
             int result = EOF;
             if (mDevice != NULL) {
                 // Parse each message
@@ -113,7 +115,27 @@ void CLightpack::handleMessages(Socket& socket)
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
                         break;
-                    // Format: <2><r>,<g>,<b>
+                    // Format: <2><n>,<r>,<g>,<b>
+                    case COMM_REC_SET_COLORS:
+                        // Read the length of number of leds
+                        {
+                            std::vector<Lightpack::RGBCOLOR> colors;
+                            std::stringstream ss(buffer + 1);
+                            while (ss >> n) {
+                                colors.push_back(n);
+                                if (ss.peek() == ',') {
+                                    ss.ignore();
+                                }
+                            }
+                            if (!colors.empty()) {
+                                EnterCriticalSection(&mDeviceLock);
+                                result = mDevice->setColors(colors) == Lightpack::RESULT::OK;
+                                LeaveCriticalSection(&mDeviceLock);
+                                sprintf(buffer, "%d1", COMM_SEND_RETURN, result);
+                            }
+                        }
+                        break;
+                    // Format: <3><r>,<g>,<b>
                     case COMM_REC_SET_ALL_COLOR:
                         result = sscanf(buffer + 1, "%d,%d,%d", &r, &g, &b);
                         if (result != EOF) {
@@ -125,7 +147,7 @@ void CLightpack::handleMessages(Socket& socket)
                         break;
                     case COMM_REC_SET_RECTS:
                         break;
-                    // Format: <4><[0-100]>
+                    // Format: <5><[0-100]>
                     case COMM_REC_SET_BRIGHTNESS:
                         result = sscanf(buffer + 1, "%d", &n);
                         if (result != EOF) {
@@ -135,7 +157,7 @@ void CLightpack::handleMessages(Socket& socket)
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
                         break;
-                    // Format: <5><[0-255]>
+                    // Format: <6><[0-255]>
                     case COMM_REC_SET_SMOOTH:
                         result = sscanf(buffer + 1, "%d", &n);
                         if (result != EOF) {
@@ -145,7 +167,7 @@ void CLightpack::handleMessages(Socket& socket)
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
                         break;
-                    // Format: <6><0-100>
+                    // Format: <7><0-100>
                     case COMM_REC_SET_GAMMA:
                         result = sscanf(buffer + 1, "%d", &n);
                         if (result != EOF) {
@@ -155,14 +177,14 @@ void CLightpack::handleMessages(Socket& socket)
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
                         break;
-                    // Format: <7>
+                    // Format: <8>
                     case COMM_REC_TURN_OFF:
                         EnterCriticalSection(&mDeviceLock);
                         result = mDevice->turnOff() == Lightpack::RESULT::OK;
                         LeaveCriticalSection(&mDeviceLock);
                         sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         break;
-                    // Format: <8>
+                    // Format: <9>
                     case COMM_REC_TURN_ON:
                         EnterCriticalSection(&mDeviceLock);
                         result = mDevice->turnOn() == Lightpack::RESULT::OK;
@@ -171,7 +193,7 @@ void CLightpack::handleMessages(Socket& socket)
                         break;
                 }
             }
-            // Format: <9>
+            // Format: <10>
             else if (messageType == COMM_REC_CONNECT) {
                 // Reconnect to all devices if not connected already
                 result = 0;
