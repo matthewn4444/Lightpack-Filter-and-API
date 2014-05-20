@@ -280,7 +280,7 @@ function setSmooth(value, callback) {
         if (callback) {
             callback.call(exports, success);
         }
-    }, [value]);
+    }, [Math.floor(value)]);
 }
 
 function setBrightness(value, callback) {
