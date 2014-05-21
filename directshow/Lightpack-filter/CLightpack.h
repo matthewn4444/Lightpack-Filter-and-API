@@ -179,6 +179,8 @@ private:
     DWORD commThreadStart();
     bool mShouldSendPlayEvent;
     bool mShouldSendPauseEvent;
+    bool mShouldSendConnectEvent;
+    bool mShouldSendDisconnectEvent;
 
     void handleMessages(Socket& socket);
 #ifdef LOG_ENABLED

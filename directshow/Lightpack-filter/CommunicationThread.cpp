@@ -26,6 +26,9 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define COMM_SEND_RETURN        0
 #define COMM_SEND_PLAYING       1
 #define COMM_SEND_PAUSED        2
+#define COMM_SEND_CONNECTED     3
+#define COMM_SEND_DISCONNECTED  4
+#define COMM_SEND_INVALID_ARGS  5
 
 void CLightpack::startCommThread()
 {
@@ -68,6 +71,10 @@ void CLightpack::destroyCommThread()
 void CLightpack::handleMessages(Socket& socket)
 {
     char buffer[512];
+    mShouldSendPlayEvent = false;
+    mShouldSendPauseEvent = false;
+    mShouldSendConnectEvent = false;
+    mShouldSendDisconnectEvent = false;
     while (!mCommThreadStopRequested) {
         // Handle send events
         EnterCriticalSection(&mCommSendLock);
@@ -83,9 +90,23 @@ void CLightpack::handleMessages(Socket& socket)
             sprintf(buffer, "%d", COMM_SEND_PLAYING);
             socket.Send(buffer);
         }
+        else if (mShouldSendConnectEvent) {
+            mShouldSendConnectEvent = false;
+            LeaveCriticalSection(&mCommSendLock);
+            sprintf(buffer, "%d", COMM_SEND_CONNECTED);
+            socket.Send(buffer);
+        }
+        else if (mShouldSendDisconnectEvent) {
+            mShouldSendDisconnectEvent = false;
+            LeaveCriticalSection(&mCommSendLock);
+            sprintf(buffer, "%d", COMM_SEND_DISCONNECTED);
+            socket.Send(buffer);
+        }
         else {
             mShouldSendPlayEvent = false;
             mShouldSendPauseEvent = false;
+            mShouldSendConnectEvent = false;
+            mShouldSendDisconnectEvent = false;
             LeaveCriticalSection(&mCommSendLock);
         }
 
@@ -96,6 +117,7 @@ void CLightpack::handleMessages(Socket& socket)
             if (mDevice != NULL) {
                 // Parse each message
                 int leds, n, r, g, b;
+                bool deviceStillAval = true;
                 switch (messageType) {
                     // Format: <0>
                     case COMM_REC_COUNT_LEDS:
@@ -110,7 +132,7 @@ void CLightpack::handleMessages(Socket& socket)
                         result = sscanf(buffer + 1, "%d,%d,%d,%d", &n, &r, &g, &b);
                         if (result != EOF) {
                             EnterCriticalSection(&mDeviceLock);
-                            result = mDevice->setColor(n, MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
+                            deviceStillAval = result = mDevice->setColor(n, MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
                             LeaveCriticalSection(&mDeviceLock);
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
@@ -129,7 +151,7 @@ void CLightpack::handleMessages(Socket& socket)
                             }
                             if (!colors.empty()) {
                                 EnterCriticalSection(&mDeviceLock);
-                                result = mDevice->setColors(colors) == Lightpack::RESULT::OK;
+                                deviceStillAval = result = mDevice->setColors(colors) == Lightpack::RESULT::OK;
                                 LeaveCriticalSection(&mDeviceLock);
                                 sprintf(buffer, "%d1", COMM_SEND_RETURN, result);
                             }
@@ -140,7 +162,7 @@ void CLightpack::handleMessages(Socket& socket)
                         result = sscanf(buffer + 1, "%d,%d,%d", &r, &g, &b);
                         if (result != EOF) {
                             EnterCriticalSection(&mDeviceLock);
-                            result = mDevice->setColorToAll(MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
+                            deviceStillAval = result = mDevice->setColorToAll(MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
                             LeaveCriticalSection(&mDeviceLock);
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
@@ -152,7 +174,7 @@ void CLightpack::handleMessages(Socket& socket)
                         result = sscanf(buffer + 1, "%d", &n);
                         if (result != EOF) {
                             EnterCriticalSection(&mDeviceLock);
-                            result = mDevice->setBrightness(n) == Lightpack::RESULT::OK;
+                            deviceStillAval = result = mDevice->setBrightness(n) == Lightpack::RESULT::OK;
                             LeaveCriticalSection(&mDeviceLock);
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
@@ -162,7 +184,7 @@ void CLightpack::handleMessages(Socket& socket)
                         result = sscanf(buffer + 1, "%d", &n);
                         if (result != EOF) {
                             EnterCriticalSection(&mDeviceLock);
-                            result = mDevice->setSmooth(n) == Lightpack::RESULT::OK;
+                            deviceStillAval = result = mDevice->setSmooth(n) == Lightpack::RESULT::OK;
                             LeaveCriticalSection(&mDeviceLock);
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
@@ -172,7 +194,7 @@ void CLightpack::handleMessages(Socket& socket)
                         result = sscanf(buffer + 1, "%d", &n);
                         if (result != EOF) {
                             EnterCriticalSection(&mDeviceLock);
-                            result = mDevice->setGamma(n / 10.0) == Lightpack::RESULT::OK;
+                            deviceStillAval = result = mDevice->setGamma(n / 10.0) == Lightpack::RESULT::OK;
                             LeaveCriticalSection(&mDeviceLock);
                             sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         }
@@ -180,17 +202,29 @@ void CLightpack::handleMessages(Socket& socket)
                     // Format: <8>
                     case COMM_REC_TURN_OFF:
                         EnterCriticalSection(&mDeviceLock);
-                        result = mDevice->turnOff() == Lightpack::RESULT::OK;
+                        deviceStillAval =  result = mDevice->turnOff() == Lightpack::RESULT::OK;
                         LeaveCriticalSection(&mDeviceLock);
                         sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         break;
                     // Format: <9>
                     case COMM_REC_TURN_ON:
                         EnterCriticalSection(&mDeviceLock);
-                        result = mDevice->turnOn() == Lightpack::RESULT::OK;
+                        deviceStillAval = result = mDevice->turnOn() == Lightpack::RESULT::OK;
                         LeaveCriticalSection(&mDeviceLock);
                         sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                         break;
+                    case COMM_REC_CONNECT:
+                        result = 0;
+                        sprintf(buffer, "%d1", COMM_SEND_RETURN);
+                        break;
+                }
+
+                if (!deviceStillAval) {
+                    // Now the device is not avaiable anymore, we should disconnect it
+                    disconnectAllDevices();
+                    mShouldSendDisconnectEvent = false;
+                    result = 0;
+                    sprintf(buffer, "%d", COMM_SEND_DISCONNECTED);
                 }
             }
             // Format: <10>
@@ -198,23 +232,26 @@ void CLightpack::handleMessages(Socket& socket)
                 // Reconnect to all devices if not connected already
                 result = 0;
                 if (mDevice == NULL) {
-                    // Try directly else try Prismatik
-                    if (!connectDevice() && !connectPrismatik()) {
-                        result = EOF;
+                    // Try directly again
+                    if (!connectDevice()) {
+                        sprintf(buffer, "%d0", COMM_SEND_RETURN);
                     }
                     else {
-                        sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+                        sprintf(buffer, "%d1", COMM_SEND_RETURN);
+                        mShouldSendConnectEvent = false;
                     }
                 }
             }
 
-            // Failed to parse the message
-            if (result == EOF) {
-                sprintf(buffer, "%d0", COMM_SEND_RETURN);
-            }
+            if (messageType >= 0) {
+                // Failed to parse the message
+                if (result == EOF) {
+                    sprintf(buffer, "%d", COMM_SEND_INVALID_ARGS);
+                }
 
-            // Respond back to the server
-            socket.Send(buffer);
+                // Respond back to the server
+                socket.Send(buffer);
+            }
         }
     }
 }

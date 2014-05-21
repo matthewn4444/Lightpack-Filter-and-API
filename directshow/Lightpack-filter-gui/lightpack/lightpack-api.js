@@ -60,12 +60,20 @@ function startServer(port, host) {
     server.listen(port, host, function(){
         log("Running socket server", host, ":", port);
     });
-    filter.on("connect", filterConnected)
-
+    filter.on("socketconnect", filterConnected)
+    .on("socketdisconnect", function() {
+        currentObj = null;
+        internalConnect();
+    })
+    .on("connect", function() {
+        log("filter connected to lights");
+        currentObj = filter;
+        notifyConnect();
+    })
     // The filter is gone, now we must reconnect either device or client
     .on("disconnect", function(){
-        currentObj = null;
-        connect();
+        notifyDisconnect();
+        currentObj = filter;        // Set this back because we give priority to the filter
     })
 
     // Handle when playing and not playing video
@@ -122,46 +130,60 @@ function filterConnected() {
     // Since filter is now connected, this has higher priority and disconnect
     // device and Prismatik client
     internalDisconnect(function(){
-        filter.signalReconnect(function(){
-            console.log("connected to filter");
-            currentObj = filter;
-            notifyConnect();
+        currentObj = filter;
+        filter.signalReconnect(function(success){
+            if (success) {
+                console.log("connected to filter");
+                notifyConnect();
+            }
         });
     });
 }
 
 function internalConnect(callback, opts) {
-    var maxAttempts = 2;
-    log("Run connect");
     callback = callback || function(){};
-    opts = opts || { apikey: API_KEY };
-    function rConnect(attempt) {
-        // Return if already connected
-        if (currentObj != null) {
-            return callback(true);
-        }
-        log("Trying to connect to either device or prismatik")
-        if (!connectDevice()) {
-            connectToPrismatik(opts, function(isConnected) {
-                if (!isConnected) {
-                    if (attempt + 1 < maxAttempts) {
-                        setTimeout(function(){
-                            rConnect(attempt + 1);
-                        }, 500);
+
+    // If connected to filter but it is not connected to the lights, try connecting them
+    if (currentObj == filter) {
+        filter.signalReconnect(function(success){
+            log("signalReconnect", success);
+            if (success) {
+                notifyConnect();
+            }
+            callback.call(exports, success);
+        });
+    } else {
+        // Otherwise try connecting Prismatik or the device
+        var maxAttempts = 2;
+        opts = opts || { apikey: API_KEY };
+        function rConnect(attempt) {
+            // Return if already connected
+            if (currentObj != null) {
+                return callback(true);
+            }
+            log("Trying to connect to either device or prismatik")
+            if (!connectDevice()) {
+                connectToPrismatik(opts, function(isConnected) {
+                    if (!isConnected) {
+                        if (attempt + 1 < maxAttempts) {
+                            setTimeout(function(){
+                                rConnect(attempt + 1);
+                            }, 500);
+                        } else {
+                            // After all the attempts, we have failed to connect
+                            notifyDisconnect();
+                            callback(false);
+                        }
                     } else {
-                        // After all the attempts, we have failed to connect
-                        notifyDisconnect();
-                        callback(false);
+                        callback(true);
                     }
-                } else {
-                    callback(true);
-                }
-            });
-        } else {
-            callback(true);
+                });
+            } else {
+                callback(true);
+            }
         }
+        rConnect(0);
     }
-    rConnect(0);
     return exports;
 }
 
@@ -260,7 +282,13 @@ function proxyFunc(callback, args) {
 
         // If not connected yet try to connect
         if (!isConnected) {
-            internalConnect(runProxy);
+            internalConnect(function(success){
+                if (success) {
+                    runProxy();
+                } else if (callback) {
+                    callback.call(exports, false);
+                }
+            });
         } else {
             runProxy();
         }

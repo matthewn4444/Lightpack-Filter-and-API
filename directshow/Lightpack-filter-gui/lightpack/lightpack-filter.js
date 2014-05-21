@@ -9,6 +9,8 @@ var server = null;
 
 // Listeners
 var listeners = {
+    socketconnect: null,
+    socketdisconnect: null,
     connect: null,
     disconnect: null,
     play: null,
@@ -31,7 +33,10 @@ var EVENT_MSG_COUNT_LEDS =      0,
 // Receive events
 var EVENT_REC_RETURN =          0,
     EVENT_REC_IS_RUNNING =      1,
-    EVENT_REC_IS_PAUSED =       2;
+    EVENT_REC_IS_PAUSED =       2,
+    EVENT_REC_CONNECTED =       3,
+    EVENT_REC_DISCONNECTED =    4,
+    EVENT_REC_INVALID_ARGS =    5;
 
 function clamp(val, min, max) {
     return Math.max(Math.min(val, max), min);
@@ -45,9 +50,9 @@ function startServer() {
 
         if (clients.length == 1) {
             currentSocketName = socket.name;
-            // Notify connected listener
-            if (listeners.connect) {
-                listeners.connect.call(exports, socket);
+            // Notify connected listenere.log("\tGot back:",data)
+            if (listeners.socketconnect) {
+                listeners.socketconnect.call(exports, socket);
             }
         }
 
@@ -76,9 +81,14 @@ function startServer() {
                                 case EVENT_MSG_SET_ALL_COLOR:
                                 case EVENT_MSG_SET_COLORS:
                                 case EVENT_MSG_SET_COLOR:
-                                case EVENT_MSG_CONNECT:
                                 case EVENT_MSG_TURN_ON:
                                 case EVENT_MSG_TURN_OFF:
+                                    callback.call(exports, data == '1');
+                                    break;
+                                case EVENT_MSG_CONNECT:
+                                    if (data != '1') {      // Failed
+                                        queue = [];
+                                    }
                                     callback.call(exports, data == '1');
                                     break;
                             }
@@ -97,6 +107,23 @@ function startServer() {
                         listeners.pause.call(exports);
                     }
                     break;
+                case EVENT_REC_CONNECTED:
+                    if (listeners.pause) {
+                        listeners.pause.call(exports);
+                    }
+                    break;
+                case EVENT_REC_DISCONNECTED:
+                    if (listeners.disconnect) {
+                        listeners.disconnect.call(exports);
+                    }
+                    queue = [];
+                    isRunning = false;
+                    break;
+                case EVENT_REC_INVALID_ARGS:
+                    // Invalid arguments sent
+                    var obj = queue.shift();
+                    throw new Error("Invalid arguments sent to filter", obj.event);
+                    break;
             }
         });
 
@@ -107,16 +134,16 @@ function startServer() {
             // New socket, when the disconnected socket was the current one
             if (clients.length == 1 && currentSocketName == socket.name) {
                 currentSocketName = clients[0].name;
-                if (listeners.connect) {
-                    listeners.connect.call(exports, clients[0]);
+                if (listeners.socketconnect) {
+                    listeners.socketconnect.call(exports, clients[0]);
                 }
-            } else if (clients.length == 0 && listeners.disconnect) {
-                listeners.disconnect.call(exports);
+            } else if (clients.length == 0 && listeners.socketdisconnect) {
+                listeners.socketdisconnect.call(exports);
             }
         });
 
         socket.on("error", function(e){
-            console.log(e)
+            throw new e;
         });
     });
     return server;
