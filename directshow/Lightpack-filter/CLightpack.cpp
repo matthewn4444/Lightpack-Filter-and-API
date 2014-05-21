@@ -417,29 +417,7 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 
 DWORD CLightpack::lightThreadStart()
 {
-    // Try to connect to device
-    bool isConnected = true;
-    if (mDevice == NULL) {
-        EnterCriticalSection(&mDeviceLock);
-        if (mDevice == NULL) {
-            log("Try to connect to Prismatik");
-            mDevice = new Lightpack::PrismatikClient();
-            if (((Lightpack::PrismatikClient*)mDevice)->connect(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY) != Lightpack::RESULT::OK
-                || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
-                log("Failed to also connect to Prismatik.");
-                delete mDevice;
-                mDevice = NULL;
-                LeaveCriticalSection(&mDeviceLock);
-                isConnected = false;
-            }
-            else {
-                mDevice->setSmooth(20);
-                mDevice->setBrightness(100);
-                log("Connected to Prismatik.");
-            }
-        }
-        LeaveCriticalSection(&mDeviceLock);
-    }
+    bool isConnected  = connectPrismatik();
 
     // Start the communication thread guarenteed after device is connected or not
     startCommThread();
