@@ -211,7 +211,14 @@ namespace Lightpack {
             if (!writeBufferToDevice(command, phid_device)) {
                 if (!writeBufferToDevice(command, phid_device)) {
                     if (tryToReopenDevice()) {
-                        return writeBufferToDevice(command, phid_device);
+                        if (!writeBufferToDevice(command, phid_device)) {
+                            if (tryToReopenDevice()) {
+                                return writeBufferToDevice(command, phid_device);
+                            }
+                            else {
+                                return false;
+                            }
+                        }
                     }
                     else {
                         return false;
