@@ -149,20 +149,7 @@ socket.on("error", function(err){
     isRunning = false;
 });
 
-function connect(/* [opts], [callback] */) {
-    // Parse Arguments
-    var callback = null, opts = null;
-    if (arguments.length) {
-        if (typeof(arguments[0]) == "object") {
-            opts = arguments[0];
-            if (arguments.length >= 2 && typeof(arguments[1]) == "function") {
-                callback = arguments[1];
-            }
-        } else if (typeof(arguments[0]) == "function") {
-            callback = arguments[0];
-        }
-    }
-
+function connect(callback, opts) {
     if (isConnected) {
         if (callback) {
             callback.call(exports, true);

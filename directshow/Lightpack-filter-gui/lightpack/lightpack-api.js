@@ -63,7 +63,20 @@ function startServer(port, host) {
     filter.on("socketconnect", filterConnected)
     .on("socketdisconnect", function() {
         currentObj = null;
-        internalConnect();
+        // Try to connect 3 times
+        var max_attempts = 3;
+        function rConnect(i) {
+            if (i < max_attempts) {
+                internalConnect(function(success){
+                    if (!success) {
+                        setTimeout(function(){
+                            rConnect(i + 1);
+                        }, 500);
+                    }
+                }, true);
+            }
+        }
+        rConnect(0);
     })
     .on("connect", function() {
         log("filter connected to lights");
@@ -106,7 +119,12 @@ function connectDevice() {
 }
 
 function connectToPrismatik(opts, callback) {
-    client.connect(opts, function(isConnected){
+    if (!opts) {
+        opts = { apikey: API_KEY }
+    } else if (!opts.apikey) {
+        opts.apikey = API_KEY;
+    }
+    client.connect(function(isConnected){
         if (isConnected) {
             // Now make sure we can lock the lightpack
             client.lock(function(gotLocked){
@@ -123,7 +141,7 @@ function connectToPrismatik(opts, callback) {
         } else {
             callback(false);
         }
-    });
+    }, opts);
 }
 
 function filterConnected() {
@@ -140,10 +158,9 @@ function filterConnected() {
     });
 }
 
-function internalConnect(callback, opts) {
+function internalConnect(callback, tryPrismatik, opts) {
     callback = callback || function(){};
 
-    // If connected to filter but it is not connected to the lights, try connecting them
     if (currentObj == filter) {
         filter.signalReconnect(function(success){
             log("signalReconnect", success);
@@ -153,36 +170,30 @@ function internalConnect(callback, opts) {
             callback.call(exports, success);
         });
     } else {
-        // Otherwise try connecting Prismatik or the device
-        var maxAttempts = 2;
-        opts = opts || { apikey: API_KEY };
-        function rConnect(attempt) {
-            // Return if already connected
-            if (currentObj != null) {
-                return callback(true);
-            }
-            log("Trying to connect to either device or prismatik")
-            if (!connectDevice()) {
-                connectToPrismatik(opts, function(isConnected) {
-                    if (!isConnected) {
-                        if (attempt + 1 < maxAttempts) {
-                            setTimeout(function(){
-                                rConnect(attempt + 1);
-                            }, 500);
-                        } else {
-                            // After all the attempts, we have failed to connect
-                            notifyDisconnect();
-                            callback(false);
-                        }
+        if (currentObj != null) {
+            return callback(true);
+        }
+        log("try to connect to device")
+        if (!connectDevice()) {
+            if (tryPrismatik) {
+                log("try to connect to prismatik")
+                connectToPrismatik(opts, function(success) {
+                    if (!success && !currentObj) {
+                        // Failed to connect
+                        notifyDisconnect();
+                        callback(false);
                     } else {
                         callback(true);
                     }
                 });
             } else {
-                callback(true);
+                // Failed to connect
+                notifyDisconnect();
+                callback(false);
             }
+        } else {
+            callback(true);
         }
-        rConnect(0);
     }
     return exports;
 }
@@ -303,7 +314,6 @@ function getCountLeds(callback) {
 }
 
 function setColor(n, r, g, b, callback) {
-    log(n, r, g, b)
     return proxyFunc(function(success) {
         // Keep track of the colors
         if (success && n < states.numberOfLeds) {
@@ -386,7 +396,7 @@ function turnOff(callback) {
 }
 
 function connect(opts) {
-    return internalConnect(null, opts);
+    return internalConnect(null, true, opts);
 }
 
 function disconnect() {
