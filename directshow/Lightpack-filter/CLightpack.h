@@ -147,6 +147,7 @@ private:
     bool connectDevice();
     bool connectPrismatik();
     void disconnectAllDevices();
+    void postConnection();
 
     void CancelNotification();
 
@@ -212,6 +213,12 @@ private:
     int mStride;
     int mWidth;
     int mHeight;
+
+    // Lightpack properties
+    std::vector<Lightpack::RGBCOLOR> mPropColors;
+    double mPropGamma;
+    unsigned char mPropBrightness;
+    unsigned char mPropSmooth;
 
     DWORD mLastDeviceCheck;
     bool mIsRunning;

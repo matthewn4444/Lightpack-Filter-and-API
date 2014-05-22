@@ -27,6 +27,9 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mShouldSendPauseEvent(false)
 , mIsRunning(false)
 , mIsConnectedToPrismatik(false)
+, mPropGamma{Lightpack::DefaultGamma}
+, mPropSmooth{Lightpack::DefaultSmooth}
+, mPropBrightness{Lightpack::DefaultBrightness}
 {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
@@ -249,11 +252,9 @@ bool CLightpack::connectDevice()
                 return false;
             }
             else {
-                mDevice->setBrightness(100);
-                mDevice->setSmooth(20);
+                postConnection();
                 log("Device connected")
                 startLightThread();
-                mShouldSendConnectEvent = true;
                 //mIsConnectedToPrismatik = false;
             }
         }
@@ -278,10 +279,8 @@ bool CLightpack::connectPrismatik()
                 return false;
             }
             else {
-                mDevice->setSmooth(20);
-                mDevice->setBrightness(100);
+                postConnection();
                 log("Connected to Prismatik.");
-                mShouldSendConnectEvent = true;
                 mIsConnectedToPrismatik = true;
             }
         }
@@ -304,6 +303,35 @@ void CLightpack::disconnectAllDevices()
         }
         LeaveCriticalSection(&mDeviceLock);
     }
+}
+
+void CLightpack::postConnection()
+{
+    EnterCriticalSection(&mDeviceLock);
+    // Apply the current Lightpack properties
+    mDevice->setSmooth(mPropSmooth);
+    mDevice->setBrightness(mPropBrightness);
+    mDevice->setGamma(mPropGamma);
+
+    // Update the colors of the array if not all black
+    bool shouldUpdateColors = false;
+    for (size_t i = 0; i < mPropColors.size(); i++) {
+        if (mPropColors[i] > 0) {
+            shouldUpdateColors = true;
+            break;
+        }
+    }
+    if (shouldUpdateColors) {
+        mDevice->setColors(mPropColors);
+    }
+
+    // Update the size of the color array
+    int numLeds = mDevice->getCountLeds();
+    if (mPropColors.size() != numLeds) {
+        mPropColors.resize(numLeds);
+    }
+    mShouldSendConnectEvent = true;
+    LeaveCriticalSection(&mDeviceLock);
 }
 
 void CLightpack::CancelNotification()
@@ -413,6 +441,12 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
                 mLightThreadCleanUpRequested = true;
                 disconnectAllDevices();
                 return;
+            }
+            for (size_t i = 0; i < mScaledRects.size(); i++) {
+                if (i < 0) {
+                    continue;
+                }
+                mPropColors[i] = colors[i];
             }
         }
         LeaveCriticalSection(&mDeviceLock);

@@ -86,6 +86,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             if (result != EOF) {
                 EnterCriticalSection(&mDeviceLock);
                 *deviceConnected = result = mDevice->setColor(n, MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
+                mPropColors[n] = MAKE_RGB(r, g, b);
                 LeaveCriticalSection(&mDeviceLock);
                 sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
             }
@@ -105,6 +106,12 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
                 if (!colors.empty()) {
                     EnterCriticalSection(&mDeviceLock);
                     *deviceConnected = result = mDevice->setColors(colors) == Lightpack::RESULT::OK;
+                    for (size_t i = 0; i < mDevice->getCountLeds(); i++) {
+                        if (i < 0) {
+                            continue;
+                        }
+                        mPropColors[i] = colors[i];
+                    }
                     LeaveCriticalSection(&mDeviceLock);
                     sprintf(buffer, "%d1", COMM_SEND_RETURN, result);
                 }
@@ -116,6 +123,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             if (result != EOF) {
                 EnterCriticalSection(&mDeviceLock);
                 *deviceConnected = result = mDevice->setColorToAll(MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
+                mPropColors.assign(mDevice->getCountLeds(), MAKE_RGB(r, g, b));
                 LeaveCriticalSection(&mDeviceLock);
                 sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
             }
@@ -128,6 +136,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             if (result != EOF) {
                 EnterCriticalSection(&mDeviceLock);
                 *deviceConnected = result = mDevice->setBrightness(n) == Lightpack::RESULT::OK;
+                mPropBrightness = n;
                 LeaveCriticalSection(&mDeviceLock);
                 sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
             }
@@ -138,6 +147,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             if (result != EOF) {
                 EnterCriticalSection(&mDeviceLock);
                 *deviceConnected = result = mDevice->setSmooth(n) == Lightpack::RESULT::OK;
+                mPropSmooth = n;
                 LeaveCriticalSection(&mDeviceLock);
                 sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
             }
@@ -148,6 +158,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             if (result != EOF) {
                 EnterCriticalSection(&mDeviceLock);
                 *deviceConnected = result = mDevice->setGamma(n / 10.0) == Lightpack::RESULT::OK;
+                mPropGamma = n / 10.0;
                 LeaveCriticalSection(&mDeviceLock);
                 sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
             }
