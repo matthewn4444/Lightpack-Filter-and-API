@@ -3,6 +3,7 @@ var light = require("./lightpack/lightpack-api");
 
 function log(/*...*/) {
     var div = document.createElement("div");
+    div.style.textAlign = "right";
     var text = "[empty string]";
     if (arguments.length) {
         text = typeof(arguments[0]) == "undefined" ? "undefined" : arguments[0].toString();
