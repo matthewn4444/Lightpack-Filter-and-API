@@ -625,7 +625,7 @@ int HID_API_EXPORT HID_API_CALL hid_write(hid_device *dev, const unsigned char *
 	if (!res) {
 		if (GetLastError() != ERROR_IO_PENDING) {
 			/* WriteFile() failed. Return error. */
-			register_error(dev, "WriteFile");
+			//register_error(dev, "WriteFile");         // Added this because it will crash (heap corruption) if unplugging the device and plug back in
 			bytes_written = -1;
 			goto end_of_function;
 		}
