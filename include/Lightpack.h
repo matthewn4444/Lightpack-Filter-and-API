@@ -40,6 +40,10 @@ namespace Lightpack {
         bool enabled;
     };
 
+    static const unsigned int DefaultBrightness = 100;
+    static const unsigned int DefaultSmooth     = 255;
+    static const double DefaultGamma            = 2.2;
+
     // Base class for Prismatik and LedDevice
     class LedBase {
     public:
@@ -149,9 +153,7 @@ namespace Lightpack {
         RESULT turnOff();
         RESULT turnOn();
 
-        static const int LedsPerDevice;         // 10
-        static const int DefaultBrightness;     // 100
-        static const double DefaultGamma;        // 2.2
+        static const unsigned int LedsPerDevice = 10;
 
     private:
         bool openDevice(unsigned short vid, unsigned short pid);

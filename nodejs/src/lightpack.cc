@@ -187,8 +187,9 @@ void init(Handle<v8::Object> exports) {
     NODE_SET_METHOD(exports, "turnOn", TurnOn);
 
     NODE_SET_NUMBER(LedsPerDevice, Lightpack::LedDevice::LedsPerDevice);
-    NODE_SET_NUMBER(DefaultBrightness, Lightpack::LedDevice::DefaultBrightness);
-    NODE_SET_NUMBER(DefaultGamma, Lightpack::LedDevice::DefaultGamma);
+    NODE_SET_NUMBER(DefaultBrightness, Lightpack::DefaultBrightness);
+    NODE_SET_NUMBER(DefaultGamma, Lightpack::DefaultGamma);
+    NODE_SET_NUMBER(DefaultSmooth, Lightpack::DefaultSmooth);
 }
 
 NODE_MODULE(lightpack, init)

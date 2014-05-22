@@ -9,10 +9,6 @@
 #define WRITE_BUFFER_INDEX_DATA_START   2
 
 namespace Lightpack {
-    const int LedDevice::LedsPerDevice = 10;
-    const int LedDevice::DefaultBrightness = 100;
-    const double LedDevice::DefaultGamma = 2.2;
-
     LedDevice::LedDevice() 
         : mGamma(DefaultGamma)
         , mBrightness(DefaultBrightness)
