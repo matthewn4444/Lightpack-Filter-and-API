@@ -8,6 +8,7 @@ var API_KEY = "{15b3fc7b-5495-43e0-801f-93fe73742962}";
 var currentObj = null;
 var isConnected = false;
 var server = null;
+var connectionTimer = null;
 
 // Default States, these will change based on the config file
 var states = {
@@ -62,18 +63,20 @@ function startServer(port, host) {
     });
     filter.on("socketconnect", filterConnected)
     .on("socketdisconnect", function() {
+        // DO NOT SET isConnected = false because this would cause a 2nd connect event
         currentObj = null;
-        // Try to connect 3 times
-        var max_attempts = 3;
+        var max_attempts = 2;
         function rConnect(i) {
             if (i < max_attempts) {
                 internalConnect(function(success){
                     if (!success) {
                         setTimeout(function(){
                             rConnect(i + 1);
-                        }, 500);
+                        }, 300);
                     }
                 }, true);
+            } else {
+                notifyDisconnect();
             }
         }
         rConnect(0);
@@ -94,6 +97,7 @@ function startServer(port, host) {
         if (listeners.play) {
             listeners.play.call(exports);
         }
+        stopConnectionPing();
     }).on("pause", function(){
         if (listeners.pause) {
             listeners.pause.call(exports);
@@ -108,6 +112,27 @@ client.on("error", function(){
     connect();
 });
 
+function startConnectionPing() {
+    stopConnectionPing();
+    connectionTimer = setInterval(function(){
+        if (!isConnected && currentObj != filter) {
+            internalConnect();
+        } else {
+            stopConnectionPing();
+        }
+    }, 1000);
+}
+
+function stopConnectionPing() {
+    if (connectionTimer) {
+        clearInterval(connectionTimer);
+    }
+    connectionTimer = null;
+}
+
+//  ============================================
+//  Connection functions
+//  ============================================
 function connectDevice() {
     if (device.open()) {
         console.log("connected to device");
@@ -171,20 +196,15 @@ function internalConnect(callback, tryPrismatik, opts) {
         });
     } else {
         if (currentObj != null) {
-            return callback(true);
+            callback(true);
+            return exports;
         }
         log("try to connect to device")
         if (!connectDevice()) {
             if (tryPrismatik) {
                 log("try to connect to prismatik")
                 connectToPrismatik(opts, function(success) {
-                    if (!success && !currentObj) {
-                        // Failed to connect
-                        notifyDisconnect();
-                        callback(false);
-                    } else {
-                        callback(true);
-                    }
+                    callback(success || currentObj);
                 });
             } else {
                 // Failed to connect
@@ -221,6 +241,7 @@ function notifyConnect() {
         }
     }
     isConnected = true;
+    stopConnectionPing();
 
     // Since connected to new device, we should apply the current states
     getCountLeds(function(n) {
@@ -251,8 +272,11 @@ function notifyConnect() {
 
 function notifyDisconnect() {
     log("notifyDisconnect")
-    if (listeners.disconnect && isConnected) {
-        listeners.disconnect.call(exports);
+    if (isConnected) {
+        if (listeners.disconnect) {
+            listeners.disconnect.call(exports);
+        }
+        startConnectionPing();
     }
     isConnected = false;
     currentObj = null;
@@ -266,7 +290,7 @@ function proxyFunc(callback, args) {
     function handleReturnValue(success) {
         if (success === false && currentObj) {
             // For device: once disconnected, we should try to reconnect or fail
-            internalDisconnect(callback);
+            disconnect(callback);
         }
         if (callback) {
             callback.apply(exports, arguments);
@@ -297,6 +321,7 @@ function proxyFunc(callback, args) {
                 if (success) {
                     runProxy();
                 } else if (callback) {
+                    notifyDisconnect();
                     callback.call(exports, false);
                 }
             });
