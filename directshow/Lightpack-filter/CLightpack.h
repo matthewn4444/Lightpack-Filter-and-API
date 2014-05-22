@@ -183,6 +183,7 @@ private:
     bool mShouldSendDisconnectEvent;
 
     void handleMessages(Socket& socket);
+    bool parseReceivedMessages(int messageType, char* buffer, bool* deviceConnected);
 #ifdef LOG_ENABLED
     Log* mLog;
 #endif
@@ -205,6 +206,7 @@ private:
     bool mCommThreadStopRequested;
 
     Lightpack::LedBase* mDevice;
+    bool mIsConnectedToPrismatik;
 
     VideoFormat mVideoType;
     int mStride;

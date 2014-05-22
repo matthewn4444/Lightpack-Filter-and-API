@@ -26,6 +26,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mShouldSendPlayEvent(false)
 , mShouldSendPauseEvent(false)
 , mIsRunning(false)
+, mIsConnectedToPrismatik(false)
 {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
@@ -253,6 +254,7 @@ bool CLightpack::connectDevice()
                 log("Device connected")
                 startLightThread();
                 mShouldSendConnectEvent = true;
+                //mIsConnectedToPrismatik = false;
             }
         }
         LeaveCriticalSection(&mDeviceLock);
@@ -280,6 +282,7 @@ bool CLightpack::connectPrismatik()
                 mDevice->setBrightness(100);
                 log("Connected to Prismatik.");
                 mShouldSendConnectEvent = true;
+                mIsConnectedToPrismatik = true;
             }
         }
         LeaveCriticalSection(&mDeviceLock);
@@ -296,6 +299,7 @@ void CLightpack::disconnectAllDevices()
             mDevice = NULL;
             log("Disconnected device");
             mShouldSendDisconnectEvent = true;
+            //mIsConnectedToPrismatik = false;
             // DO NOT REMOVE THREAD HERE, there will be a deadlock
         }
         LeaveCriticalSection(&mDeviceLock);

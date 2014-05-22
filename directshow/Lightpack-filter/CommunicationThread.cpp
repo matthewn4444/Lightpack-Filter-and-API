@@ -68,6 +68,113 @@ void CLightpack::destroyCommThread()
     mCommThreadStopRequested = false;
 }
 
+bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* deviceConnected) {
+    // Parse each message
+    int leds, n, r, g, b, result = EOF;
+    switch (messageType) {
+        // Format: <0>
+        case COMM_REC_COUNT_LEDS:
+            result = 0;
+            EnterCriticalSection(&mDeviceLock);
+            leds = mDevice->getCountLeds();
+            LeaveCriticalSection(&mDeviceLock);
+            sprintf(buffer, "%d%d", COMM_SEND_RETURN, leds);
+            break;
+        // Format: <1><n>,<r>,<g>,<b>
+        case COMM_REC_SET_COLOR:
+            result = sscanf(buffer + 1, "%d,%d,%d,%d", &n, &r, &g, &b);
+            if (result != EOF) {
+                EnterCriticalSection(&mDeviceLock);
+                *deviceConnected = result = mDevice->setColor(n, MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
+                LeaveCriticalSection(&mDeviceLock);
+                sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            }
+            break;
+        // Format: <2><n>,<r>,<g>,<b>
+        case COMM_REC_SET_COLORS:
+        // Read the length of number of leds
+            {
+                std::vector<Lightpack::RGBCOLOR> colors;
+                std::stringstream ss(buffer + 1);
+                while (ss >> n) {
+                    colors.push_back(n);
+                    if (ss.peek() == ',') {
+                        ss.ignore();
+                    }
+                }
+                if (!colors.empty()) {
+                    EnterCriticalSection(&mDeviceLock);
+                    *deviceConnected = result = mDevice->setColors(colors) == Lightpack::RESULT::OK;
+                    LeaveCriticalSection(&mDeviceLock);
+                    sprintf(buffer, "%d1", COMM_SEND_RETURN, result);
+                }
+            }
+            break;
+        // Format: <3><r>,<g>,<b>
+        case COMM_REC_SET_ALL_COLOR:
+            result = sscanf(buffer + 1, "%d,%d,%d", &r, &g, &b);
+            if (result != EOF) {
+                EnterCriticalSection(&mDeviceLock);
+                *deviceConnected = result = mDevice->setColorToAll(MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
+                LeaveCriticalSection(&mDeviceLock);
+                sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            }
+            break;
+        case COMM_REC_SET_RECTS:
+            break;
+        // Format: <5><[0-100]>
+        case COMM_REC_SET_BRIGHTNESS:
+            result = sscanf(buffer + 1, "%d", &n);
+            if (result != EOF) {
+                EnterCriticalSection(&mDeviceLock);
+                *deviceConnected = result = mDevice->setBrightness(n) == Lightpack::RESULT::OK;
+                LeaveCriticalSection(&mDeviceLock);
+                sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            }
+            break;
+        // Format: <6><[0-255]>
+        case COMM_REC_SET_SMOOTH:
+            result = sscanf(buffer + 1, "%d", &n);
+            if (result != EOF) {
+                EnterCriticalSection(&mDeviceLock);
+                *deviceConnected = result = mDevice->setSmooth(n) == Lightpack::RESULT::OK;
+                LeaveCriticalSection(&mDeviceLock);
+                sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            }
+            break;
+        // Format: <7><0-100>
+        case COMM_REC_SET_GAMMA:
+            result = sscanf(buffer + 1, "%d", &n);
+            if (result != EOF) {
+                EnterCriticalSection(&mDeviceLock);
+                *deviceConnected = result = mDevice->setGamma(n / 10.0) == Lightpack::RESULT::OK;
+                LeaveCriticalSection(&mDeviceLock);
+                sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            }
+            break;
+        // Format: <8>
+        case COMM_REC_TURN_OFF:
+            EnterCriticalSection(&mDeviceLock);
+            *deviceConnected = result = mDevice->turnOff() == Lightpack::RESULT::OK;
+            LeaveCriticalSection(&mDeviceLock);
+            sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            break;
+        // Format: <9>
+        case COMM_REC_TURN_ON:
+            EnterCriticalSection(&mDeviceLock);
+            *deviceConnected = result = mDevice->turnOn() == Lightpack::RESULT::OK;
+            LeaveCriticalSection(&mDeviceLock);
+            sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            break;
+        case COMM_REC_CONNECT:
+            // Don't do anything because we try to connect when already connected!
+            result = 0;
+            sprintf(buffer, "%d1", COMM_SEND_RETURN);
+            break;
+        }
+    return result != EOF;
+}
+
 void CLightpack::handleMessages(Socket& socket)
 {
     char buffer[512];
@@ -113,124 +220,33 @@ void CLightpack::handleMessages(Socket& socket)
         // Handle Receiving events
         if (socket.Receive(buffer, RECV_TIMEOUT) && strlen(buffer) > 0) {
             int messageType = buffer[0] - 'a';
-            int result = EOF;
+            bool parsingError = true;
             if (mDevice != NULL) {
-                // Parse each message
-                int leds, n, r, g, b;
-                bool deviceStillAval = true;
-                switch (messageType) {
-                    // Format: <0>
-                    case COMM_REC_COUNT_LEDS:
-                        result = 0;
-                        EnterCriticalSection(&mDeviceLock);
-                        leds = mDevice->getCountLeds();
-                        LeaveCriticalSection(&mDeviceLock);
-                        sprintf(buffer, "%d%d", COMM_SEND_RETURN, leds);
-                        break;
-                    // Format: <1><n>,<r>,<g>,<b>
-                    case COMM_REC_SET_COLOR:
-                        result = sscanf(buffer + 1, "%d,%d,%d,%d", &n, &r, &g, &b);
-                        if (result != EOF) {
-                            EnterCriticalSection(&mDeviceLock);
-                            deviceStillAval = result = mDevice->setColor(n, MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
-                            LeaveCriticalSection(&mDeviceLock);
-                            sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
-                        }
-                        break;
-                    // Format: <2><n>,<r>,<g>,<b>
-                    case COMM_REC_SET_COLORS:
-                        // Read the length of number of leds
-                        {
-                            std::vector<Lightpack::RGBCOLOR> colors;
-                            std::stringstream ss(buffer + 1);
-                            while (ss >> n) {
-                                colors.push_back(n);
-                                if (ss.peek() == ',') {
-                                    ss.ignore();
-                                }
-                            }
-                            if (!colors.empty()) {
-                                EnterCriticalSection(&mDeviceLock);
-                                deviceStillAval = result = mDevice->setColors(colors) == Lightpack::RESULT::OK;
-                                LeaveCriticalSection(&mDeviceLock);
-                                sprintf(buffer, "%d1", COMM_SEND_RETURN, result);
-                            }
-                        }
-                        break;
-                    // Format: <3><r>,<g>,<b>
-                    case COMM_REC_SET_ALL_COLOR:
-                        result = sscanf(buffer + 1, "%d,%d,%d", &r, &g, &b);
-                        if (result != EOF) {
-                            EnterCriticalSection(&mDeviceLock);
-                            deviceStillAval = result = mDevice->setColorToAll(MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
-                            LeaveCriticalSection(&mDeviceLock);
-                            sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
-                        }
-                        break;
-                    case COMM_REC_SET_RECTS:
-                        break;
-                    // Format: <5><[0-100]>
-                    case COMM_REC_SET_BRIGHTNESS:
-                        result = sscanf(buffer + 1, "%d", &n);
-                        if (result != EOF) {
-                            EnterCriticalSection(&mDeviceLock);
-                            deviceStillAval = result = mDevice->setBrightness(n) == Lightpack::RESULT::OK;
-                            LeaveCriticalSection(&mDeviceLock);
-                            sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
-                        }
-                        break;
-                    // Format: <6><[0-255]>
-                    case COMM_REC_SET_SMOOTH:
-                        result = sscanf(buffer + 1, "%d", &n);
-                        if (result != EOF) {
-                            EnterCriticalSection(&mDeviceLock);
-                            deviceStillAval = result = mDevice->setSmooth(n) == Lightpack::RESULT::OK;
-                            LeaveCriticalSection(&mDeviceLock);
-                            sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
-                        }
-                        break;
-                    // Format: <7><0-100>
-                    case COMM_REC_SET_GAMMA:
-                        result = sscanf(buffer + 1, "%d", &n);
-                        if (result != EOF) {
-                            EnterCriticalSection(&mDeviceLock);
-                            deviceStillAval = result = mDevice->setGamma(n / 10.0) == Lightpack::RESULT::OK;
-                            LeaveCriticalSection(&mDeviceLock);
-                            sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
-                        }
-                        break;
-                    // Format: <8>
-                    case COMM_REC_TURN_OFF:
-                        EnterCriticalSection(&mDeviceLock);
-                        deviceStillAval =  result = mDevice->turnOff() == Lightpack::RESULT::OK;
-                        LeaveCriticalSection(&mDeviceLock);
-                        sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
-                        break;
-                    // Format: <9>
-                    case COMM_REC_TURN_ON:
-                        EnterCriticalSection(&mDeviceLock);
-                        deviceStillAval = result = mDevice->turnOn() == Lightpack::RESULT::OK;
-                        LeaveCriticalSection(&mDeviceLock);
-                        sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
-                        break;
-                    case COMM_REC_CONNECT:
-                        result = 0;
-                        sprintf(buffer, "%d1", COMM_SEND_RETURN);
-                        break;
-                }
-
-                if (!deviceStillAval) {
-                    // Now the device is not avaiable anymore, we should disconnect it
+                // Parse the message: you can never get a parsing error and a disconnect, they are mutually exclusive!
+                bool isDeviceConnected = true;
+                parsingError = !parseReceivedMessages(messageType, buffer, &isDeviceConnected);
+                if (!isDeviceConnected) {
+                    // Disconnect the device because it is not physically connected
                     disconnectAllDevices();
                     mShouldSendDisconnectEvent = false;
-                    result = 0;
-                    sprintf(buffer, "%d", COMM_SEND_DISCONNECTED);
+
+                    if (mIsConnectedToPrismatik) {
+                        // Prismatik is not available and disconnected, try to connect to the device and try parsing again
+                        if (connectDevice()) {
+                            mShouldSendConnectEvent = false;
+                            parseReceivedMessages(messageType, buffer, &isDeviceConnected);
+                        }
+                    }
+                    if (!isDeviceConnected) {
+                        // Device is not connected anymore, tell gui that this has disconnected from device
+                        sprintf(buffer, "%d", COMM_SEND_DISCONNECTED);
+                    }
                 }
             }
             // Format: <10>
             else if (messageType == COMM_REC_CONNECT) {
                 // Reconnect to all devices if not connected already
-                result = 0;
+                parsingError = false;
                 if (mDevice == NULL) {
                     // Try directly again
                     if (!connectDevice()) {
@@ -245,7 +261,7 @@ void CLightpack::handleMessages(Socket& socket)
 
             if (messageType >= 0) {
                 // Failed to parse the message
-                if (result == EOF) {
+                if (parsingError) {
                     sprintf(buffer, "%d", COMM_SEND_INVALID_ARGS);
                 }
 
