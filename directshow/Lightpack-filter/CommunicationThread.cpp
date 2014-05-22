@@ -238,10 +238,11 @@ void CLightpack::handleMessages(Socket& socket)
                 parsingError = !parseReceivedMessages(messageType, buffer, &isDeviceConnected);
                 if (!isDeviceConnected) {
                     // Disconnect the device because it is not physically connected
+                    bool wasConnectedToPrismatik = mIsConnectedToPrismatik;
                     disconnectAllDevices();
                     mShouldSendDisconnectEvent = false;
 
-                    if (mIsConnectedToPrismatik) {
+                    if (wasConnectedToPrismatik) {
                         // Prismatik is not available and disconnected, try to connect to the device and try parsing again
                         if (connectDevice()) {
                             mShouldSendConnectEvent = false;

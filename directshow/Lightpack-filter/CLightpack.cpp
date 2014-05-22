@@ -255,7 +255,7 @@ bool CLightpack::connectDevice()
                 postConnection();
                 log("Device connected")
                 startLightThread();
-                //mIsConnectedToPrismatik = false;
+                mIsConnectedToPrismatik = false;
             }
         }
         LeaveCriticalSection(&mDeviceLock);
@@ -298,7 +298,7 @@ void CLightpack::disconnectAllDevices()
             mDevice = NULL;
             log("Disconnected device");
             mShouldSendDisconnectEvent = true;
-            //mIsConnectedToPrismatik = false;
+            mIsConnectedToPrismatik = false;
             // DO NOT REMOVE THREAD HERE, there will be a deadlock
         }
         LeaveCriticalSection(&mDeviceLock);
