@@ -82,19 +82,21 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             break;
         // Format: <1><n>,<r>,<g>,<b>
         case COMM_REC_SET_COLOR:
-            result = sscanf(buffer + 1, "%d,%d,%d,%d", &n, &r, &g, &b);
-            if (result != EOF) {
-                EnterCriticalSection(&mDeviceLock);
-                *deviceConnected = result = mDevice->setColor(n, MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
-                mPropColors[n] = MAKE_RGB(r, g, b);
-                LeaveCriticalSection(&mDeviceLock);
-                sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            if (!mIsRunning) {
+                result = sscanf(buffer + 1, "%d,%d,%d,%d", &n, &r, &g, &b);
+                if (result != EOF) {
+                    EnterCriticalSection(&mDeviceLock);
+                    *deviceConnected = result = mDevice->setColor(n, MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
+                    mPropColors[n] = MAKE_RGB(r, g, b);
+                    LeaveCriticalSection(&mDeviceLock);
+                    sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+                }
             }
             break;
         // Format: <2><n>,<r>,<g>,<b>
         case COMM_REC_SET_COLORS:
         // Read the length of number of leds
-            {
+            if (!mIsRunning) {
                 std::vector<Lightpack::RGBCOLOR> colors;
                 std::stringstream ss(buffer + 1);
                 while (ss >> n) {
@@ -119,13 +121,15 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             break;
         // Format: <3><r>,<g>,<b>
         case COMM_REC_SET_ALL_COLOR:
-            result = sscanf(buffer + 1, "%d,%d,%d", &r, &g, &b);
-            if (result != EOF) {
-                EnterCriticalSection(&mDeviceLock);
-                *deviceConnected = result = mDevice->setColorToAll(MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
-                mPropColors.assign(mDevice->getCountLeds(), MAKE_RGB(r, g, b));
-                LeaveCriticalSection(&mDeviceLock);
-                sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+            if (!mIsRunning) {
+                result = sscanf(buffer + 1, "%d,%d,%d", &r, &g, &b);
+                if (result != EOF) {
+                    EnterCriticalSection(&mDeviceLock);
+                    *deviceConnected = result = mDevice->setColorToAll(MAKE_RGB(r, g, b)) == Lightpack::RESULT::OK;
+                    mPropColors.assign(mDevice->getCountLeds(), MAKE_RGB(r, g, b));
+                    LeaveCriticalSection(&mDeviceLock);
+                    sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
+                }
             }
             break;
         case COMM_REC_SET_RECTS:
