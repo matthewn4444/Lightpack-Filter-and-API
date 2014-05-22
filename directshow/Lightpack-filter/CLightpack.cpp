@@ -6,7 +6,7 @@
 #define DEFAULT_PORT 3636
 #define DEFAULT_APIKEY "{cb832c47-0a85-478c-8445-0b20e3c28cdd}"
 
-const DWORD CLightpack::sDeviceCheckElapseTime = 2000;
+const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
 
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 : CTransInPlaceFilter(FILTER_NAME, pUnk, CLSID_Lightpack, phr)
@@ -69,16 +69,16 @@ CLightpack::~CLightpack(void)
     ASSERT(mhLightThread == INVALID_HANDLE_VALUE);
     ASSERT(mLightThreadStopRequested == false);
 
-    delete[] mFrameBuffer;
-
-    disconnectAllDevices();
-    ASSERT(mDevice == NULL);
-
     destroyCommThread();
 
     ASSERT(mCommThreadId == NULL);
     ASSERT(mhCommThread == INVALID_HANDLE_VALUE);
     ASSERT(mCommThreadStopRequested == false);
+
+    delete[] mFrameBuffer;
+
+    disconnectAllDevices();
+    ASSERT(mDevice == NULL);
 #ifdef LOG_ENABLED
     if (mLog) {
         delete mLog;
@@ -579,7 +579,7 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
     }
 
     if (mDevice == NULL) {
-        // Reconnect device every 2 seconds if not connected
+        // Reconnect device every 1 seconds if not connected
         DWORD now = GetTickCount();
         if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
             connectDevice();

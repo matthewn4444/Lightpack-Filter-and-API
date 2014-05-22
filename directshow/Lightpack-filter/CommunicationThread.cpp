@@ -194,6 +194,34 @@ void CLightpack::handleMessages(Socket& socket)
     mShouldSendConnectEvent = false;
     mShouldSendDisconnectEvent = false;
     while (!mCommThreadStopRequested) {
+        // Ping the device every 1 seconds and resolve failed connection
+        if (!mIsRunning) {
+            DWORD now = GetTickCount();
+            if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
+                EnterCriticalSection(&mDeviceLock);
+                if (mDevice != NULL) {
+                    // To ping, set the brightness, if fail then we should try to reconnect device
+                    if (mDevice->setBrightness(mPropBrightness) != Lightpack::RESULT::OK) {
+                        disconnectAllDevices();     // Disconnect devices because it has failed
+                    }
+                }
+
+                // Reconnect device if fails
+                if (mDevice == NULL) {
+                    if (connectDevice()) {
+                        mShouldSendConnectEvent = true;
+                        mShouldSendDisconnectEvent = false;
+                    }
+                    else {
+                        mShouldSendConnectEvent = false;
+                        mShouldSendDisconnectEvent = true;
+                    }
+                }
+                LeaveCriticalSection(&mDeviceLock);
+                mLastDeviceCheck = now;
+            }
+        }
+
         // Handle send events
         EnterCriticalSection(&mCommSendLock);
         if (mShouldSendPauseEvent) {
