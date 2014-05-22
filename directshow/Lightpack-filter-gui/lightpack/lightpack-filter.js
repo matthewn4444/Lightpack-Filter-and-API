@@ -108,8 +108,8 @@ function startServer() {
                     }
                     break;
                 case EVENT_REC_CONNECTED:
-                    if (listeners.pause) {
-                        listeners.pause.call(exports);
+                    if (listeners.connect) {
+                        listeners.connect.call(exports);
                     }
                     break;
                 case EVENT_REC_DISCONNECTED:
