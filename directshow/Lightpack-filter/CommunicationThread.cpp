@@ -203,9 +203,11 @@ void CLightpack::handleMessages(Socket& socket)
             DWORD now = GetTickCount();
             if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
                 EnterCriticalSection(&mDeviceLock);
+                bool justDisconnected = false;
                 if (mDevice != NULL) {
                     // To ping, set the brightness, if fail then we should try to reconnect device
                     if (mDevice->setBrightness(mPropBrightness) != Lightpack::RESULT::OK) {
+                        justDisconnected = true;
                         disconnectAllDevices();     // Disconnect devices because it has failed
                     }
                 }
@@ -213,10 +215,15 @@ void CLightpack::handleMessages(Socket& socket)
                 // Reconnect device if fails
                 if (mDevice == NULL) {
                     if (connectDevice()) {
-                        mShouldSendConnectEvent = true;
-                        mShouldSendDisconnectEvent = false;
+                        if (!justDisconnected) {
+                            mShouldSendConnectEvent = true;
+                            mShouldSendDisconnectEvent = false;
+                        }
+                        else {
+                            mShouldSendConnectEvent = mShouldSendDisconnectEvent = false;
+                        }
                     }
-                    else {
+                    else if (justDisconnected) {
                         mShouldSendConnectEvent = false;
                         mShouldSendDisconnectEvent = true;
                     }
