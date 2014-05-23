@@ -1,21 +1,26 @@
 // This is a common API to communicate between the filter and directly to the lightpack device
-var filter = require("./lightpack-filter"),
+var fs = require("fs"),
+    path = require("path"),
+    filter = require("./lightpack-filter"),
     client = require("./prismatik-client"),
     device = require("./lightpack");
 
 var API_KEY = "{15b3fc7b-5495-43e0-801f-93fe73742962}";
+var INI_FILE = path.dirname(process.execPath) + "/settings.ini";
 
 var currentObj = null;
 var isConnected = false;
 var server = null;
 var connectionTimer = null;
+var port = 6000;
+var api = {};
 
 // Default States, these will change based on the config file
 var states = {
     numberOfLeds: 0,
     brightness: 100,
     gamma: 2.2,
-    smooth: 255,
+    smooth: 30,
     colors: []
 };
 
@@ -44,8 +49,6 @@ function log(/*...*/) {
         }
         div.appendChild(document.createTextNode(text));
         document.getElementById("output").appendChild(div);
-    } else {
-        console.log.apply(null, arguments);
     }
 }
 
@@ -95,12 +98,12 @@ function startServer(port, host) {
     // Handle when playing and not playing video
     .on("play", function(){
         if (listeners.play) {
-            listeners.play.call(exports);
+            listeners.play.call(api);
         }
         stopConnectionPing();
     }).on("pause", function(){
         if (listeners.pause) {
-            listeners.pause.call(exports);
+            listeners.pause.call(api);
         }
     });
 }
@@ -128,6 +131,78 @@ function stopConnectionPing() {
         clearInterval(connectionTimer);
     }
     connectionTimer = null;
+}
+
+function setPort(p) {
+    port = p;
+    saveSettings();
+}
+
+//  ============================================
+//  Settings File functions
+//  ============================================
+function saveSettings(callback) {
+    callback = callback || function(){};
+    // Save the file
+    var data = "[General]\n" +
+                "port=" + port + "\n" +
+                "\n[State]\n" +
+                "smooth=" + states.smooth + "\n" +
+                "brightness="+ states.brightness + "\n" +
+                "gamma=" + states.gamma + "\n";
+    fs.writeFile(INI_FILE, data, function(err) {
+        if (err) {
+            throw err;
+        }
+        callback(true);
+    });
+}
+
+function loadSettings(callback) {
+    // Load the data into this API
+    fs.exists(INI_FILE, function(exists) {
+        if (exists) {
+            fs.readFile(INI_FILE, function(err, contents) {
+                if (err) {
+                    throw err;
+                }
+                var data = contents.toString();
+                var lines = data.indexOf("\r") != -1 ? data.split("\r\n") : data.split("\n");
+                for (var i = 0; i < lines.length; i++) {
+                    var line = lines[i].trim();
+                    if (line == "") {
+                        continue;
+                    }
+                    var s = line.indexOf("=");
+                    if (s == -1) {
+                        // Skip titles and comments
+                        if (line.charAt(0) == '[' || line.charAt(0) == ';') {
+                            continue;
+                        }
+                        throw new Error("INI file is not formatted correctly.");
+                    }
+                    var command = line.substring(0, s).trim();
+                    var value = line.substring(s + 1).trim();
+                    if (command == "port") {
+                        port = parseInt(value, 10);
+                    } else if (command == "smooth") {
+                        states.smooth = parseInt(value, 10);
+                    } else if (command == "brightness") {
+                        states.brightness = parseInt(value, 10);
+                    } else if (command == "gamma") {
+                        states.gamma = parseFloat(value, 10);
+                    } else {
+                        throw new Error("INI file is not formatted correctly of command", command);
+                    }
+                }
+                if (callback) {
+                    callback(true);
+                }
+            });
+        } else if (callback) {
+            callback(false);
+        }
+    });
 }
 
 //  ============================================
@@ -192,12 +267,12 @@ function internalConnect(callback, tryPrismatik, opts) {
             if (success) {
                 notifyConnect();
             }
-            callback.call(exports, success);
+            callback.call(api, success);
         });
     } else {
         if (currentObj != null) {
             callback(true);
-            return exports;
+            return api;
         }
         log("try to connect to device")
         if (!connectDevice()) {
@@ -215,7 +290,7 @@ function internalConnect(callback, tryPrismatik, opts) {
             callback(true);
         }
     }
-    return exports;
+    return api;
 }
 
 function internalDisconnect(callback) {
@@ -237,7 +312,7 @@ function notifyConnect() {
     var wasConnected = isConnected;
     function runConnected() {
         if (listeners.connect && !wasConnected) {
-            listeners.connect.call(exports);
+            listeners.connect.call(api);
         }
     }
     isConnected = true;
@@ -274,7 +349,7 @@ function notifyDisconnect() {
     log("notifyDisconnect")
     if (isConnected) {
         if (listeners.disconnect) {
-            listeners.disconnect.call(exports);
+            listeners.disconnect.call(api);
         }
         startConnectionPing();
     }
@@ -293,7 +368,7 @@ function proxyFunc(callback, args) {
             disconnect(callback);
         }
         if (callback) {
-            callback.apply(exports, arguments);
+            callback.apply(api, arguments);
         }
     }
 
@@ -304,14 +379,14 @@ function proxyFunc(callback, args) {
         function runProxy() {
             if (currentObj == device) {
                 // If crash next line, you did not make the function same name to call this
-                var ret = device[fnName].apply(exports, args);
+                var ret = device[fnName].apply(api, args);
                 handleReturnValue(ret);
             } else if (currentObj) {
                 args.push(handleReturnValue);
                 // If crash next line, you did not make the function same name to call this
-                currentObj[fnName].apply(exports, args);
+                currentObj[fnName].apply(api, args);
             } else if (callback) {
-                callback.call(exports, false);
+                callback.call(api, false);
             }
         }
 
@@ -322,7 +397,7 @@ function proxyFunc(callback, args) {
                     runProxy();
                 } else if (callback) {
                     notifyDisconnect();
-                    callback.call(exports, false);
+                    callback.call(api, false);
                 }
             });
         } else {
@@ -331,7 +406,7 @@ function proxyFunc(callback, args) {
     } else {
         throw new Error("proxyFunc was called incorrectly!");
     }
-    return exports;
+    return api;
 }
 
 function getCountLeds(callback) {
@@ -345,7 +420,7 @@ function setColor(n, r, g, b, callback) {
             states.colors[n] = [r, g, b];
         }
         if (callback) {
-            callback.call(exports, success);
+            callback.call(api, success);
         }
     }, [n, r, g, b]);
 }
@@ -360,7 +435,7 @@ function setColors(colorArr, callback) {
             }
         }
         if (callback) {
-            callback.call(exports, success);
+            callback.call(api, success);
         }
     }, [colorArr]);
 }
@@ -374,7 +449,7 @@ function setColorToAll(r, g, b, callback) {
             }
         }
         if (callback) {
-            callback.call(exports, success);
+            callback.call(api, success);
         }
     }, [r, g, b]);
 }
@@ -383,9 +458,10 @@ function setGamma(value, callback) {
     return proxyFunc(function(success){
         if (success) {
             states.gamma = value;
+            saveSettings();
         }
         if (callback) {
-            callback.call(exports, success);
+            callback.call(api, success);
         }
     }, [value]);
 }
@@ -394,20 +470,26 @@ function setSmooth(value, callback) {
     return proxyFunc(function(success){
         if (success) {
             states.smooth = value;
+            saveSettings();
         }
         if (callback) {
-            callback.call(exports, success);
+            callback.call(api, success);
         }
     }, [Math.floor(value)]);
+}
+
+function setExportedSmooth(value, callback) {
+    return setSmooth(Math.round(255 * value / 100.0), callback);
 }
 
 function setBrightness(value, callback) {
     return proxyFunc(function(success){
         if (success) {
             states.brightness = value;
+            saveSettings();
         }
         if (callback) {
-            callback.call(exports, success);
+            callback.call(api, success);
         }
     }, [value]);
 }
@@ -426,7 +508,7 @@ function connect(opts) {
 
 function disconnect() {
     internalDisconnect(notifyDisconnect);
-    return exports;
+    return api;
 }
 
 function on(eventName, fn) {
@@ -435,22 +517,43 @@ function on(eventName, fn) {
             listeners[eventName] = fn;
         }
     }
-    return exports;
+    return api;
 }
 
 // Implementation
-exports.connect = connect;
-exports.disconnect = disconnect;
-exports.getCountLeds = function(){ return states.numberOfLeds; };
-exports.setColor = setColor;
-exports.setColors = setColors;
-exports.setColorToAll = setColorToAll;
-exports.setGamma = setGamma;
-exports.setSmooth = setSmooth;
-exports.setBrightness = setBrightness;
-exports.turnOn = turnOn;
-exports.turnOff = turnOff;
-exports.on = on;
+api.connect = connect;
+api.disconnect = disconnect;
+api.getCountLeds = function(){ return states.numberOfLeds; };
+api.setColor = setColor;
+api.setColors = setColors;
+api.setColorToAll = setColorToAll;
+api.setGamma = setGamma;
+api.setSmooth = setExportedSmooth;
+api.setPort = setPort;
+api.setBrightness = setBrightness;
+api.turnOn = turnOn;
+api.turnOff = turnOff;
+api.on = on;
+api.getPort = function(){ return port; };
+api.getSmooth = function(){ return Math.round((states.smooth / 255.0) * 10) * 10; };
+api.getGamma = function(){ return states.gamma; };
+api.getBrightness = function(){ return states.brightness; };
 
-// Start the server
-startServer(6000, "127.0.0.1");
+exports.init = function(callback){
+    // Start by loading the file and then start the server
+    loadSettings(function(fileExists){
+        if (fileExists) {
+            startServer(port, "127.0.0.1");
+            if (callback) {
+                callback(api);
+            }
+        } else {
+            saveSettings(function() {
+                startServer(port, "127.0.0.1");
+                if (callback) {
+                    callback(api);
+                }
+            });
+        }
+    });
+}

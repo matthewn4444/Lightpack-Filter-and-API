@@ -1,4 +1,5 @@
-var light = require("./lightpack/lightpack-api");
+var lightpack = require("./lightpack/lightpack-api"),
+    lightApi = null;
 //require('nw.gui').Window.get().showDevTools()
 
 function log(/*...*/) {
@@ -19,19 +20,26 @@ function log(/*...*/) {
 //  Handle Lightpack
 //  ============================================
 var numLeds = 0;
-light.a(document);
+lightpack.a(document);
 
-light.on("connect", function(){
-    log("Lights have connected");
-    numLeds = light.getCountLeds();
-    log("Got", numLeds, "Leds");
-}).on("disconnect", function(){
-    log("Lights have disconnected");
-}).on("play", function(){
-    log("Filter is playing");
-}).on("pause", function(){
-    log("Filter was paused");
-}).connect();
+lightpack.init(function(api){
+    lightApi = api;
+    lightApi.on("connect", function(){
+        log("Lights have connected");
+        numLeds = lightApi.getCountLeds();
+        log("Got", numLeds, "Leds");
+
+        // Apply the data from API to the GUI
+        $("#brightness").val(Math.round(lightApi.getBrightness() / 10.0) * 10);
+        $("#smooth").val(Math.round(lightApi.getSmooth() / 10.0) * 10);
+    }).on("disconnect", function(){
+        log("Lights have disconnected");
+    }).on("play", function(){
+        log("Filter is playing");
+    }).on("pause", function(){
+        log("Filter was paused");
+    }).connect();
+});
 
 //  ============================================
 //  GUI stuff
@@ -51,10 +59,10 @@ function randomColor() {
 $("#toggleOnOff").click(function(){
     if ($(this).text() == "Turn On") {
         $(this).text("Turn Off");
-        light.turnOn();
+        lightApi.turnOn();
     } else {
         $(this).text("Turn On");
-        light.turnOff();
+        lightApi.turnOff();
     }
 });
 
@@ -62,7 +70,7 @@ $("#randomColor").click(function(){
     if (numLeds) {
         var color = randomColor();
         var randLed = rand(numLeds);
-        light.setColor(randLed, color[0], color[1], color[2]);
+        lightApi.setColor(randLed, color[0], color[1], color[2]);
     }
 });
 
@@ -72,22 +80,22 @@ $("#randomEachColorAll").click(function(){
         for (var i = 0; i < numLeds; i++) {
             colors.push(randomColor());
         }
-        light.setColors(colors);
+        lightApi.setColors(colors);
     }
 });
 
 $("#randomColorAll").click(function(){
     var color = randomColor();
-    light.setColorToAll(color[0], color[1], color[2]);
+    lightApi.setColorToAll(color[0], color[1], color[2]);
 });
 
 $("#brightness").change(function(){
     var val = $(this).val();
-    light.setBrightness(parseInt(val, 10));
+    lightApi.setBrightness(parseInt(val, 10));
 });
 
 $("#smooth").change(function(){
     var val = $(this).val();
     var percent = parseInt(val, 10);
-    light.setSmooth(255 * percent / 100.0);
+    lightApi.setSmooth(parseInt(val, 10));
 });
