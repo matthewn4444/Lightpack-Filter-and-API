@@ -229,6 +229,21 @@ function on(eventName, fn) {
     return exports;
 }
 
+function close(callback) {
+    // Disconnect user and start the server over again
+    for (var i = 0; i < clients.length; i++) {
+        clients[i].end();
+    }
+    clients = [];
+    queue = [];
+    server.close(function() {
+        server = null;
+        if (callback) {
+            callback.call(exports);
+        }
+    });
+}
+
 exports.Server = startServer;
 exports.getCountLeds = getCountLeds;
 exports.setColor = setColor;
@@ -241,3 +256,4 @@ exports.turnOn = turnOn;
 exports.turnOff = turnOff;
 exports.signalReconnect = signalReconnect;
 exports.on = on;
+exports.close = close;

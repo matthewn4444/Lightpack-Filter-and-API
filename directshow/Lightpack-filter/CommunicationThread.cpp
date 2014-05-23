@@ -265,7 +265,7 @@ void CLightpack::handleMessages(Socket& socket)
         }
 
         // Handle Receiving events
-        if (socket.Receive(buffer, RECV_TIMEOUT) && strlen(buffer) > 0) {
+        if (socket.Receive(buffer, RECV_TIMEOUT) > 0 && strlen(buffer) > 0) {
             int messageType = buffer[0] - 'a';
             bool parsingError = true;
             if (mDevice != NULL) {
@@ -317,6 +317,12 @@ void CLightpack::handleMessages(Socket& socket)
                 socket.Send(buffer);
             }
         }
+        else {
+            // Received a socket error
+            log("Socket left");
+            socket.Close();
+            break;
+        }
     }
 }
 
@@ -325,26 +331,19 @@ DWORD CLightpack::commThreadStart()
     log("Running communication thread");
     Socket socket;
 
-    // Convert the port to a string
-    std::stringstream ss;
-    ss << mPropPort;
-    std::string& str = ss.str();
-    const char* port = str.c_str();
-
-    // Trying to connect
-    if (socket.Open(DEFAULT_GUI_HOST, port)) {
+    // Trying to connect; when port changes in handleMessages, it will reconnect port
+    if (socket.Open(DEFAULT_GUI_HOST, mPropPort)) {
         handleMessages(socket);
     }
     else {
         // Run the application (if already running this does nothing), try to connect, if fail then give up
         ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", getCurrentDirectory(), SW_SHOW);   // TODO change this when gui is complete
-        if (socket.Open(DEFAULT_GUI_HOST, port)) {
+        if (socket.Open(DEFAULT_GUI_HOST, mPropPort)) {
             handleMessages(socket);
         }
         else {
             log("Failed to connect to gui");
         }
-
     }
     mCommThreadStopRequested = true;
     return 0;

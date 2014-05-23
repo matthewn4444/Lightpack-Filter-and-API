@@ -557,3 +557,9 @@ exports.init = function(callback){
         }
     });
 }
+
+exports.close = function(callback) {
+    internalDisconnect(function(){
+        filter.close(callback);
+    });
+}

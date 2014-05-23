@@ -1,6 +1,8 @@
 var lightpack = require("./lightpack/lightpack-api"),
-    lightApi = null;
-//require('nw.gui').Window.get().showDevTools()
+    gui = require('nw.gui'),
+    lightApi = null,
+    win = gui.Window.get();
+//win.showDevTools()
 
 function log(/*...*/) {
     var div = document.createElement("div");
@@ -55,6 +57,17 @@ function randomColor() {
     }
     return color;
 }
+
+win.on("close", function(){
+    win.hide();
+    if (lightApi) {
+        lightpack.close(function(){
+            win.close(true);
+        });
+    } else {
+        win.close(true);
+    }
+});
 
 $("#toggleOnOff").click(function(){
     if ($(this).text() == "Turn On") {

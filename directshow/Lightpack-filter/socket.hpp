@@ -38,7 +38,7 @@ public:
         WSACleanup();
     }
 
-    bool Open(PCSTR hostname, PCSTR port) {
+    bool Open(PCSTR hostname, unsigned int port) {
         if (mConnectSocket != INVALID_SOCKET) {
             Close();
         }
@@ -53,8 +53,13 @@ public:
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_protocol = IPPROTO_TCP;
 
+        // Convert port from number to string
+        std::stringstream ss;
+        ss << port;
+        std::string& strPort = ss.str();
+
         // Resolve the server address and port
-        iResult = getaddrinfo(hostname, port, &hints, &result);
+        iResult = getaddrinfo(hostname, strPort.c_str(), &hints, &result);
         if (iResult != 0) {
             printf("getaddrinfo failed with error: %d\n", iResult);
             return false;
@@ -86,6 +91,7 @@ public:
             printf("Unable to connect to server!\n");
             return false;
         }
+        mPort = port;
         return true;
     }
 
@@ -93,6 +99,7 @@ public:
         if (mConnectSocket != INVALID_SOCKET) {
             closesocket(mConnectSocket);
             mConnectSocket = INVALID_SOCKET;
+            log("CLose socket");
         }
     }
 
@@ -113,9 +120,9 @@ public:
     }
 
     // Not safe for large character buffers
-    bool Receive(char* buffer, int timeout = 0) {
+    int Receive(char* buffer, int timeout = 0) {
         if (mConnectSocket == INVALID_SOCKET) {
-            return false;
+            return -1;
         }
 
         // Set the timeout
@@ -142,18 +149,29 @@ public:
                 }
                 buffer[n] = '\0';
             }
-            return true;
+            logf("Received: %s", buffer);
         }
         else if (iResult == 0) {
             buffer = '\0';
-            logf("Connection closed\n");
-            return false;
+            logf("Connection closed");
         }
         else {
             buffer = '\0';
-            logf("recv failed with error: %d\n", WSAGetLastError());
-            return false;
+
+            // If there was a timeout and that was the error, then ignore it
+            if (WSAGetLastError() == 10060 && mRecvTimeout > 0) {
+                logf("IGNORE recv timeout error: %d", WSAGetLastError());
+                iResult = 1;
+            }
+            else {
+                logf("recv failed with error: %d", WSAGetLastError());
+            }
         }
+        return iResult;
+    }
+
+    inline unsigned int getPort() {
+        return mPort;
     }
 
 private:
@@ -168,6 +186,7 @@ private:
     // Variables
     SOCKET mConnectSocket = INVALID_SOCKET;
     int mRecvTimeout;
+    unsigned int mPort = 0;
 
     Log* mLog;
 };
