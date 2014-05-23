@@ -12,6 +12,7 @@
 
 #include "gpu_memcpy_sse4.h"
 #include "Converters.h"
+#include "../../LightpackAPI/inih/cpp/INIReader.h"
 
 // TEMP
 #define LOG_ENABLED
@@ -169,6 +170,9 @@ private:
 
     void clearQueue();
 
+    void loadSettingsFile();
+    wchar_t* getCurrentDirectory();
+
     // Thread function
     void startLightThread();
     void destroyLightThread();
@@ -200,6 +204,7 @@ private:
     CRITICAL_SECTION mAdviseLock;
     CRITICAL_SECTION mDeviceLock;
     CRITICAL_SECTION mCommSendLock;
+    CRITICAL_SECTION mFileLock;
 
     // Communication thread to the GUI
     HANDLE mhCommThread;
@@ -219,12 +224,15 @@ private:
     double mPropGamma;
     unsigned char mPropBrightness;
     unsigned char mPropSmooth;
+    unsigned int mPropPort;
 
     DWORD mLastDeviceCheck;
     bool mIsRunning;
 
     BYTE* mFrameBuffer;
     std::queue<DWORD_PTR> mAdviseQueue;
+    bool mHasReadSettings;
+    wchar_t mCurrentDirectoryCache[MAX_PATH];
 };
 
 #endif // __CLIGHTPACK__

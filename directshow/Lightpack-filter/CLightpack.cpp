@@ -1,10 +1,16 @@
 #include <sstream>
 #include "CLightpack.h"
 
+EXTERN_C IMAGE_DOS_HEADER __ImageBase;
+
 // Connection to Prismatik
 #define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_PORT 3636
 #define DEFAULT_APIKEY "{cb832c47-0a85-478c-8445-0b20e3c28cdd}"
+#define DEFAULT_SMOOTH 30
+#define DEFAULT_GUI_PORT 6000
+
+#define SETTINGS_FILE "settings.ini"
 
 const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
 
@@ -28,8 +34,10 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mIsRunning(false)
 , mIsConnectedToPrismatik(false)
 , mPropGamma{Lightpack::DefaultGamma}
-, mPropSmooth{Lightpack::DefaultSmooth}
+, mPropSmooth{DEFAULT_SMOOTH}
 , mPropBrightness{Lightpack::DefaultBrightness}
+, mPropPort(DEFAULT_GUI_PORT)
+, mHasReadSettings(false)
 {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
@@ -53,6 +61,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     InitializeCriticalSection(&mAdviseLock);
     InitializeCriticalSection(&mDeviceLock);
     InitializeCriticalSection(&mCommSendLock);
+    InitializeCriticalSection(&mFileLock);
 
     // Try to connect to the lights directly,
     // if fails the try to connect to Prismatik in the thread
@@ -147,6 +156,8 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
             else {
                 mVideoType = VideoFormat::OTHER;
             }
+
+            loadSettingsFile();
 
             int desktopWidth, desktopHeight;
             GetDesktopResolution(desktopWidth, desktopHeight);
@@ -351,6 +362,43 @@ void CLightpack::CancelNotification()
     mDisplayLightEvent.Reset();
 }
 
+wchar_t* CLightpack::getCurrentDirectory()
+{
+    if (wcslen(mCurrentDirectoryCache) == 0) {
+        WCHAR wDllPath[MAX_PATH] = { 0 };
+        if (GetModuleFileName((HINSTANCE)&__ImageBase, wDllPath, _countof(wDllPath)) != ERROR_INSUFFICIENT_BUFFER) {
+            std::wstring temp(wDllPath);
+            std::wstring axPath = temp.substr(0, temp.find_last_of('\\'));
+            wcscpy(mCurrentDirectoryCache, axPath.c_str());
+        }
+    }
+    return mCurrentDirectoryCache;
+}
+
+void CLightpack::loadSettingsFile()
+{
+    if (!mHasReadSettings) {
+        EnterCriticalSection(&mFileLock);
+        if (!mHasReadSettings) {
+            mHasReadSettings = true;
+            // Prepare the path to the settings file
+            char path[MAX_PATH];
+            wcstombs(path, getCurrentDirectory(), wcslen(getCurrentDirectory()));
+            strcat(path, "\\"SETTINGS_FILE);
+
+            // Read the file and parse it
+            INIReader reader(path);
+            if (!reader.ParseError()) {
+                mPropPort = reader.GetInteger("General", "port", DEFAULT_GUI_PORT);
+                mPropSmooth = reader.GetInteger("State", "smooth", DEFAULT_SMOOTH);
+                mPropBrightness = reader.GetInteger("State", "brightness", Lightpack::DefaultBrightness);
+                mPropGamma = reader.GetReal("State", "gamma", Lightpack::DefaultGamma);
+            }
+        }
+        LeaveCriticalSection(&mFileLock);
+    }
+}
+
 void CLightpack::startLightThread()
 {
     if (mLightThreadId != NULL && mhLightThread != INVALID_HANDLE_VALUE) {
@@ -455,6 +503,7 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 
 DWORD CLightpack::lightThreadStart()
 {
+    loadSettingsFile();
     bool isConnected  = connectPrismatik();
 
     // Start the communication thread guarenteed after device is connected or not

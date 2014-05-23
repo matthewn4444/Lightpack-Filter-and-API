@@ -16,6 +16,9 @@
     <Filter Include="log">
       <UniqueIdentifier>{dbedf894-afae-41f8-8be6-a00152cab09f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="inih">
+      <UniqueIdentifier>{0d58551d-a6e0-446c-800a-d15e1582f508}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Filter.def">
@@ -48,6 +51,9 @@
     </ClInclude>
     <ClInclude Include="socket.hpp">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\LightpackAPI\inih\cpp\INIReader.h">
+      <Filter>inih</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

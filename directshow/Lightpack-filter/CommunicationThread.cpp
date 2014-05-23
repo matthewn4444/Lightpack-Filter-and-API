@@ -1,11 +1,8 @@
 #include "CLightpack.h"
 #include <sstream>
 
-EXTERN_C IMAGE_DOS_HEADER __ImageBase;
-
 // Connection to GUI
 #define DEFAULT_GUI_HOST "127.0.0.1"
-#define DEFAULT_GUI_PORT "6000"
 
 #define RECV_TIMEOUT 200
 
@@ -326,29 +323,28 @@ void CLightpack::handleMessages(Socket& socket)
 DWORD CLightpack::commThreadStart()
 {
     log("Running communication thread");
-    // Trying to connect
     Socket socket;
-    if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
+
+    // Convert the port to a string
+    std::stringstream ss;
+    ss << mPropPort;
+    std::string& str = ss.str();
+    const char* port = str.c_str();
+
+    // Trying to connect
+    if (socket.Open(DEFAULT_GUI_HOST, port)) {
         handleMessages(socket);
     }
     else {
-        WCHAR wDllPath[MAX_PATH] = { 0 };
-        if (GetModuleFileName((HINSTANCE)&__ImageBase, wDllPath, _countof(wDllPath)) != ERROR_INSUFFICIENT_BUFFER) {
-            std::wstring temp(wDllPath);
-            std::wstring axPath = temp.substr(0, temp.find_last_of('\\'));
-
-            // Run the application (if already running this does nothing), try to connect, if fail then give up
-            ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", axPath.c_str(), SW_SHOW);   // TODO change this when gui is complete
-            if (socket.Open(DEFAULT_GUI_HOST, DEFAULT_GUI_PORT)) {
-                handleMessages(socket);
-            }
-            else {
-                log("Failed to connect to gui");
-            }
+        // Run the application (if already running this does nothing), try to connect, if fail then give up
+        ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", getCurrentDirectory(), SW_SHOW);   // TODO change this when gui is complete
+        if (socket.Open(DEFAULT_GUI_HOST, port)) {
+            handleMessages(socket);
         }
         else {
-            log("Failed parse this directory");
+            log("Failed to connect to gui");
         }
+
     }
     mCommThreadStopRequested = true;
     return 0;

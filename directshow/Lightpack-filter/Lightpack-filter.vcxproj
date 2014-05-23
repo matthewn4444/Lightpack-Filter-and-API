@@ -100,6 +100,7 @@
     <ClCompile Include="Setup.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\LightpackAPI\inih\cpp\INIReader.h" />
     <ClInclude Include="CLightpack.h" />
     <ClInclude Include="Converters.h" />
     <ClInclude Include="gpu_memcpy_sse4.h" />
