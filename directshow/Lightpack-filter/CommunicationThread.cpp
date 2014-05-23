@@ -18,6 +18,7 @@
 #define COMM_REC_TURN_OFF       8
 #define COMM_REC_TURN_ON        9
 #define COMM_REC_CONNECT        10
+#define COMM_REC_NEW_PORT       11
 
 // These messages are used to send data back to the server
 #define COMM_SEND_RETURN        0
@@ -92,7 +93,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             break;
         // Format: <2><n>,<r>,<g>,<b>
         case COMM_REC_SET_COLORS:
-        // Read the length of number of leds
+            // Read the length of number of leds
             if (!mIsRunning) {
                 std::vector<Lightpack::RGBCOLOR> colors;
                 std::stringstream ss(buffer + 1);
@@ -183,13 +184,22 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             result = 0;
             sprintf(buffer, "%d1", COMM_SEND_RETURN);
             break;
-        }
+        // Format: <10><PORT>
+        case COMM_REC_NEW_PORT:
+            result = sscanf(buffer + 1, "%d", &n);
+            if (result != EOF) {
+                mPropPort = n;
+                sprintf(buffer, "%d1", COMM_SEND_RETURN);
+            }
+            break;
+    }
     return result != EOF;
 }
 
 void CLightpack::handleMessages(Socket& socket)
 {
-    char buffer[512];
+    char buffer[512] = { 0 };
+    unsigned int currentPort = socket.getPort();
     mShouldSendPlayEvent = false;
     mShouldSendPauseEvent = false;
     mShouldSendConnectEvent = false;
@@ -263,65 +273,76 @@ void CLightpack::handleMessages(Socket& socket)
             mShouldSendDisconnectEvent = false;
             LeaveCriticalSection(&mCommSendLock);
         }
+        buffer[0] = '\0';
 
         // Handle Receiving events
-        if (socket.Receive(buffer, RECV_TIMEOUT) > 0 && strlen(buffer) > 0) {
-            int messageType = buffer[0] - 'a';
-            bool parsingError = true;
-            if (mDevice != NULL) {
-                // Parse the message: you can never get a parsing error and a disconnect, they are mutually exclusive!
-                bool isDeviceConnected = true;
-                parsingError = !parseReceivedMessages(messageType, buffer, &isDeviceConnected);
-                if (!isDeviceConnected) {
-                    // Disconnect the device because it is not physically connected
-                    bool wasConnectedToPrismatik = mIsConnectedToPrismatik;
-                    disconnectAllDevices();
-                    mShouldSendDisconnectEvent = false;
+        if (socket.Receive(buffer, RECV_TIMEOUT) > 0) {
+            if (strlen(buffer) > 0) {
+                int messageType = buffer[0] - 'a';
+                bool parsingError = true;
+                if (mDevice != NULL) {
+                    // Parse the message: you can never get a parsing error and a disconnect, they are mutually exclusive!
+                    bool isDeviceConnected = true;
+                    parsingError = !parseReceivedMessages(messageType, buffer, &isDeviceConnected);
+                    if (!isDeviceConnected) {
+                        // Disconnect the device because it is not physically connected
+                        bool wasConnectedToPrismatik = mIsConnectedToPrismatik;
+                        disconnectAllDevices();
+                        mShouldSendDisconnectEvent = false;
 
-                    if (wasConnectedToPrismatik) {
-                        // Prismatik is not available and disconnected, try to connect to the device and try parsing again
-                        if (connectDevice()) {
-                            mShouldSendConnectEvent = false;
-                            parseReceivedMessages(messageType, buffer, &isDeviceConnected);
+                        if (wasConnectedToPrismatik) {
+                            // Prismatik is not available and disconnected, try to connect to the device and try parsing again
+                            if (connectDevice()) {
+                                mShouldSendConnectEvent = false;
+                                parseReceivedMessages(messageType, buffer, &isDeviceConnected);
+                            }
+                        }
+                        if (!isDeviceConnected) {
+                            // Device is not connected anymore, tell gui that this has disconnected from device
+                            sprintf(buffer, "%d", COMM_SEND_DISCONNECTED);
                         }
                     }
-                    if (!isDeviceConnected) {
-                        // Device is not connected anymore, tell gui that this has disconnected from device
-                        sprintf(buffer, "%d", COMM_SEND_DISCONNECTED);
-                    }
                 }
-            }
-            // Format: <10>
-            else if (messageType == COMM_REC_CONNECT) {
-                // Reconnect to all devices if not connected already
-                parsingError = false;
-                if (mDevice == NULL) {
-                    // Try directly again
-                    if (!connectDevice()) {
-                        sprintf(buffer, "%d0", COMM_SEND_RETURN);
+                // Format: <10>
+                else if (messageType == COMM_REC_CONNECT) {
+                    // Reconnect to all devices if not connected already
+                    parsingError = false;
+                    if (mDevice == NULL) {
+                        // Try directly again
+                        if (!connectDevice()) {
+                            sprintf(buffer, "%d0", COMM_SEND_RETURN);
+                        }
+                        else {
+                            sprintf(buffer, "%d1", COMM_SEND_RETURN);
+                            mShouldSendConnectEvent = false;
+                        }
                     }
-                    else {
-                        sprintf(buffer, "%d1", COMM_SEND_RETURN);
-                        mShouldSendConnectEvent = false;
-                    }
-                }
-            }
-
-            if (messageType >= 0) {
-                // Failed to parse the message
-                if (parsingError) {
-                    sprintf(buffer, "%d", COMM_SEND_INVALID_ARGS);
                 }
 
-                // Respond back to the server
-                socket.Send(buffer);
+                if (messageType >= 0) {
+                    // Failed to parse the message
+                    if (parsingError) {
+                        sprintf(buffer, "%d", COMM_SEND_INVALID_ARGS);
+                    }
+
+                    // Respond back to the server
+                    socket.Send(buffer);
+                }
             }
         }
         else {
             // Received a socket error
             log("Socket left");
             socket.Close();
+            mCommThreadStopRequested = true;
             break;
+        }
+        buffer[0] = '\0';
+
+        // Detect port changes
+        if (currentPort != mPropPort) {
+            socket.Close();
+            return;
         }
     }
 }
@@ -332,17 +353,21 @@ DWORD CLightpack::commThreadStart()
     Socket socket;
 
     // Trying to connect; when port changes in handleMessages, it will reconnect port
-    if (socket.Open(DEFAULT_GUI_HOST, mPropPort)) {
-        handleMessages(socket);
-    }
-    else {
-        // Run the application (if already running this does nothing), try to connect, if fail then give up
-        ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", getCurrentDirectory(), SW_SHOW);   // TODO change this when gui is complete
+    while (!mCommThreadStopRequested) {
         if (socket.Open(DEFAULT_GUI_HOST, mPropPort)) {
             handleMessages(socket);
         }
         else {
-            log("Failed to connect to gui");
+            // Run the application (if already running this does nothing), try to connect, if fail then give up
+            ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", getCurrentDirectory(), SW_SHOW);   // TODO change this when gui is complete
+            if (socket.Open(DEFAULT_GUI_HOST, mPropPort)) {
+                handleMessages(socket);
+            }
+            else {
+                log("Failed to connect to gui");
+                break;
+            }
+
         }
     }
     mCommThreadStopRequested = true;

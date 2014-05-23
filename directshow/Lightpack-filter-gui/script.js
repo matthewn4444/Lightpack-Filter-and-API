@@ -34,6 +34,7 @@ lightpack.init(function(api){
         // Apply the data from API to the GUI
         $("#brightness").val(Math.round(lightApi.getBrightness() / 10.0) * 10);
         $("#smooth").val(Math.round(lightApi.getSmooth() / 10.0) * 10);
+        $("#port").val(lightApi.getPort());
     }).on("disconnect", function(){
         log("Lights have disconnected");
     }).on("play", function(){
@@ -57,6 +58,14 @@ function randomColor() {
     }
     return color;
 }
+
+var inputDelay = (function(){
+    var timer = 0;
+    return function(callback, ms){
+        clearTimeout (timer);
+        timer = setTimeout(callback, ms);
+    };
+})();
 
 win.on("close", function(){
     win.hide();
@@ -111,4 +120,17 @@ $("#smooth").change(function(){
     var val = $(this).val();
     var percent = parseInt(val, 10);
     lightApi.setSmooth(parseInt(val, 10));
+});
+
+$("#port").keyup(function(){
+    inputDelay(function(){
+        var port = parseInt($("#port").val(), 10);
+        if (!isNaN(port)) {
+            lightApi.setPort(port, function(success){
+                if (!success) {
+                    $("#port").val(lightApi.getPort());
+                }
+            });
+        }
+    }, 1000);
 });

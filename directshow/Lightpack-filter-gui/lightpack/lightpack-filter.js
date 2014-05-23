@@ -1,11 +1,17 @@
 var net = require('net');
 
+var DEFAULT_PORT = 6000,
+    DEFAULT_HOST = "127.0.0.1";
+
 // Create the server
 var clients = [];
 var queue = [];
 var isRunning = false;
 var currentSocketName = null;
 var server = null;
+var isResettingServer = false;
+var serverPort = DEFAULT_PORT;
+var serverHost = DEFAULT_HOST;
 
 // Listeners
 var listeners = {
@@ -28,7 +34,8 @@ var EVENT_MSG_COUNT_LEDS =      0,
     EVENT_MSG_SET_GAMMA =       7,
     EVENT_MSG_TURN_OFF =        8,
     EVENT_MSG_TURN_ON =         9,
-    EVENT_MSG_CONNECT =         10;
+    EVENT_MSG_CONNECT =         10,
+    EVENT_MSG_NEW_PORT =        11;
 
 // Receive events
 var EVENT_REC_RETURN =          0,
@@ -42,8 +49,14 @@ function clamp(val, min, max) {
     return Math.max(Math.min(val, max), min);
 }
 
-function startServer() {
-    if (server) return server;
+function startServer(callback, port, host) {
+    callback = callback || function(){};
+    if (server) return callback(true);
+
+    port = port || serverPort;
+    host = host || serverHost;
+    isResettingServer = false;
+    isRunning = false;
     server = net.createServer(function(socket){
         socket.name = socket.remoteAddress + ":" + socket.remotePort;
         clients.push(socket);
@@ -69,32 +82,44 @@ function startServer() {
                 case EVENT_REC_RETURN:
                     if (queue.length) {
                         var obj = queue.shift();
-                        var callback = obj.callback;
-                        if (callback) {
-                            switch(obj.event) {
-                                case EVENT_MSG_COUNT_LEDS:
-                                    callback.call(exports, parseInt(data, 10));
-                                    break;
-                                case EVENT_MSG_SET_BRIGHTNESS:
-                                case EVENT_MSG_SET_GAMMA:
-                                case EVENT_MSG_SET_SMOOTH:
-                                case EVENT_MSG_SET_ALL_COLOR:
-                                case EVENT_MSG_SET_COLORS:
-                                case EVENT_MSG_SET_COLOR:
-                                case EVENT_MSG_TURN_ON:
-                                case EVENT_MSG_TURN_OFF:
-                                    callback.call(exports, data == '1');
-                                    break;
-                                case EVENT_MSG_CONNECT:
-                                    if (data != '1') {      // Failed
-                                        queue = [];
-                                    }
-                                    callback.call(exports, data == '1');
-                                    break;
+                        if (obj.event == EVENT_MSG_NEW_PORT) {
+                            if (data == '1') {
+                                // Disconnect user and start the server over again
+                                isResettingServer = true;
+                                close(function(){
+                                    startServer(obj.callback);
+                                });
+                            } else {
+                                throw new Error("Failed to receive true after setting new port.");
                             }
+                        } else {
+                            var callback = obj.callback;
+                            if (callback) {
+                                switch(obj.event) {
+                                    case EVENT_MSG_COUNT_LEDS:
+                                        callback.call(exports, parseInt(data, 10));
+                                        break;
+                                    case EVENT_MSG_SET_BRIGHTNESS:
+                                    case EVENT_MSG_SET_GAMMA:
+                                    case EVENT_MSG_SET_SMOOTH:
+                                    case EVENT_MSG_SET_ALL_COLOR:
+                                    case EVENT_MSG_SET_COLORS:
+                                    case EVENT_MSG_SET_COLOR:
+                                    case EVENT_MSG_TURN_ON:
+                                    case EVENT_MSG_TURN_OFF:
+                                        callback.call(exports, data == '1');
+                                        break;
+                                    case EVENT_MSG_CONNECT:
+                                        if (data != '1') {      // Failed
+                                            queue = [];
+                                        }
+                                        callback.call(exports, data == '1');
+                                        break;
+                                }
+                            }
+                            isRunning = false;
+                            runQueue();
                         }
-                        isRunning = false;
-                        runQueue();
                     }
                     break;
                 case EVENT_REC_IS_RUNNING:
@@ -128,6 +153,9 @@ function startServer() {
         });
 
         socket.on("end", function(){
+            if (isResettingServer) {
+                return;
+            }
             clients.splice(clients.indexOf(socket), 1);
             //log(socket.name + " disconnected\n");
 
@@ -146,7 +174,12 @@ function startServer() {
             throw new e;
         });
     });
-    return server;
+
+    server.listen(port, host, function(){
+        serverPort = port;
+        serverHost = host;
+        callback(true);
+    });
 }
 
 function runQueue() {
@@ -216,6 +249,15 @@ function turnOff(callback) {
     queueEvent(EVENT_MSG_TURN_OFF, null, callback);
 }
 
+function setPort(port, callback) {
+    var p = parseInt(port, 10);
+    if (isNaN(p)) {
+        throw new Error("Port is invalid", port);
+    }
+    serverPort = p;
+    queueEvent(EVENT_MSG_NEW_PORT, p, callback);
+}
+
 function signalReconnect(callback) {
     queueEvent(EVENT_MSG_CONNECT, null, callback);
 }
@@ -244,7 +286,7 @@ function close(callback) {
     });
 }
 
-exports.Server = startServer;
+exports.startServer = startServer;
 exports.getCountLeds = getCountLeds;
 exports.setColor = setColor;
 exports.setColors = setColors;
@@ -256,4 +298,6 @@ exports.turnOn = turnOn;
 exports.turnOff = turnOff;
 exports.signalReconnect = signalReconnect;
 exports.on = on;
+exports.setPort = setPort;
+exports.getPort = function() { return serverPort; };
 exports.close = close;

@@ -12,7 +12,6 @@ var currentObj = null;
 var isConnected = false;
 var server = null;
 var connectionTimer = null;
-var port = 6000;
 var api = {};
 
 // Default States, these will change based on the config file
@@ -60,10 +59,10 @@ var console = {
 //  Private functions
 //  ============================================
 function startServer(port, host) {
-    server = filter.Server();
-    server.listen(port, host, function(){
-        log("Running socket server", host, ":", port);
-    });
+    filter.startServer(function() {
+        log("Runnign socket server");
+    }, port, host);
+
     filter.on("socketconnect", filterConnected)
     .on("socketdisconnect", function() {
         // DO NOT SET isConnected = false because this would cause a 2nd connect event
@@ -133,9 +132,16 @@ function stopConnectionPing() {
     connectionTimer = null;
 }
 
-function setPort(p) {
-    port = p;
-    saveSettings();
+function setPort(p, callback) {
+    filter.setPort(p, function(success){
+        if (success) {
+            log("Changed port to", p);
+            saveSettings(callback);
+        } else {
+            log("Failed to change port");
+            callback.call(api, success);
+        }
+    });
 }
 
 //  ============================================
@@ -145,7 +151,7 @@ function saveSettings(callback) {
     callback = callback || function(){};
     // Save the file
     var data = "[General]\n" +
-                "port=" + port + "\n" +
+                "port=" + filter.getPort() + "\n" +
                 "\n[State]\n" +
                 "smooth=" + states.smooth + "\n" +
                 "brightness="+ states.brightness + "\n" +
@@ -158,8 +164,9 @@ function saveSettings(callback) {
     });
 }
 
-function loadSettings(callback) {
+function readSettings(callback) {
     // Load the data into this API
+    var values = {};
     fs.exists(INI_FILE, function(exists) {
         if (exists) {
             fs.readFile(INI_FILE, function(err, contents) {
@@ -184,23 +191,23 @@ function loadSettings(callback) {
                     var command = line.substring(0, s).trim();
                     var value = line.substring(s + 1).trim();
                     if (command == "port") {
-                        port = parseInt(value, 10);
+                        values.port = parseInt(value, 10);
                     } else if (command == "smooth") {
-                        states.smooth = parseInt(value, 10);
+                        values.smooth = parseInt(value, 10);
                     } else if (command == "brightness") {
-                        states.brightness = parseInt(value, 10);
+                        values.brightness = parseInt(value, 10);
                     } else if (command == "gamma") {
-                        states.gamma = parseFloat(value, 10);
+                        values.gamma = parseFloat(value, 10);
                     } else {
                         throw new Error("INI file is not formatted correctly of command", command);
                     }
                 }
                 if (callback) {
-                    callback(true);
+                    callback(values);
                 }
             });
         } else if (callback) {
-            callback(false);
+            callback();
         }
     });
 }
@@ -534,22 +541,32 @@ api.setBrightness = setBrightness;
 api.turnOn = turnOn;
 api.turnOff = turnOff;
 api.on = on;
-api.getPort = function(){ return port; };
+api.getPort = function(){ return filter.getPort(); };
 api.getSmooth = function(){ return Math.round((states.smooth / 255.0) * 10) * 10; };
 api.getGamma = function(){ return states.gamma; };
 api.getBrightness = function(){ return states.brightness; };
 
 exports.init = function(callback){
     // Start by loading the file and then start the server
-    loadSettings(function(fileExists){
-        if (fileExists) {
-            startServer(port, "127.0.0.1");
+    readSettings(function(data){
+        if (data) {
+            // Update values from the settings file
+            if (data.smooth) {
+                states.smooth = data.smooth;
+            }
+            if (data.brightness) {
+                states.brightness = data.brightness;
+            }
+            if (data.gamma) {
+                states.gamma = data.gamma;
+            }
+            startServer(data.port);
             if (callback) {
                 callback(api);
             }
         } else {
             saveSettings(function() {
-                startServer(port, "127.0.0.1");
+                startServer();     // null port uses default
                 if (callback) {
                     callback(api);
                 }
