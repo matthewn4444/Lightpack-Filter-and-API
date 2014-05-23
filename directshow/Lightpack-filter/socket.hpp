@@ -99,6 +99,7 @@ public:
         if (mConnectSocket != INVALID_SOCKET) {
             closesocket(mConnectSocket);
             mConnectSocket = INVALID_SOCKET;
+            mRecvTimeout = 0;
             log("CLose socket");
         }
     }
