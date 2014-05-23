@@ -26,15 +26,16 @@ lightpack.a(document);
 
 lightpack.init(function(api){
     lightApi = api;
+
+    // Apply the data from API to the GUI
+    $("#brightness").val(Math.round(lightpack.getBrightness() / 10.0) * 10);
+    $("#smooth").val(Math.round(lightpack.getSmooth() / 10.0) * 10);
+    $("#port").val(lightpack.getPort());
+
     lightApi.on("connect", function(){
         log("Lights have connected");
         numLeds = lightApi.getCountLeds();
         log("Got", numLeds, "Leds");
-
-        // Apply the data from API to the GUI
-        $("#brightness").val(Math.round(lightApi.getBrightness() / 10.0) * 10);
-        $("#smooth").val(Math.round(lightApi.getSmooth() / 10.0) * 10);
-        $("#port").val(lightApi.getPort());
     }).on("disconnect", function(){
         log("Lights have disconnected");
     }).on("play", function(){
@@ -69,13 +70,9 @@ var inputDelay = (function(){
 
 win.on("close", function(){
     win.hide();
-    if (lightApi) {
-        lightpack.close(function(){
-            win.close(true);
-        });
-    } else {
+    lightpack.close(function(){
         win.close(true);
-    }
+    });
 });
 
 $("#toggleOnOff").click(function(){
@@ -113,22 +110,22 @@ $("#randomColorAll").click(function(){
 
 $("#brightness").change(function(){
     var val = $(this).val();
-    lightApi.setBrightness(parseInt(val, 10));
+    lightpack.setBrightness(parseInt(val, 10));
 });
 
 $("#smooth").change(function(){
     var val = $(this).val();
     var percent = parseInt(val, 10);
-    lightApi.setSmooth(parseInt(val, 10));
+    lightpack.setSmooth(parseInt(val, 10));
 });
 
 $("#port").keyup(function(){
     inputDelay(function(){
         var port = parseInt($("#port").val(), 10);
         if (!isNaN(port)) {
-            lightApi.setPort(port, function(success){
+            lightpack.setPort(port, function(success){
                 if (!success) {
-                    $("#port").val(lightApi.getPort());
+                    $("#port").val(lightpack.getPort());
                 }
             });
         }

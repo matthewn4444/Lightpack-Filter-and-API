@@ -134,11 +134,13 @@ function stopConnectionPing() {
 
 function setPort(p, callback) {
     filter.setPort(p, function(success){
+        saveSettings(callback);
         if (success) {
             log("Changed port to", p);
-            saveSettings(callback);
         } else {
-            log("Failed to change port");
+            log("Couldn't change port because filter is not connected");
+        }
+        if (callback) {
             callback.call(api, success);
         }
     });
@@ -462,27 +464,19 @@ function setColorToAll(r, g, b, callback) {
 }
 
 function setGamma(value, callback) {
-    return proxyFunc(function(success){
-        if (success) {
-            states.gamma = value;
-            saveSettings();
-        }
-        if (callback) {
-            callback.call(api, success);
-        }
-    }, [value]);
+    if (value != states.gamma) {
+        states.gamma = value;
+        saveSettings();
+    }
+    return proxyFunc(callback, [value]);
 }
 
 function setSmooth(value, callback) {
-    return proxyFunc(function(success){
-        if (success) {
-            states.smooth = value;
-            saveSettings();
-        }
-        if (callback) {
-            callback.call(api, success);
-        }
-    }, [Math.floor(value)]);
+    if (states.smooth != value) {
+        states.smooth = value;
+        saveSettings();
+    }
+    return proxyFunc(callback, [Math.floor(value)]);
 }
 
 function setExportedSmooth(value, callback) {
@@ -490,15 +484,11 @@ function setExportedSmooth(value, callback) {
 }
 
 function setBrightness(value, callback) {
-    return proxyFunc(function(success){
-        if (success) {
-            states.brightness = value;
-            saveSettings();
-        }
-        if (callback) {
-            callback.call(api, success);
-        }
-    }, [value]);
+    if (states.brightness != value) {
+        states.brightness = value;
+        saveSettings();
+    }
+    return proxyFunc(callback, [value]);
 }
 
 function turnOn(callback) {
@@ -527,24 +517,26 @@ function on(eventName, fn) {
     return api;
 }
 
-// Implementation
+// API requires connection
 api.connect = connect;
 api.disconnect = disconnect;
 api.getCountLeds = function(){ return states.numberOfLeds; };
 api.setColor = setColor;
 api.setColors = setColors;
 api.setColorToAll = setColorToAll;
-api.setGamma = setGamma;
-api.setSmooth = setExportedSmooth;
-api.setPort = setPort;
-api.setBrightness = setBrightness;
 api.turnOn = turnOn;
 api.turnOff = turnOff;
 api.on = on;
-api.getPort = function(){ return filter.getPort(); };
-api.getSmooth = function(){ return Math.round((states.smooth / 255.0) * 10) * 10; };
-api.getGamma = function(){ return states.gamma; };
-api.getBrightness = function(){ return states.brightness; };
+
+// API doesn't require connection
+exports.setGamma = setGamma;
+exports.setSmooth = setExportedSmooth;
+exports.setPort = setPort;
+exports.setBrightness = setBrightness;
+exports.getPort = function(){ return filter.getPort(); };
+exports.getSmooth = function(){ return Math.round((states.smooth / 255.0) * 10) * 10; };
+exports.getGamma = function(){ return states.gamma; };
+exports.getBrightness = function(){ return states.brightness; };
 
 exports.init = function(callback){
     // Start by loading the file and then start the server
@@ -560,10 +552,12 @@ exports.init = function(callback){
             if (data.gamma) {
                 states.gamma = data.gamma;
             }
-            startServer(data.port);
-            if (callback) {
-                callback(api);
-            }
+            filter.setPort(data.port, function(){
+                startServer(data.port);
+                if (callback) {
+                    callback(api);
+                }
+            });
         } else {
             saveSettings(function() {
                 startServer();     // null port uses default
