@@ -8,7 +8,7 @@ function assertCallback(flag) {
     assert.ok(flag);
 }
 
-client.connect({apikey: key}, function(connected){
+client.connect(function(connected){
     assert.ok(connected);
     console.log("Connected");
     
@@ -53,6 +53,6 @@ client.connect({apikey: key}, function(connected){
             }, 1000);
         }, 1000);
     });
-});
+}, {apikey: key});
 
 console.log("Starting...");
