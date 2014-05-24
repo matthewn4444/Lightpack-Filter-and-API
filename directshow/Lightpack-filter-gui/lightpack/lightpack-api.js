@@ -137,8 +137,6 @@ function setPort(p, callback) {
         saveSettings();
         if (success) {
             log("Changed port to", p);
-        } else {
-            log("Couldn't change port because filter is not connected");
         }
         if (callback) {
             callback.call(api, success);

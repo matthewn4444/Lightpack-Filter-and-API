@@ -245,21 +245,25 @@ function setPort(port, callback) {
     if (isNaN(p)) {
         throw new Error("Port is invalid", port);
     }
-    serverPort = p;
+    if (serverPort != p) {
+        serverPort = p;
 
-    // Disconnect user and start the server over again
-    isResettingServer = true;
-    var message = formatMessage(EVENT_MSG_NEW_PORT, p);
-    for (var i = 0; i < clients.length; i++) {
-        clients[i].end(message);
-    }
-    clients = [];
-    if (server) {
-        close(function(){
+        // Disconnect user and start the server over again
+        isResettingServer = true;
+        var message = formatMessage(EVENT_MSG_NEW_PORT, p);
+        for (var i = 0; i < clients.length; i++) {
+            clients[i].end(message);
+        }
+        clients = [];
+        if (server) {
+            close(function(){
+                startServer(callback);
+            });
+        } else {
             startServer(callback);
-        });
-    } else {
-        startServer(callback);
+        }
+    } else if (callback) {
+        callback.call(exports, true);
     }
 }
 
