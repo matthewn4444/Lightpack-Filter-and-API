@@ -106,6 +106,7 @@ function startServer(callback, port, host) {
                                     break;
                             }
                         }
+                        isRunning = false;
                         runQueue();
                     }
                     break;
@@ -128,6 +129,7 @@ function startServer(callback, port, host) {
                     if (listeners.disconnect) {
                         listeners.disconnect.call(exports);
                     }
+                    isRunning = false;
                     runQueue();
                     break;
                 case EVENT_REC_INVALID_ARGS:
@@ -136,7 +138,6 @@ function startServer(callback, port, host) {
                     throw new Error("Invalid arguments sent to filter", obj.event);
                     break;
             }
-            isRunning = false;
         });
 
         socket.on("end", function(){
