@@ -82,40 +82,28 @@ function startServer(callback, port, host) {
                 case EVENT_REC_RETURN:
                     if (queue.length) {
                         var obj = queue.shift();
-                        if (obj.event == EVENT_MSG_NEW_PORT) {
-                            if (data == '1') {
-                                // Disconnect user and start the server over again
-                                isResettingServer = true;
-                                close(function(){
-                                    startServer(obj.callback);
-                                });
-                            } else {
-                                throw new Error("Failed to receive true after setting new port.");
-                            }
-                        } else {
-                            var callback = obj.callback;
-                            if (callback) {
-                                switch(obj.event) {
-                                    case EVENT_MSG_COUNT_LEDS:
-                                        callback.call(exports, parseInt(data, 10));
-                                        break;
-                                    case EVENT_MSG_SET_BRIGHTNESS:
-                                    case EVENT_MSG_SET_GAMMA:
-                                    case EVENT_MSG_SET_SMOOTH:
-                                    case EVENT_MSG_SET_ALL_COLOR:
-                                    case EVENT_MSG_SET_COLORS:
-                                    case EVENT_MSG_SET_COLOR:
-                                    case EVENT_MSG_TURN_ON:
-                                    case EVENT_MSG_TURN_OFF:
-                                        callback.call(exports, data == '1');
-                                        break;
-                                    case EVENT_MSG_CONNECT:
-                                        if (data != '1') {      // Failed
-                                            queue = [];
-                                        }
-                                        callback.call(exports, data == '1');
-                                        break;
-                                }
+                        var callback = obj.callback;
+                        if (callback) {
+                            switch(obj.event) {
+                                case EVENT_MSG_COUNT_LEDS:
+                                    callback.call(exports, parseInt(data, 10));
+                                    break;
+                                case EVENT_MSG_SET_BRIGHTNESS:
+                                case EVENT_MSG_SET_GAMMA:
+                                case EVENT_MSG_SET_SMOOTH:
+                                case EVENT_MSG_SET_ALL_COLOR:
+                                case EVENT_MSG_SET_COLORS:
+                                case EVENT_MSG_SET_COLOR:
+                                case EVENT_MSG_TURN_ON:
+                                case EVENT_MSG_TURN_OFF:
+                                    callback.call(exports, data == '1');
+                                    break;
+                                case EVENT_MSG_CONNECT:
+                                    if (data != '1') {      // Failed
+                                        queue = [];
+                                    }
+                                    callback.call(exports, data == '1');
+                                    break;
                             }
                         }
                         runQueue();
@@ -189,11 +177,14 @@ function runQueue() {
     }
 }
 
+function formatMessage(eventId, data) {
+    var eventCode = String.fromCharCode('a'.charCodeAt(0) + eventId);
+    return eventCode + ((data ? data : "") + "\n");
+}
+
 function queueEvent(eventId, data, callback) {
     if (clients.length) {
-        var eventCode = String.fromCharCode('a'.charCodeAt(0) + eventId);
-        var q = "" + eventCode + (data ? data : "") + "\n";
-        var obj = { event: eventId, query: q, callback: callback };
+        var obj = { event: eventId, query: formatMessage(eventId, data), callback: callback };
         queue.push(obj);
         runQueue();
     } else if (callback) {
@@ -254,7 +245,21 @@ function setPort(port, callback) {
         throw new Error("Port is invalid", port);
     }
     serverPort = p;
-    queueEvent(EVENT_MSG_NEW_PORT, p, callback);
+
+    // Disconnect user and start the server over again
+    isResettingServer = true;
+    var message = formatMessage(EVENT_MSG_NEW_PORT, p);
+    for (var i = 0; i < clients.length; i++) {
+        clients[i].end(message);
+    }
+    clients = [];
+    if (server) {
+        close(function(){
+            startServer(callback);
+        });
+    } else {
+        startServer(callback);
+    }
 }
 
 function signalReconnect(callback) {

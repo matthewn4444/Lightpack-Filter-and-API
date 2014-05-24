@@ -134,7 +134,7 @@ function stopConnectionPing() {
 
 function setPort(p, callback) {
     filter.setPort(p, function(success){
-        saveSettings(callback);
+        saveSettings();
         if (success) {
             log("Changed port to", p);
         } else {
