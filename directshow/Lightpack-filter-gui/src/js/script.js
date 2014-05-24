@@ -1,4 +1,4 @@
-var lightpack = require("./lightpack/lightpack-api"),
+var lightpack = require("lightpack/lightpack-api"),
     gui = require('nw.gui'),
     lightApi = null,
     win = gui.Window.get();

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-var client = require("./../lightpack/prismatik-client");
+var client = require("lightpack/prismatik-client");
 var assert = require("assert");
 
 var key = "{cb832c47-0a85-478c-8445-0b20e3c28cdd}";
