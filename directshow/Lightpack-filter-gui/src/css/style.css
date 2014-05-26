@@ -1,0 +1,98 @@
+* {
+    -webkit-box-sizing: border-box;
+}
+
+html, body, ul {
+    position: relative;
+    width:100%;
+    height:100%;
+}
+
+nav {
+    top:0;
+    bottom:0;
+    width:200px;
+    position:absolute;
+    background:skyblue;
+}
+
+section#content {
+    top:0;
+    bottom:0;
+    width:100%;
+    height:100%;
+    padding-left:200px;
+}
+
+html, body, ul, li {
+    margin:0;
+    padding:0;
+    list-style-type:none;
+}
+
+nav li {
+    border:1px blue solid;
+    height:33%;
+    text-align:center;
+}
+
+nav li span {
+    position:relative;
+    top:50%;
+    -webkit-transform:transition(-50%);
+}
+
+#content div.page {
+    display:none;
+    width:100%;
+    height:100%;
+    padding:20px;
+    position:relative;
+}
+
+#content div.page.open {
+    display:block;
+}
+
+#content div.page .reset-default-button {
+    position:absolute;
+    bottom:20px;
+    right:20px;
+}
+
+fieldset {
+    border:none;
+    margin-bottom:20px;
+    position:relative;
+}
+
+fieldset div.slider.with-labels {
+    margin-left:50px;
+    margin-right:50px;
+}
+
+fieldset span.slider-label.left {
+    float:left;
+}
+
+fieldset span.slider-label.right {
+    float:right;
+}
+
+fieldset label {
+    margin-bottom:10px;
+    display:block;
+}
+
+fieldset input {
+    width:80%;
+    position: absolute;
+    top:0;
+    right:0;
+}
+
+fieldset button {
+    position:absolute;
+    right:0;
+    top:0;
+}

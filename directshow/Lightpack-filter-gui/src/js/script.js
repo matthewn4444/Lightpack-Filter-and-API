@@ -28,6 +28,9 @@ lightpack.init(function(api){
     lightApi = api;
 
     // Apply the data from API to the GUI
+    setBrightnessSlider(lightpack.getBrightness());
+    setSmoothSlider(lightpack.getSmooth());
+
     $("#brightness").val(Math.round(lightpack.getBrightness() / 10.0) * 10);
     $("#smooth").val(Math.round(lightpack.getSmooth() / 10.0) * 10);
     $("#port").val(lightpack.getPort());
@@ -36,6 +39,9 @@ lightpack.init(function(api){
         log("Lights have connected");
         numLeds = lightApi.getCountLeds();
         log("Got", numLeds, "Leds");
+
+        var color = randomColor();
+        lightApi.setColorToAll(color[0], color[1], color[2]);
     }).on("disconnect", function(){
         log("Lights have disconnected");
     }).on("play", function(){
@@ -44,6 +50,24 @@ lightpack.init(function(api){
         log("Filter was paused");
     }).connect();
 });
+
+function setLPBrightness(value) {
+	if (value != lightpack.getBrightness()) {
+		lightpack.setBrightness(value);
+	}
+}
+
+function setLPGamma(value) {
+	if (value != lightpack.getGamma()) {
+		lightpack.setGamma(value);
+	}
+}
+
+function setLPSmooth(value) {
+	if (value != lightpack.getSmooth()) {
+		lightpack.setSmooth(value);
+	}
+}
 
 //  ============================================
 //  GUI stuff
@@ -75,13 +99,11 @@ win.on("close", function(){
     });
 });
 
-$("#toggleOnOff").click(function(){
+$("#turn-off-on").click(function(){
     if ($(this).text() == "Turn On") {
-        $(this).text("Turn Off");
-        lightApi.turnOn();
-    } else {
-        $(this).text("Turn On");
         lightApi.turnOff();
+    } else {
+        lightApi.turnOn();
     }
 });
 
