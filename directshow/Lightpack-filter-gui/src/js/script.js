@@ -30,10 +30,10 @@ lightpack.init(function(api){
     // Apply the data from API to the GUI
     setBrightnessSlider(lightpack.getBrightness());
     setSmoothSlider(lightpack.getSmooth());
+    setPortInput(lightpack.getPort());
 
     $("#brightness").val(Math.round(lightpack.getBrightness() / 10.0) * 10);
     $("#smooth").val(Math.round(lightpack.getSmooth() / 10.0) * 10);
-    $("#port").val(lightpack.getPort());
 
     lightApi.on("connect", function(){
         log("Lights have connected");
@@ -52,21 +52,27 @@ lightpack.init(function(api){
 });
 
 function setLPBrightness(value) {
-	if (value != lightpack.getBrightness()) {
-		lightpack.setBrightness(value);
-	}
+    if (value != lightpack.getBrightness()) {
+        lightpack.setBrightness(value);
+    }
 }
 
 function setLPGamma(value) {
-	if (value != lightpack.getGamma()) {
-		lightpack.setGamma(value);
-	}
+    if (value != lightpack.getGamma()) {
+        lightpack.setGamma(value);
+    }
 }
 
 function setLPSmooth(value) {
-	if (value != lightpack.getSmooth()) {
-		lightpack.setSmooth(value);
-	}
+    if (value != lightpack.getSmooth()) {
+        lightpack.setSmooth(value);
+    }
+}
+
+function setLPPort(port) {
+    if (!isNaN(port)) {
+        lightpack.setPort(port);
+    }
 }
 
 //  ============================================
@@ -83,14 +89,6 @@ function randomColor() {
     }
     return color;
 }
-
-var inputDelay = (function(){
-    var timer = 0;
-    return function(callback, ms){
-        clearTimeout (timer);
-        timer = setTimeout(callback, ms);
-    };
-})();
 
 win.on("close", function(){
     win.hide();
@@ -139,17 +137,4 @@ $("#smooth").change(function(){
     var val = $(this).val();
     var percent = parseInt(val, 10);
     lightpack.setSmooth(parseInt(val, 10));
-});
-
-$("#port").keyup(function(){
-    inputDelay(function(){
-        var port = parseInt($("#port").val(), 10);
-        if (!isNaN(port)) {
-            lightpack.setPort(port, function(success){
-                if (!success) {
-                    $("#port").val(lightpack.getPort());
-                }
-            });
-        }
-    }, 1000);
 });
