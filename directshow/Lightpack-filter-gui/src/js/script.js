@@ -30,10 +30,8 @@ lightpack.init(function(api){
     // Apply the data from API to the GUI
     setBrightnessSlider(lightpack.getBrightness());
     setSmoothSlider(lightpack.getSmooth());
+    setGammaSlider(lightpack.getGamma());
     setPortInput(lightpack.getPort());
-
-    $("#brightness").val(Math.round(lightpack.getBrightness() / 10.0) * 10);
-    $("#smooth").val(Math.round(lightpack.getSmooth() / 10.0) * 10);
 
     lightApi.on("connect", function(){
         log("Lights have connected");

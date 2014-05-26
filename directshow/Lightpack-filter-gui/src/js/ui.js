@@ -2,7 +2,7 @@ function setAPIValueFromSlider(id, value) {
     if (id == "brightness-slider") {
         setLPBrightness(value);
     } else if (id == "gamma-slider") {
-        //setLPGamma() TODO
+        setLPGamma(value);
     } else if (id == "smooth-slider") {
         setLPSmooth(value);
     }
