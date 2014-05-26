@@ -18,7 +18,7 @@ using v8::Local;
     (int)v8::Local<v8::Integer>::Cast(args[i])->Int32Value()
 
 #define ARG2DOUBLE(i) \
-    (double)Local<v8::Integer>::Cast(args[i])->Value()
+    (double)Local<v8::Number>::Cast(args[i])->Value()
 
 // Function helpers
 // TODO make this work with node-gyp as well
