@@ -96,3 +96,18 @@ fieldset button {
     right:0;
     top:0;
 }
+
+/* Led Map Screen*/
+#led-position-screen {
+    width: 400px;
+    height:250px;
+    border:1px solid black;
+    position:relative;
+}
+
+#led-position-screen .led-item {
+    width:20px;
+    height:20px;
+    background:red;
+    position:absolute;
+}
