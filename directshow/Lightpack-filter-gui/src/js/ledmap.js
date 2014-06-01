@@ -113,16 +113,13 @@ function getLedPositions() {
 function arrangeDefault() {
     var $leds = $ledscreen.find(".holder");
     if ($leds.length) {
-        $leds.eq(0).attr("data-direction", "up");
         var numOfGroups = $leds.length / 10,
-            ledWidth = $leds.eq(0).outerWidth(),
             verticalParts = 3 * numOfGroups,
             horizontalParts = 4 * numOfGroups,
-
-            ledWidthVPercent = ledWidth * 1.0 / screenHeight;
-            verticalBlockSize = (1 - ledWidthVPercent * verticalParts) / (verticalParts + 1.0);
-            ledWidthHPercent = ledWidth * 1.0 / screenWidth;
-            horizontalBlockSize = (1 - ledWidthHPercent * horizontalParts) / (horizontalParts + 1.0);
+            ledWidthVPercent = smallSide * 1.0 / screenHeight,
+            verticalBlockSize = (1 - ledWidthVPercent * verticalParts) / (verticalParts + 1.0),
+            ledWidthHPercent = smallSide * 1.0 / screenWidth,
+            horizontalBlockSize = (1 - ledWidthHPercent * horizontalParts) / (horizontalParts + 1.0),
             x = 0, y = 0;
 
         // Left
@@ -156,7 +153,7 @@ function setDefaultGroups(numOfGroups) {
      *      nothing on the bottom.
      *      Order of leds usually right, top, left
      */
-     numOfGroups = numOfGroups || 1;
+    numOfGroups = numOfGroups || 1;
     var $leds = $ledscreen.find(".holder");
     if ($leds.length != numOfGroups * 10) {
         $leds.remove();
@@ -175,12 +172,10 @@ function arrangeLed($holder, side, percentValue) {
      *        3 - bottom
      */
     $holder.attr("data-direction", "up");
-    var ledWidth = $holder.outerWidth(),
-        ledHeight = $holder.outerHeight(),
-        verticalPos = Math.round(screenHeight * percentValue / 100.0) - ledWidth / 2,
-        horizontalPos = Math.round(screenWidth * percentValue / 100.0) - ledWidth / 2,
-        leftBound = ledWidth / 4.0, rightBound = (screenWidth - ledWidth) - ledWidth / 4.0,
-        topBound = leftBound, bottomBound = (screenHeight - ledWidth) - ledWidth / 4.0;
+    var verticalPos = Math.round(screenHeight * percentValue / 100.0) - smallSide / 2,
+        horizontalPos = Math.round(screenWidth * percentValue / 100.0) - smallSide / 2,
+        leftBound = smallSide / 4.0, rightBound = (screenWidth - smallSide) - smallSide / 4.0,
+        topBound = leftBound, bottomBound = (screenHeight - smallSide) - smallSide / 4.0;
 
     switch(side) {
         case 0:    // Right
