@@ -78,10 +78,10 @@ function arrangeLed($holder, side, percentValue) {
             $holder.attr("data-direction", "up").css({ left: horizontalPos, top: 0 });
             break;
         case 2:    // Right
-            $holder.attr("data-direction", "right").css({ left: screenWidth, top: verticalPos });
+            $holder.attr("data-direction", "right").css({ left: $border.outerWidth(), top: verticalPos });
             break;
         case 3:    // Bottom
-            $holder.attr("data-direction", "down").css({ left: horizontalPos, top: screenHeight });
+            $holder.attr("data-direction", "down").css({ left: horizontalPos, top: $border.outerHeight() });
             break;
         default:
             throw new Error("Position specified is not valid");
