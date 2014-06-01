@@ -32,13 +32,12 @@ lightpack.init(function(api){
     setSmoothSlider(lightpack.getSmooth());
     setGammaSlider(lightpack.getGamma());
     setPortInput(lightpack.getPort());
-    applyDefaultLedsGroup(1);
 
     lightApi.on("connect", function(){
         log("Lights have connected");
         numLeds = lightApi.getCountLeds();
         log("Got", numLeds, "Leds");
-        applyDefaultLedsGroup(numLeds / 10);
+        Ledmap.setGroups(numLeds / 10);
 
         var color = randomColor();
         lightApi.setColorToAll(color[0], color[1], color[2]);

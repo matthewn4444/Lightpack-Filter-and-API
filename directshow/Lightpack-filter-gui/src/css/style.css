@@ -98,7 +98,7 @@ fieldset button {
 }
 
 /* Led Map Screen*/
-#led-position-screen {
+.led-map-screen {
     width: 400px;
     -webkit-box-sizing: content-box;
     height:280px;
