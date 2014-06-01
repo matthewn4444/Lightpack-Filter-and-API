@@ -100,14 +100,86 @@ fieldset button {
 /* Led Map Screen*/
 #led-position-screen {
     width: 400px;
-    height:250px;
-    border:1px solid black;
+    -webkit-box-sizing: content-box;
+    height:279px;
+    border:1px dotted red;
     position:relative;
+    margin-left:25px;
+    margin-top:25px;
 }
 
-#led-position-screen .led-item {
-    width:20px;
-    height:20px;
-    background:red;
+#led-position-screen-border {
+    border:1px solid black;
     position:absolute;
+    top:0;
+    left:0;
+    right:25px;
+    bottom:25px;
+    -webkit-box-sizing: content-box;
+}
+
+.holder {
+    position:absolute;
+    border: 1px solid green;
+    width:25px;
+    height:25px;
+}
+
+.led-item {
+    position:absolute;
+    -webkit-box-sizing: border-box;
+    display:inline-block;
+    overflow:hidden;
+    width:18px;
+    height:25px;
+    border-bottom: 2px solid black;
+    left: -45%;
+    top:0;
+}
+.led-item .pointer{
+    left:-22%;
+    position:absolute;
+    -webkit-box-sizing: border-box;
+    width: 26px;
+    height:25px;
+    background:red;
+    border: 2px solid blue;
+    -webkit-transform: rotate(45deg) skew(24deg, 24deg) translate(26%, 26%);
+}
+.holder[data-direction='left'], .holder[data-direction='right'] {
+    height:20px;
+}
+.holder[data-direction='left'] .led-item {
+    -webkit-transform: rotate(-90deg);
+    left:3px;
+    top:-70%;
+}
+.holder[data-direction='right'] .led-item {
+    left:-102%;
+    top:-70%;
+    -webkit-transform: rotate(90deg);
+}
+.holder[data-direction='down'] .led-item {
+    -webkit-transform: rotate(180deg);
+    top:-27px;
+}
+.holder[data-direction='left-up'] .led-item {
+    -webkit-transform: rotate(-45deg);
+    left:-6%;
+    top:-22%;
+}
+.holder[data-direction='right-up'] .led-item {
+    -webkit-transform: rotate(45deg);
+    left:-84%;
+    top:-19%;
+}
+.holder[data-direction='left-down'] .led-item {
+    -webkit-transform: rotate(225deg);
+    top:-96%;
+    left:-8%;
+}
+.holder[data-direction='right-down'] .led-item {
+    -webkit-transform: rotate(-225deg);
+    left:-84%;
+    top:-96%;
 }
