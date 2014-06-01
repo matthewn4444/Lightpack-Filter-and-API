@@ -1,7 +1,8 @@
 // Led Map Draggable
 var $ledscreen = $("#led-position-screen"),
     screenWidth = Math.round($ledscreen.innerWidth()),
-    screenHeight = Math.round($ledscreen.innerHeight());
+    screenHeight = Math.round($ledscreen.innerHeight()),
+    screenRatio = screenHeight / screenWidth;
 
 function arrangeLedsToDefault() {
     var $leds = $(".holder");
@@ -128,7 +129,8 @@ function addLed(side, percentValue) {
         smallSide = Math.min(s1, s2),
         largeSide = Math.max(s1, s2),
         rightEdge = screenWidth - largeSide,
-        bottomEdge = screenHeight - largeSide;
+        bottomEdge = screenHeight - largeSide,
+        prevX = 0, prevY = 0;
 
     $holder.draggable({
         containment: "parent",
@@ -175,10 +177,36 @@ function addLed(side, percentValue) {
                             .draggable("option", "axis", y > x ? "y" : "x");
                         ui.position.top = bottomEdge;
                     }
-                } else if (y < topBound && top < topBound) {    // Horizontal middle
-                    $(this).attr("data-direction", "top");
-                } else if (y > bottomBound && top > bottomBound) {  // Vertical middle
-                    $(this).attr("data-direction", "down");
+                } else {                            // Horizontal Center
+                    if (y < topBound && top < topBound) {               // Top
+                        $(this).attr("data-direction", "top");
+                    } else if (y > bottomBound && top > bottomBound) {  // Bottom
+                        $(this).attr("data-direction", "down");
+                    } else {                                            // Vertical middle
+                        // Move it to the left if equals or if user moved mouse above
+                        // the diagonal (eq of line: y-(h/w)*x=0) to below
+                        // For coming from bottom up, the equation y+(h/w)*x-h=0 is used
+                        if (x < screenWidth / 2) {
+                            // Moving mouse down
+                            if (    prevY - screenRatio * prevX < 0 && y - screenRatio * x > 0
+                            // Moving mouse up
+                            || prevY + screenRatio * prevX - screenHeight > 0
+                            && y + screenRatio * x - screenHeight < 0) {
+                                $(this).attr("data-direction", "left").draggable("option", "axis", "y")
+                                    .css({ left: 0, top: ui.position.left });
+                                }
+                        } else {
+                            // Moving mouse down
+                            if (prevY - screenRatio * (screenWidth - prevX) < 0
+                            && y - screenRatio * (screenWidth - x) > 0
+                            // Moving mouse up
+                            || prevY + screenRatio * (screenWidth - prevX) - screenHeight > 0
+                            && y + screenRatio * (screenWidth - x) - screenHeight < 0) {
+                                $(this).attr("data-direction", "right").draggable("option", "axis", "y")
+                                    .css({ left: rightEdge, top: ui.position.left });
+                            }
+                        }
+                    }
                 }
             } else {
                 if (y < topBound) {                 // Top
@@ -215,12 +243,41 @@ function addLed(side, percentValue) {
                             .draggable("option", "axis", y > x ? "y" : "x");
                         ui.position.left = rightEdge;
                     }
-                } else if (x < leftBound && left < leftBound) {
-                    $(this).attr("data-direction", "left");
-                } else if (x > rightBound && left > rightBound) {
-                    $(this).attr("data-direction", "right");
+                } else {                            // Vertical middle
+                    if (x < leftBound && left < leftBound) {            // Left
+                        $(this).attr("data-direction", "left");
+                    } else if (x > rightBound && left > rightBound) {   // Right
+                        $(this).attr("data-direction", "right");
+                    } else {                                            // Horizontal middle
+                        // Move it to top or bottom
+                        //  Top   : same equation as above, '> 0' -> '< 0'
+                        //  Bottom: same equation as above, '< 0' -> '> 0'
+                        if (y < screenHeight / 2) {
+                            // Moving mouse right
+                            if (prevY - screenRatio * prevX > 0 && y - screenRatio * x < 0
+                            // Moving mouse left
+                            || prevY - screenRatio * (screenWidth - prevX) > 0
+                            && y - screenRatio * (screenWidth - x) < 0) {
+                                $(this).attr("data-direction", "top").draggable("option", "axis", "x")
+                                    .css({ left: ui.position.top, top: 0 });
+                                }
+                        } else {
+                            // Moving mouse left
+                            if ((screenHeight - prevY) - screenRatio * prevX > 0
+                            && (screenHeight - y) - screenRatio * x < 0
+                            // Moving mouse right
+                            || (screenHeight - prevY) - (screenWidth - prevX) > 0
+                            && (screenHeight - y) - (screenWidth - x) < 0) {
+                                console.log("yooo")
+                                $(this).attr("data-direction", "down").draggable("option", "axis", "x")
+                                    .css({ left: ui.position.top, top: bottomEdge });
+                            }
+                        }
+                    }
                 }
             }
+            prevX = x;
+            prevY = y;
         },
     });
     arrangeLed($holder, side, percentValue);
