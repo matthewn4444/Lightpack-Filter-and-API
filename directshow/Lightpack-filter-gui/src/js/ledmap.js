@@ -1,4 +1,5 @@
-/*  Draggable Led Maps
+/*
+ *  Draggable Led Maps
  *      User sets the position of the leds via interactive map
  *
  *  Dependencies: jQuery and jQuery.ui
@@ -15,13 +16,27 @@
  *      Ledmap.setGroups(n)
  *
  *  Arrange all the Leds to their default positions
- *      arrangeDefault()
+ *      Ledmap.arrangeDefault()
+ *
+ *  Get all the led's position by side and percentage position
+ *      @return returns an array of object data with the format: { side:<0-3>, percent: <0-100> }
+ *      Ledmap.getPositions()
+ *
+ *  Set all the led's position
+ *      @params positions   an array of position values of the format:{ side:<0-3>, percent: <0-100> }
+ *      Ledmap.setPositions(positions)
  *
  *  Set dragging event listeners
  *      @param eventName    String event name
  *      @param callback     Function that gets called when event occurs
- *      on(eventName, callback)
+ *      Ledmap.on(eventName, callback)
  *    Possible Events: start | drag | end
+ *
+ *  Side Data:
+ *      0 = Right
+ *      1 = Top
+ *      2 = Left
+ *      3 = Bottom
  */
 (function(w){
 
@@ -66,6 +81,33 @@ function handleListeners(eventName, fn) {
             listeners[eventName] = fn;
         }
     }
+}
+
+function setLedPositions(positions) {
+    if ($ledscreen == null) {
+        throw new Error("Did not run Ledmap.init($screen)");
+    }
+    if (!Array.isArray(positions)) {
+        throw new Error("Did not set the led positions correctly with an array.");
+    }
+    var $leds = $ledscreen.find(".holder");
+    for (var i = 0; i < positions.length; i++) {
+        var side = positions[i].side,
+            percent = positions[i].percent,
+            $holder = $leds.eq(i);
+        arrangeLed($holder, side, percent);
+    }
+}
+
+function getLedPositions() {
+    var values = [];
+    if ($ledscreen != null) {
+        var $leds = $ledscreen.find(".holder");
+        $leds.each(function(i){
+            values.push(getPositionAndSideOfLed(i));
+        });
+    }
+    return values;
 }
 
 function arrangeDefault() {
@@ -180,6 +222,51 @@ function arrangeLed($holder, side, percentValue) {
         default:
             throw new Error("Position specified is not valid");
     }
+}
+
+function getPositionAndSideOfLed(i) {
+    if ($ledscreen != null) {
+        var $led = $ledscreen.find(".holder").eq(i);
+        if ($led.length) {
+            var side = 0, percentValue = 0,
+            verticalPercentage = (parseInt($led.css("top"), 10) + smallSide / 2) / screenHeight * 100,
+            horizontalPercentage = (parseInt($led.css("left"), 10) + smallSide / 2) / screenWidth * 100;
+            // Corners
+            switch($led.attr("data-direction")) {
+                case "left-up":
+                    side = 2;
+                    break;
+                case "right-up":
+                    // Default values are fine
+                    break;
+                case "left-down":
+                    side = 3;
+                    break;
+                case "right-down":
+                    percentValue = 100;
+                    break;
+                case "left":
+                    side = 2;
+                    percentValue = verticalPercentage;
+                    break;
+                case "up":
+                    side = 1;
+                    percentValue = horizontalPercentage;
+                    break;
+                case "right":
+                    percentValue = verticalPercentage;
+                    break;
+                case "down":
+                    side = 3;
+                    percentValue = horizontalPercentage;
+                    break;
+                default:
+                    throw new Error("There is no valid direction on this led");
+            }
+            return { side: side, percent: percentValue };
+        }
+    }
+    return null;
 }
 
 function addLed(side, percentValue) {
@@ -369,6 +456,8 @@ function addLed(side, percentValue) {
 // Implementation
 w.Ledmap = {
     init: init,
+    setPositions: setLedPositions,
+    getPositions: getLedPositions,
     setGroups: setDefaultGroups,
     arrangeDefault: arrangeDefault,
     on: handleListeners
