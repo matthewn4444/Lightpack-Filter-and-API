@@ -58,6 +58,8 @@ var $ledscreen = null,
         end: null,
         mouseover: null,
         mouseout: null,
+        startSelection: null,
+        endSelection: null
     },
     colorGroup = [
         [255, 0, 0],        // Red
@@ -99,6 +101,9 @@ function init($screen, numOfGroups) {
         if (!isDragging && $ledscreen) {
             $ledscreen.find(".holder").addClass("not-selected");
             $(this).addClass("selected").removeClass("not-selected");
+            if (listeners.startSelection) {
+                listeners.startSelection.apply(this, arguments);
+            }
         }
         if (listeners.mouseover) {
             listeners.mouseover.apply(this, arguments);
@@ -106,7 +111,10 @@ function init($screen, numOfGroups) {
     }).on("mouseout.led-map", ".holder", function(){
         isMouseOver = false;
         if (!isDragging && $ledscreen) {
-            $ledscreen.find(".holder").removeClass("not-selected").removeClass("selected");;
+            $ledscreen.find(".holder").removeClass("not-selected").removeClass("selected");
+            if (listeners.endSelection) {
+                listeners.endSelection.apply(this, arguments);
+            }
         }
         if (listeners.mouseout) {
             listeners.mouseout.apply(this, arguments);
@@ -353,7 +361,10 @@ function addLed(side, percentValue) {
         stop: function(){
             isDragging = false;
             if (!isMouseOver && $ledscreen) {
-                $ledscreen.find(".holder").removeClass("not-selected").removeClass("selected");;
+                $ledscreen.find(".holder").removeClass("not-selected").removeClass("selected");
+                if (listeners.endSelection) {
+                    listeners.endSelection.apply(this, arguments);
+                }
             }
             if (listeners.end) {
                 listeners.end.apply(this, arguments);
