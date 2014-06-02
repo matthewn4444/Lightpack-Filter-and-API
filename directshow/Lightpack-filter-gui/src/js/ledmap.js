@@ -50,13 +50,27 @@ var $ledscreen = null,
     largeSide = 0,
     rightEdge = 0,
     bottomEdge = 0,
+    isDragging = false,
+    isMouseOver = false,
     listeners = {
         start: null,
         drag: null,
         end: null,
         mouseover: null,
         mouseout: null,
-    };
+    },
+    colorGroup = [
+        [255, 0, 0],        // Red
+        [255, 255, 0],      // Yellow
+        [120, 163, 185],    // Darker Blue
+        [0, 255, 0],        // Green
+        [255, 0, 255],      // Dark Purple
+        [255, 144, 0],      // Orange
+        [0, 255, 255],      // Light blue
+        [192, 60, 68],      // Red
+        [255, 214, 160],    // Peach
+        [170, 102, 204],    // Light purple
+    ];
 
 function init($screen, numOfGroups) {
     $screen = $($screen);
@@ -80,10 +94,20 @@ function init($screen, numOfGroups) {
 
     // Mouse over and out events
     $ledscreen.on("mouseover.led-map", ".holder", function(){
+        // On mouse over, make all leds to white but the current led to red
+        isMouseOver = true;
+        if (!isDragging && $ledscreen) {
+            $ledscreen.find(".holder").addClass("not-selected");
+            $(this).addClass("selected").removeClass("not-selected");
+        }
         if (listeners.mouseover) {
             listeners.mouseover.apply(this, arguments);
         }
     }).on("mouseout.led-map", ".holder", function(){
+        isMouseOver = false;
+        if (!isDragging && $ledscreen) {
+            $ledscreen.find(".holder").removeClass("not-selected").removeClass("selected");;
+        }
         if (listeners.mouseout) {
             listeners.mouseout.apply(this, arguments);
         }
@@ -126,6 +150,20 @@ function getLedPositions() {
     return values;
 }
 
+function setColorGroup(colors) {
+    if (!Array.isArray(colors)) {
+        throw new Error("Colors specified is not an array");
+    }
+    if (colors.length < 10) {
+        throw new Error("Did not pass enough colors (10 is minimim)");
+    }
+    colorGroup = colors;
+}
+
+function getColorGroup() {
+    return colorGroup;
+}
+
 function arrangeDefault() {
     var $leds = $ledscreen.find(".holder");
     if ($leds.length) {
@@ -139,14 +177,14 @@ function arrangeDefault() {
             x = 0, y = 0;
 
         // Left
-        for (var i = 0, y = ledWidthVPercent / 2; i < verticalParts; i++) {
+        for (var i = verticalParts - 1, y = ledWidthVPercent / 2; i >= 0 ; i--) {
             y += verticalBlockSize;
             arrangeLed($leds.eq(i), 0, y * 100);
             y += ledWidthVPercent;
         }
 
         // Top
-        for (var i = 0, x = ledWidthHPercent / 2; i < horizontalParts; i++) {
+        for (var i = horizontalParts - 1, x = ledWidthHPercent / 2; i >= 0; i--) {
             x += horizontalBlockSize;
             arrangeLed($leds.eq(i + verticalParts), 1, x * 100);
             x += ledWidthHPercent;
@@ -174,7 +212,9 @@ function setDefaultGroups(numOfGroups) {
     if ($leds.length != numOfGroups * 10) {
         $leds.remove();
         for (var i = 0; i < numOfGroups * 10; i++) {
-            addLed(0, 0).attr("id", "led_" + i);
+            var color = colorGroup[i % 10];
+            addLed(0, 0).attr("id", "led_" + i).find(".pointer")
+                .css("background-color", "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")");
         }
         arrangeDefault();
     }
@@ -303,11 +343,16 @@ function addLed(side, percentValue) {
         containment: "parent",
         axis: "x",      // TEMP
         start: function(){
+            isDragging = true;
             if (listeners.start) {
                 listeners.start.apply(this, arguments);
             }
         },
         stop: function(){
+            isDragging = false;
+            if (!isMouseOver && $ledscreen) {
+                $ledscreen.find(".holder").removeClass("not-selected").removeClass("selected");;
+            }
             if (listeners.end) {
                 listeners.end.apply(this, arguments);
             }
@@ -469,6 +514,8 @@ w.Ledmap = {
     init: init,
     setPositions: setLedPositions,
     getPositions: getLedPositions,
+    setColorGroup: setColorGroup,
+    getColorGroup: getColorGroup,
     setGroups: setDefaultGroups,
     arrangeDefault: arrangeDefault,
     on: handleListeners
