@@ -215,7 +215,7 @@ function setDefaultGroups(numOfGroups) {
         $leds.remove();
         for (var i = 0; i < numOfGroups * 10; i++) {
             var color = colorGroup[i % 10];
-            addLed(0, 0).attr("id", "led_" + i).find(".pointer")
+            addLed(0, 0).attr("data-led", i).find(".pointer")
                 .css("background-color", "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")");
         }
         arrangeDefault();
