@@ -21,7 +21,9 @@ function log(/*...*/) {
 //  ============================================
 //  Handle Lightpack
 //  ============================================
-var numLeds = 0;
+var numLeds = 0,
+    normalSmooth = lightpack.getSmooth(),
+    isPlaying = false;
 lightpack.a(document);
 
 lightpack.init(function(api){
@@ -41,14 +43,41 @@ lightpack.init(function(api){
 
         var color = randomColor();
         lightApi.setColorToAll(color[0], color[1], color[2]);
+
+        // Set the colors if on the adjustment page
+        if ($("#page-adjust-position.open").length) {
+            displayLedMapColors();
+        }
     }).on("disconnect", function(){
         log("Lights have disconnected");
     }).on("play", function(){
         log("Filter is playing");
+        isPlaying = true;
     }).on("pause", function(){
         log("Filter was paused");
+        isPlaying = false;
+
+        // Paused and showing
+        if ($("#page-adjust-position.open").length) {
+            displayLedMapColors();
+        }
     }).connect();
 });
+
+function canDisplayColors() {
+    return lightApi && !isPlaying;
+}
+
+function displayLedMapColors() {
+    if (canDisplayColors()) {   // Also detect if window is shown
+        var c = [];
+        var colors = Ledmap.getColorGroup();
+        for (var i = 0; i < numLeds; i += 10) {
+            c = c.concat(colors);
+        }
+        lightApi.setColors(c);
+    }
+}
 
 function setLPBrightness(value) {
     if (value != lightpack.getBrightness()) {
@@ -65,6 +94,7 @@ function setLPGamma(value) {
 function setLPSmooth(value) {
     if (value != lightpack.getSmooth()) {
         lightpack.setSmooth(value);
+        normalSmooth = value;
     }
 }
 
@@ -73,6 +103,35 @@ function setLPPort(port) {
         lightpack.setPort(port);
     }
 }
+
+//  ============================================
+//  Handle Ledmap
+//  ============================================
+Ledmap.on("end", function() {
+}).on("startSelection", function() {
+    if (canDisplayColors()) {
+        normalSmooth = lightpack.getSmooth();
+        var n = parseInt($(this).attr("data-led"), 10);
+        lightpack.setSmooth(10);
+        lightApi.setColorToAll(180, 180, 180);
+        lightApi.setColor(n, 255, 0, 0);
+    }
+}).on("endSelection", function() {
+    displayLedMapColors();
+    lightpack.setSmooth(normalSmooth);
+});
+
+$("#nav-adjust-position").click(function(){
+    var id = $(this).attr("id");
+    if (id == "nav-adjust-position") {
+        displayLedMapColors();
+    }
+});
+
+// Reset button to send the lights again
+$("#page-adjust-position .led-map-screen .reset-default-button").click(function(){
+    displayLedMapColors();
+});
 
 //  ============================================
 //  GUI stuff
