@@ -111,6 +111,8 @@ function init($screen, numOfGroups) {
         if (listeners.mouseout) {
             listeners.mouseout.apply(this, arguments);
         }
+    }).on("click.led-map", ".reset-default-button", function(){
+        arrangeDefault();
     });
 }
 

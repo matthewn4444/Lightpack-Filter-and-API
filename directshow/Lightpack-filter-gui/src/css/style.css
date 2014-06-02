@@ -108,6 +108,23 @@ fieldset button {
     margin-top:25px;
 }
 
+#content div.page .led-map-screen .center-section {
+    width: auto;
+    position:absolute;
+    left:50%;
+    top:50%;
+    -webkit-transform: translate(-50%, -50%);
+}
+
+#content div.page .led-map-screen button {
+    display:block;
+    margin:20px auto;
+}
+
+#content div.page .led-map-screen .reset-default-button {
+    position: static;
+}
+
 .holder {
     position:absolute;
     width:20px;
@@ -131,8 +148,8 @@ fieldset button {
     -webkit-box-sizing: border-box;
     width: 26px;
     height:25px;
-    background:red;
     border: 2px solid black;
+    -webkit-transition: background-color 0.1s linear;
     -webkit-transform: rotate(45deg) skew(24deg, 24deg) translate(26%, 26%);
 }
 .holder.not-selected .led-item .pointer{
