@@ -29,8 +29,9 @@
  *  Set dragging event listeners
  *      @param eventName    String event name
  *      @param callback     Function that gets called when event occurs
+ *      @return self        Returns instance of Ledmap
  *      Ledmap.on(eventName, callback)
- *    Possible Events: start | drag | end
+ *    Possible Events: start | drag | end | mouseover | mouseout
  *
  *  Side Data:
  *      0 = Right
@@ -52,7 +53,9 @@ var $ledscreen = null,
     listeners = {
         start: null,
         drag: null,
-        end: null
+        end: null,
+        mouseover: null,
+        mouseout: null,
     };
 
 function init($screen, numOfGroups) {
@@ -61,6 +64,7 @@ function init($screen, numOfGroups) {
     // Move the leds to the new screen if exists
     if ($ledscreen != null && $ledscreen.length && !$ledscreen.is($screen)) {
         $ledscreen.removeClass("led-map-screen");
+        $ledscreen.off(".led-map");
         var $existingHolders = $ledscreen.find(".holder");
         if ($existingHolders.length) {
             $screen.append($existingHolders);
@@ -73,6 +77,17 @@ function init($screen, numOfGroups) {
     screenHeight = Math.round($ledscreen.innerHeight()),
     screenRatio = screenHeight / screenWidth;
     setDefaultGroups(numOfGroups);
+
+    // Mouse over and out events
+    $ledscreen.on("mouseover.led-map", ".holder", function(){
+        if (listeners.mouseover) {
+            listeners.mouseover.apply(this, arguments);
+        }
+    }).on("mouseout.led-map", ".holder", function(){
+        if (listeners.mouseout) {
+            listeners.mouseout.apply(this, arguments);
+        }
+    });
 }
 
 function handleListeners(eventName, fn) {
@@ -81,6 +96,7 @@ function handleListeners(eventName, fn) {
             listeners[eventName] = fn;
         }
     }
+    return this;
 }
 
 function setLedPositions(positions) {
