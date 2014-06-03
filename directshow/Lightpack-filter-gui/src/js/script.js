@@ -23,6 +23,7 @@ function log(/*...*/) {
 //  ============================================
 var numLeds = 0,
     normalSmooth = lightpack.getSmooth(),
+    isConnected = false,
     isPlaying = false;
 lightpack.a(document);
 
@@ -40,6 +41,7 @@ lightpack.init(function(api){
         numLeds = lightApi.getCountLeds();
         log("Got", numLeds, "Leds");
         Ledmap.setGroups(numLeds / 10);
+        isConnected = true;
 
         var color = randomColor();
         lightApi.setColorToAll(color[0], color[1], color[2]);
@@ -49,6 +51,7 @@ lightpack.init(function(api){
             displayLedMapColors();
         }
     }).on("disconnect", function(){
+        isConnected = false;
         log("Lights have disconnected");
     }).on("play", function(){
         log("Filter is playing");
@@ -65,7 +68,7 @@ lightpack.init(function(api){
 });
 
 function canDisplayColors() {
-    return lightApi && !isPlaying;
+    return lightApi && isConnected && !isPlaying;
 }
 
 function displayLedMapColors() {
@@ -118,7 +121,9 @@ Ledmap.on("end", function() {
     }
 }).on("endSelection", function() {
     displayLedMapColors();
-    lightpack.setSmooth(normalSmooth);
+    if (canDisplayColors()) {
+        lightpack.setSmooth(normalSmooth);
+    }
 });
 
 $("#nav-adjust-position").click(function(){
