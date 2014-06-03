@@ -138,6 +138,20 @@ $("#page-adjust-position .led-map-screen .reset-default-button").click(function(
     displayLedMapColors();
 });
 
+// Fullscreen button
+$("#fullscreen").click(function(){
+    win.toggleFullscreen();
+    $(document.body).toggleClass("fullscreen");
+});
+win.on("enter-fullscreen", function() {
+    $("#fullscreen").text("Exit Fullscreen");
+    Ledmap.updateMetrics();
+});
+win.on("leave-fullscreen", function() {
+    $("#fullscreen").text("Fullscreen");
+    Ledmap.updateMetrics();
+});
+
 //  ============================================
 //  GUI stuff
 //  ============================================

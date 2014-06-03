@@ -97,9 +97,7 @@ function init($screen, numOfGroups) {
 
     $ledscreen = $screen;
     $ledscreen.addClass("led-map-screen");
-    screenWidth = Math.round($ledscreen.innerWidth()),
-    screenHeight = Math.round($ledscreen.innerHeight()),
-    screenRatio = screenHeight / screenWidth;
+    updateMetrics();
     setDefaultGroups(numOfGroups);
 
     // Mouse over and out events
@@ -180,6 +178,25 @@ function setColorGroup(colors) {
 
 function getColorGroup() {
     return colorGroup;
+}
+
+function updateMetrics() {
+    screenWidth = Math.round($ledscreen.innerWidth()),
+    screenHeight = Math.round($ledscreen.innerHeight()),
+    screenRatio = screenHeight / screenWidth;
+
+    var $leds = $ledscreen.find(".holder");
+    if ($leds.length) {
+        var s1 = $leds.eq(0).outerWidth(),
+            s2 = $leds.eq(0).outerHeight();
+        smallSide = Math.min(s1, s2);
+        largeSide = Math.max(s1, s2);
+        rightEdge = screenWidth - largeSide;
+        bottomEdge = screenHeight - largeSide;
+        // TODO Update their positions again
+        arrangeDefault();
+        //alert($("body").width() + " " + $ledscreen.width())
+    }
 }
 
 function arrangeDefault() {
@@ -538,6 +555,7 @@ w.Ledmap = {
     setColorGroup: setColorGroup,
     getColorGroup: getColorGroup,
     setGroups: setDefaultGroups,
+    updateMetrics: updateMetrics,
     arrangeDefault: arrangeDefault,
     on: handleListeners
 };
