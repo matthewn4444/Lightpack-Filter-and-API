@@ -26,12 +26,20 @@
  *      @params positions   an array of position values of the format:{ side:<0-3>, percent: <0-100> }
  *      Ledmap.setPositions(positions)
  *
+ *  Set the colors of the leds (most be 10 colors of format: [ [r,g,b], [r,g,b], ... ]
+ *      @params colors      Colors to set each 10 led groups
+ *      Ledmap.setColorGroup(colors)
+ *
+ *  Get the colors of the leds set
+ *      @return colors that are used for each group of leds
+ *      Ledmap.getColorGroup()
+ *
  *  Set dragging event listeners
  *      @param eventName    String event name
  *      @param callback     Function that gets called when event occurs
  *      @return self        Returns instance of Ledmap
  *      Ledmap.on(eventName, callback)
- *    Possible Events: start | drag | end | mouseover | mouseout
+ *    Possible Events: start | drag | end | mouseover | mouseout | startSelection | endSelection
  *
  *  Side Data:
  *      0 = Right
