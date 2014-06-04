@@ -66,4 +66,7 @@ $("nav ul").on("click", "li", function(){
     $("#content div.page").removeClass("open");
     var name = this.id.substring(this.id.indexOf("-"));
     $("#page" + name).addClass("open");
+    if (name == "-adjust-position") {
+        Ledmap.updateMetrics();
+    }
 });
