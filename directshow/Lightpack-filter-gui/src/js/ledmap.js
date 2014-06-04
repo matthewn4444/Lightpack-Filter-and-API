@@ -146,11 +146,10 @@ function setLedPositions(positions) {
     if (!Array.isArray(positions)) {
         throw new Error("Did not set the led positions correctly with an array.");
     }
-    var $leds = $ledscreen.find(".holder");
     for (var i = 0; i < positions.length; i++) {
         var side = positions[i].side,
             percent = positions[i].percent,
-            $holder = $leds.eq(i);
+            $holder = $ledscreen.find(".holder[data-led='" + i + "']")
         arrangeLed($holder, side, percent);
     }
 }
@@ -181,6 +180,7 @@ function getColorGroup() {
 }
 
 function updateMetrics() {
+    var positions = getLedPositions();
     screenWidth = Math.round($ledscreen.innerWidth()),
     screenHeight = Math.round($ledscreen.innerHeight()),
     screenRatio = screenHeight / screenWidth;
@@ -193,9 +193,9 @@ function updateMetrics() {
         largeSide = Math.max(s1, s2);
         rightEdge = screenWidth - largeSide;
         bottomEdge = screenHeight - largeSide;
-        // TODO Update their positions again
-        arrangeDefault();
-        //alert($("body").width() + " " + $ledscreen.width())
+
+        // Update the positions
+        setLedPositions(positions);
     }
 }
 

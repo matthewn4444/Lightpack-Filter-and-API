@@ -25,7 +25,6 @@ var numLeds = 0,
     normalSmooth = lightpack.getSmooth(),
     isConnected = false,
     isPlaying = false;
-    positions = null,
 lightpack.a(document);
 
 lightpack.init(function(api){
@@ -141,19 +140,16 @@ $("#page-adjust-position .led-map-screen .reset-default-button").click(function(
 
 // Fullscreen button
 $("#fullscreen").click(function(){
-    positions = Ledmap.getPositions();
     win.toggleFullscreen();
     $(document.body).toggleClass("fullscreen");
 });
 win.on("enter-fullscreen", function() {
     $("#fullscreen").text("Exit Fullscreen");
     Ledmap.updateMetrics();
-    Ledmap.setPositions(positions);
 });
 win.on("leave-fullscreen", function() {
     $("#fullscreen").text("Fullscreen");
     Ledmap.updateMetrics();
-    Ledmap.setPositions(positions);
 });
 
 //  ============================================
