@@ -211,10 +211,10 @@ function arrangeDefault() {
             horizontalBlockSize = (1 - ledWidthHPercent * horizontalParts) / (horizontalParts + 1.0),
             x = 0, y = 0;
 
-        // Left
+        // Right
         for (var i = verticalParts - 1, y = ledWidthVPercent / 2; i >= 0 ; i--) {
             y += verticalBlockSize;
-            arrangeLed($leds.eq(i), 'l', y * 100);
+            arrangeLed($leds.eq(i), 'r', y * 100);
             y += ledWidthVPercent;
         }
 
@@ -225,10 +225,10 @@ function arrangeDefault() {
             x += ledWidthHPercent;
         }
 
-        // Right
+        // Left
         for (var i = 0, y = ledWidthVPercent / 2; i < verticalParts; i++) {
             y += verticalBlockSize;
-            arrangeLed($leds.eq(i + verticalParts + horizontalParts), 'r', y * 100);
+            arrangeLed($leds.eq(i + verticalParts + horizontalParts), 'l', y * 100);
             y += ledWidthVPercent;
         }
     }
@@ -306,7 +306,7 @@ function arrangeLed($holder, side, percentValue) {
 
 function getPositionAndSideOfLed(i) {
     if ($ledscreen != null) {
-        var $led = $ledscreen.find(".holder").eq(i);
+        var $led = $ledscreen.find(".holder[data-led='" + i + "']");
         if ($led.length) {
             var side = 'r', percentValue = 0,
             verticalPercentage = (parseInt($led.css("top"), 10) + smallSide / 2) / screenHeight * 100,
