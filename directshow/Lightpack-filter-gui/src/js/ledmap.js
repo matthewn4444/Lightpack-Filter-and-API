@@ -433,7 +433,7 @@ function addLed(side, percentValue) {
                     }
                 } else {                            // Horizontal Center
                     if (y < topBound && top < topBound) {               // Top
-                        $(this).attr("data-direction", "top");
+                        $(this).attr("data-direction", "up");
                     } else if (y > bottomBound && top > bottomBound) {  // Bottom
                         $(this).attr("data-direction", "down");
                     } else {                                            // Vertical middle
@@ -512,7 +512,7 @@ function addLed(side, percentValue) {
                             // Moving mouse left
                             || prevY - screenRatio * (screenWidth - prevX) > 0
                             && y - screenRatio * (screenWidth - x) < 0) {
-                                $(this).attr("data-direction", "top").draggable("option", "axis", "x")
+                                $(this).attr("data-direction", "up").draggable("option", "axis", "x")
                                     .css({ left: ui.position.top, top: 0 });
                                 }
                         } else {
