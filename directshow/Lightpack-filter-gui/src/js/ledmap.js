@@ -42,10 +42,10 @@
  *    Possible Events: start | drag | end | mouseover | mouseout | startSelection | endSelection
  *
  *  Side Data:
- *      0 = Right
- *      1 = Top
- *      2 = Left
- *      3 = Bottom
+ *      'r' = Right
+ *      't' = Top
+ *      'l' = Left
+ *      'b' = Bottom
  */
 (function(w){
 
@@ -214,21 +214,21 @@ function arrangeDefault() {
         // Left
         for (var i = verticalParts - 1, y = ledWidthVPercent / 2; i >= 0 ; i--) {
             y += verticalBlockSize;
-            arrangeLed($leds.eq(i), 0, y * 100);
+            arrangeLed($leds.eq(i), 'l', y * 100);
             y += ledWidthVPercent;
         }
 
         // Top
         for (var i = horizontalParts - 1, x = ledWidthHPercent / 2; i >= 0; i--) {
             x += horizontalBlockSize;
-            arrangeLed($leds.eq(i + verticalParts), 1, x * 100);
+            arrangeLed($leds.eq(i + verticalParts), 't', x * 100);
             x += ledWidthHPercent;
         }
 
         // Right
         for (var i = 0, y = ledWidthVPercent / 2; i < verticalParts; i++) {
             y += verticalBlockSize;
-            arrangeLed($leds.eq(i + verticalParts + horizontalParts), 2, y * 100);
+            arrangeLed($leds.eq(i + verticalParts + horizontalParts), 'r', y * 100);
             y += ledWidthVPercent;
         }
     }
@@ -248,7 +248,7 @@ function setDefaultGroups(numOfGroups) {
         $leds.remove();
         for (var i = 0; i < numOfGroups * 10; i++) {
             var color = colorGroup[i % 10];
-            addLed(0, 0).attr("data-led", i).find(".pointer")
+            addLed('t', 0).attr("data-led", i).find(".pointer")
                 .css("background-color", "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")");
         }
         arrangeDefault();
@@ -256,12 +256,6 @@ function setDefaultGroups(numOfGroups) {
 }
 
 function arrangeLed($holder, side, percentValue) {
-    /*    side:
-     *        0 - right
-     *        1 - top
-     *        2 - left
-     *        3 - bottom
-     */
     $holder.attr("data-direction", "up");
     var verticalPos = Math.round(screenHeight * percentValue / 100.0) - smallSide / 2,
         horizontalPos = Math.round(screenWidth * percentValue / 100.0) - smallSide / 2,
@@ -269,7 +263,7 @@ function arrangeLed($holder, side, percentValue) {
         topBound = leftBound, bottomBound = (screenHeight - smallSide) - smallSide / 4.0;
 
     switch(side) {
-        case 0:    // Right
+        case 'r':    // Right
             if (verticalPos < topBound) {
                 $holder.attr("data-direction", "right-up").css({ left: rightEdge, top: 0 });
             } else if (verticalPos > bottomBound) {
@@ -278,7 +272,7 @@ function arrangeLed($holder, side, percentValue) {
                 $holder.attr("data-direction", "right").css({ left: rightEdge, top: verticalPos });
             }
             break;
-        case 1:    // Top
+        case 't':    // Top
             if (horizontalPos < leftBound) {
                 $holder.attr("data-direction", "left-up").css({ left: 0, top: 0 });
             } else if (horizontalPos > rightBound) {
@@ -287,7 +281,7 @@ function arrangeLed($holder, side, percentValue) {
                 $holder.attr("data-direction", "up").css({ left: horizontalPos, top: 0 });
             }
             break;
-        case 2:    // Left
+        case 'l':    // Left
             if (verticalPos < topBound) {
                 $holder.attr("data-direction", "left-up").css({ left: 0, top: 0 });
             } else if (verticalPos > bottomBound) {
@@ -296,7 +290,7 @@ function arrangeLed($holder, side, percentValue) {
                 $holder.attr("data-direction", "left").css({ left: 0, top: verticalPos });
             }
             break;
-        case 3:    // Bottom
+        case 'b':    // Bottom
             if (horizontalPos < leftBound) {
                 $holder.attr("data-direction", "left-down").css({ left: 0, top: bottomEdge });
             } else if (horizontalPos > rightBound) {
@@ -314,36 +308,36 @@ function getPositionAndSideOfLed(i) {
     if ($ledscreen != null) {
         var $led = $ledscreen.find(".holder").eq(i);
         if ($led.length) {
-            var side = 0, percentValue = 0,
+            var side = 'r', percentValue = 0,
             verticalPercentage = (parseInt($led.css("top"), 10) + smallSide / 2) / screenHeight * 100,
             horizontalPercentage = (parseInt($led.css("left"), 10) + smallSide / 2) / screenWidth * 100;
             // Corners
             switch($led.attr("data-direction")) {
                 case "left-up":
-                    side = 2;
+                    side = 'l';
                     break;
                 case "right-up":
                     // Default values are fine
                     break;
                 case "left-down":
-                    side = 3;
+                    side = 'b';
                     break;
                 case "right-down":
                     percentValue = 100;
                     break;
                 case "left":
-                    side = 2;
+                    side = 'l';
                     percentValue = verticalPercentage;
                     break;
                 case "up":
-                    side = 1;
+                    side = 't';
                     percentValue = horizontalPercentage;
                     break;
                 case "right":
                     percentValue = verticalPercentage;
                     break;
                 case "down":
-                    side = 3;
+                    side = 'b';
                     percentValue = horizontalPercentage;
                     break;
                 default:
