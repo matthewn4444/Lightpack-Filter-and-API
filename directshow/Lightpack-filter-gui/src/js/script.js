@@ -35,6 +35,7 @@ lightpack.init(function(api){
     setSmoothSlider(lightpack.getSmooth());
     setGammaSlider(lightpack.getGamma());
     setPortInput(lightpack.getPort());
+    Ledmap.setPositions(lightpack.getSavedPositions());
 
     lightApi.on("connect", function(){
         log("Lights have connected");
@@ -111,6 +112,7 @@ function setLPPort(port) {
 //  Handle Ledmap
 //  ============================================
 Ledmap.on("end", function() {
+    lightpack.sendPositions(Ledmap.getPositions());
 }).on("startSelection", function() {
     if (canDisplayColors()) {
         normalSmooth = lightpack.getSmooth();
