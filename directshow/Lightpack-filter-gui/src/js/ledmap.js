@@ -456,9 +456,16 @@ function getPositionAndSideOfLed(i) {
     if ($ledscreen != null) {
         var $led = $ledscreen.find(".group[data-led='" + i + "'] .holder");
         if ($led.length) {
-            var side = 'r', percentValue = 0,
-            verticalPercentage = (parseInt($led.css("top"), 10) + smallSide / 2) / screenHeight * 100,
-            horizontalPercentage = (parseInt($led.css("left"), 10) + smallSide / 2) / screenWidth * 100;
+            var $rect = $ledscreen.find(".group[data-led='" + i + "'] .rect"),
+                side = 'r', percentValue = 0,
+                verticalPercentage = (parseInt($led.css("top"), 10) + smallSide / 2) / screenHeight * 100,
+                horizontalPercentage = (parseInt($led.css("left"), 10) + smallSide / 2) / screenWidth * 100,
+                rect = {
+                    x: parseInt($rect.css("left"), 10) / screenWidth,
+                    y: parseInt($rect.css("top"), 10) / screenHeight,
+                    width: $rect.width() / screenWidth,
+                    height: $rect.height() / screenHeight
+                };
             // Corners
             switch($led.attr("data-direction")) {
                 case "left-up":
@@ -491,7 +498,7 @@ function getPositionAndSideOfLed(i) {
                 default:
                     throw new Error("There is no valid direction on this led");
             }
-            return { side: side, percent: percentValue };
+            return { side: side, percent: percentValue, rect: rect };
         }
     }
     return null;
