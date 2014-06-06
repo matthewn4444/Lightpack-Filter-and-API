@@ -108,11 +108,24 @@ fieldset button {
     margin-top:25px;
 }
 
+.led-map-screen .group {
+    width:100%;
+    height:100%;
+    position:absolute;
+    top:0;
+    left:0;
+}
+
+.led-map-screen .holder {
+    z-index:2;
+}
+
 #content div.page .led-map-screen .center-section {
     width: auto;
     position:absolute;
     left:50%;
     top:50%;
+    z-index:3;
     -webkit-transform: translate(-50%, -50%);
 }
 
@@ -123,6 +136,14 @@ fieldset button {
 
 #content div.page .led-map-screen .reset-default-button {
     position: static;
+}
+
+.led-map-screen .rect {
+    opacity: 0.4;
+    position:absolute;
+    -webkit-box-sizing: content-box;
+    z-index:1;
+    -webkit-transition: background-color 0.1s linear, width 0.1s linear, height 0.1s linear;
 }
 
 .holder {
@@ -154,10 +175,13 @@ fieldset button {
     -webkit-transition: background-color 0.1s linear;
     -webkit-transform: rotate(45deg) skew(24deg, 24deg) translate(26%, 26%);
 }
-.holder.not-selected .led-item .pointer{
+.group.not-selected .rect {
+    background: black !important;
+}
+.group.not-selected .led-item .pointer, body.fullscreen .group.not-selected .rect{
     background: white !important;
 }
-.holder.selected .led-item .pointer{
+.group.selected .led-item .pointer, .group.selected .rect{
     background: red !important;
 }
 .holder[data-direction='left'], .holder[data-direction='right'] {

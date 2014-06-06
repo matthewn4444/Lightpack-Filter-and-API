@@ -60,6 +60,8 @@ var $ledscreen = null,
     bottomEdge = 0,
     isDragging = false,
     isMouseOver = false,
+    horizontalDepthPercent = 0.20,
+    verticalDepthPercent = 0.15,
     listeners = {
         start: null,
         drag: null,
@@ -89,10 +91,6 @@ function init($screen, numOfGroups) {
     if ($ledscreen != null && $ledscreen.length && !$ledscreen.is($screen)) {
         $ledscreen.removeClass("led-map-screen");
         $ledscreen.off(".led-map");
-        var $existingHolders = $ledscreen.find(".holder");
-        if ($existingHolders.length) {
-            $screen.append($existingHolders);
-        }
     }
 
     $ledscreen = $screen;
@@ -105,8 +103,8 @@ function init($screen, numOfGroups) {
         // On mouse over, make all leds to white but the current led to red
         isMouseOver = true;
         if (!isDragging && $ledscreen) {
-            $ledscreen.find(".holder").addClass("not-selected");
-            $(this).addClass("selected").removeClass("not-selected");
+            $ledscreen.find(".group").addClass("not-selected");
+            $(this).parent().addClass("selected").removeClass("not-selected");
             if (listeners.startSelection) {
                 listeners.startSelection.apply(this, arguments);
             }
@@ -117,7 +115,7 @@ function init($screen, numOfGroups) {
     }).on("mouseout.led-map", ".holder", function(){
         isMouseOver = false;
         if (!isDragging && $ledscreen) {
-            $ledscreen.find(".holder").removeClass("not-selected").removeClass("selected");
+            $ledscreen.find(".group").removeClass("not-selected").removeClass("selected");
             if (listeners.endSelection) {
                 listeners.endSelection.apply(this, arguments);
             }
@@ -128,6 +126,150 @@ function init($screen, numOfGroups) {
     }).on("click.led-map", ".reset-default-button", function(){
         arrangeDefault();
     });
+}
+
+function updateRectangles() {
+    if ($ledscreen == null) {
+        throw new Error("Did not run Ledmap.init($screen)");
+    }
+    var $rects = $ledscreen.find(".rect"),
+        leftPos = [],
+        rightPos = [],
+        topPos = [],
+        bottomPos = [];
+    $rects.each(function(i){
+        var item = getPositionAndSideOfLed(i),
+            obj = { n: i, percent: item.percent };
+        switch(item.side) {
+            case 'r':
+                // Right up
+                if (item.percent == 0) {
+                    topPos.push(obj);
+                } else if (item.percent == 100) {
+                    bottomPos.push(obj);
+                }
+                rightPos.push(obj);
+                break;
+            case 'l':
+                // Left up
+                if (item.percent == 0) {
+                    topPos.push(obj);
+                }
+                leftPos.push(obj);
+                break;
+            case 't':
+                topPos.push(obj);
+                break;
+            case 'b':
+                // Left down
+                if (item.percent == 0) {
+                    leftPos.push(obj);
+                }
+                bottomPos.push(obj);
+                break;
+            default:
+                throw new Error("Side is not valid");
+        }
+    });
+    // Sort the values
+    var order = [ leftPos, rightPos, topPos, bottomPos ],
+        n = 0,
+        sum = 0,
+        verticalDepth = Math.round(verticalDepthPercent * screenWidth),
+        horizontalDepth = Math.round(horizontalDepthPercent * screenHeight);
+    order.sort(function(a,b){ return b.length > a.length; });
+    for (var i = 0; i < 4; i++) {
+        order[i].sort(function(a,b){ return a.percent > b.percent; });
+
+        // Calculate the width/height and rects for each led
+        var prev = 0,
+            average = n > 0 ? sum * 1.0 / n : (order[i] == leftPos || order[i] == leftPos ? screenWidth : screenHeight);
+        for (var j = 0; j < order[i].length; j++) {
+            var item = order[i][j],
+                p = item.percent,
+                $rect = $ledscreen.find(".group[data-led='" + item.n + "'] .rect");
+            // Calculate the midpoint between this and next if there is a next otherwise max
+            var next = j + 1 < order[i].length ? (p + order[i][j + 1].percent) / 2.0 : 100.0;
+            var prev2this = Math.abs(prev - p);
+            var this2next = Math.abs(p - next);
+            prev2this = prev2this > 0 ? prev2this : 100;
+            this2next = this2next > 0 ? this2next : 100;
+
+            // Calculate the width by getting the min distance from current to prev midpoint
+            // or next midpoint and the averaged width
+            var halfSizePercent = Math.min(prev2this, this2next);
+            var size = 0;
+
+            switch(order[i]) {
+                case leftPos:
+                    size = Math.round(Math.min(halfSizePercent * 2 * screenHeight / 100.0, average));
+                    $rect.css({
+                        left: 0,
+                        height: size
+                    });
+                    if (p != 0 && p != 100) {
+                        $rect.css({
+                            width: verticalDepth,
+                            top: Math.round(p / 100.0 * screenHeight - size / 2),
+                        });
+                    }
+                    break;
+                case rightPos:
+                    size = Math.round(Math.min(halfSizePercent * 2 * screenHeight / 100.0, average));
+                    $rect.css({
+                        left: screenWidth - verticalDepth,
+                        height: size
+                    });
+                    if (p != 0 && p != 100) {
+                        $rect.css({
+                            width: verticalDepth,
+                            top: Math.round(p / 100.0 * screenHeight - size / 2),
+                        });
+                    }
+                    break;
+                case topPos:
+                    size = Math.round(Math.min(halfSizePercent * 2 * screenWidth / 100.0, average));
+                    $rect.css({
+                        top: 0,
+                        width: size
+                    });
+                    if (p != 0 && p != 100) {
+                        $rect.css({
+                            height: horizontalDepth,
+                            left: Math.round(p / 100.0 * screenWidth - size / 2),
+                        });
+                    }
+                    break;
+                case bottomPos:
+                    size = Math.round(Math.min(halfSizePercent * 2 * screenWidth / 100.0, average));
+                    $rect.css({
+                        top: screenHeight - horizontalDepth,
+                        width: size
+                    });
+                    if (p != 0 && p != 100) {
+                        $rect.css({
+                            height: horizontalDepth,
+                            left: Math.round(p / 100.0 * screenWidth - size / 2),
+                        });
+                    } else {
+                    }
+                    break;
+                default:
+                    throw new Error("Did not work");
+            }
+            if (p == 0 || p == 100) {
+                $rect.css({
+                    width: verticalDepth,
+                    height: horizontalDepth
+                });
+            }
+
+            // Update the data for the average
+            sum += size;
+            n++;
+            prev = next;
+        }
+    }
 }
 
 function handleListeners(eventName, fn) {
@@ -149,15 +291,16 @@ function setLedPositions(positions) {
     for (var i = 0; i < positions.length; i++) {
         var side = positions[i].side,
             percent = positions[i].percent,
-            $holder = $ledscreen.find(".holder[data-led='" + i + "']")
+            $holder = $ledscreen.find(".group[data-led='" + i + "'] .holder");
         arrangeLed($holder, side, percent);
     }
+    updateRectangles();
 }
 
 function getLedPositions() {
     var values = [];
     if ($ledscreen != null) {
-        var $leds = $ledscreen.find(".holder");
+        var $leds = $ledscreen.find(".group");
         $leds.each(function(i){
             values.push(getPositionAndSideOfLed(i));
         });
@@ -232,6 +375,7 @@ function arrangeDefault() {
             y += ledWidthVPercent;
         }
     }
+    updateRectangles();
 }
 
 function setDefaultGroups(numOfGroups) {
@@ -243,13 +387,15 @@ function setDefaultGroups(numOfGroups) {
      *      Order of leds usually right, top, left
      */
     numOfGroups = numOfGroups || 1;
-    var $leds = $ledscreen.find(".holder");
-    if ($leds.length != numOfGroups * 10) {
-        $leds.remove();
+    var $groups = $ledscreen.find(".group");
+    if ($groups.length != numOfGroups * 10) {
+        $groups.remove();
         for (var i = 0; i < numOfGroups * 10; i++) {
-            var color = colorGroup[i % 10];
-            addLed('t', 0).attr("data-led", i).find(".pointer")
-                .css("background-color", "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")");
+            var color = colorGroup[i % 10],
+                colorObj = {"background-color": "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")"};
+            $led = addLed('t', 0)
+            $led.find(".pointer").css(colorObj);
+            $led.parent().find(".rect").css(colorObj);
         }
         arrangeDefault();
     }
@@ -306,7 +452,7 @@ function arrangeLed($holder, side, percentValue) {
 
 function getPositionAndSideOfLed(i) {
     if ($ledscreen != null) {
-        var $led = $ledscreen.find(".holder[data-led='" + i + "']");
+        var $led = $ledscreen.find(".group[data-led='" + i + "'] .holder");
         if ($led.length) {
             var side = 'r', percentValue = 0,
             verticalPercentage = (parseInt($led.css("top"), 10) + smallSide / 2) / screenHeight * 100,
@@ -353,11 +499,16 @@ function addLed(side, percentValue) {
     if ($ledscreen == null) {
         throw new Error("Did not run Ledmap.init($screen)");
     }
+    var num = $ledscreen.find(".group");
     var $holder = $("<div>").addClass("holder");
     var $led = $("<div>").addClass("led-item");
     var $pointer = $("<div>").addClass("pointer");
+    var $rect = $("<div>").addClass("rect");
+    var $group = $("<div>").addClass("group").attr("data-led", num.length);
     $led.append($pointer);
-    $ledscreen.append($holder.append($led));
+    $group.append($holder.append($led));
+    $group.append($rect);
+    $ledscreen.append($group);
     var s1 = $holder.outerWidth(),
         s2 = $holder.outerHeight(),
         prevX = 0, prevY = 0;
@@ -380,7 +531,7 @@ function addLed(side, percentValue) {
         stop: function(){
             isDragging = false;
             if (!isMouseOver && $ledscreen) {
-                $ledscreen.find(".holder").removeClass("not-selected").removeClass("selected");
+                $ledscreen.find(".group").removeClass("not-selected").removeClass("selected");
                 if (listeners.endSelection) {
                     listeners.endSelection.apply(this, arguments);
                 }
@@ -535,6 +686,7 @@ function addLed(side, percentValue) {
             if (listeners.drag) {
                 listeners.drag.apply(this, arguments);
             }
+            updateRectangles();
         },
     });
     arrangeLed($holder, side, percentValue);
