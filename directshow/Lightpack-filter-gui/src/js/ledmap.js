@@ -415,6 +415,7 @@ function arrangeLed($holder, side, percentValue) {
             } else {
                 $holder.attr("data-direction", "right").css({ left: rightEdge, top: verticalPos });
             }
+            $holder.draggable("option", "axis", "y");
             break;
         case 't':    // Top
             if (horizontalPos < leftBound) {
@@ -424,6 +425,7 @@ function arrangeLed($holder, side, percentValue) {
             } else {
                 $holder.attr("data-direction", "up").css({ left: horizontalPos, top: 0 });
             }
+            $holder.draggable("option", "axis", "x");
             break;
         case 'l':    // Left
             if (verticalPos < topBound) {
@@ -433,6 +435,7 @@ function arrangeLed($holder, side, percentValue) {
             } else {
                 $holder.attr("data-direction", "left").css({ left: 0, top: verticalPos });
             }
+            $holder.draggable("option", "axis", "y");
             break;
         case 'b':    // Bottom
             if (horizontalPos < leftBound) {
@@ -442,6 +445,7 @@ function arrangeLed($holder, side, percentValue) {
             } else {
                 $holder.attr("data-direction", "down").css({ left: horizontalPos, top: bottomEdge });
             }
+            $holder.draggable("option", "axis", "x");
             break;
         default:
             throw new Error("Position specified is not valid");
