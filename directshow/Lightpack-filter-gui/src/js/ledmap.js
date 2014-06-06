@@ -348,31 +348,29 @@ function arrangeDefault() {
         var numOfGroups = $leds.length / 10,
             verticalParts = 3 * numOfGroups,
             horizontalParts = 4 * numOfGroups,
-            ledWidthVPercent = smallSide * 1.0 / screenHeight,
-            verticalBlockSize = (1 - ledWidthVPercent * verticalParts) / (verticalParts + 1.0),
-            ledWidthHPercent = smallSide * 1.0 / screenWidth,
-            horizontalBlockSize = (1 - ledWidthHPercent * horizontalParts) / (horizontalParts + 1.0),
+            verticalBlockSize = 1 / (verticalParts * 2),
+            horizontalBlockSize = 1 / (horizontalParts * 2),
             x = 0, y = 0;
 
         // Right
-        for (var i = verticalParts - 1, y = ledWidthVPercent / 2; i >= 0 ; i--) {
+        for (var i = verticalParts - 1, y = 0; i >= 0 ; i--) {
             y += verticalBlockSize;
             arrangeLed($leds.eq(i), 'r', y * 100);
-            y += ledWidthVPercent;
+            y += verticalBlockSize;
         }
 
         // Top
-        for (var i = horizontalParts - 1, x = ledWidthHPercent / 2; i >= 0; i--) {
+        for (var i = horizontalParts - 1, x = 0; i >= 0; i--) {
             x += horizontalBlockSize;
             arrangeLed($leds.eq(i + verticalParts), 't', x * 100);
-            x += ledWidthHPercent;
+            x += horizontalBlockSize;
         }
 
         // Left
-        for (var i = 0, y = ledWidthVPercent / 2; i < verticalParts; i++) {
+        for (var i = 0, y = 0; i < verticalParts; i++) {
             y += verticalBlockSize;
             arrangeLed($leds.eq(i + verticalParts + horizontalParts), 'l', y * 100);
-            y += ledWidthVPercent;
+            y += verticalBlockSize;
         }
     }
     updateRectangles();
