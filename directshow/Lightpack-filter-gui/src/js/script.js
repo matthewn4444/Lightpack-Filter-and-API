@@ -35,7 +35,14 @@ lightpack.init(function(api){
     setSmoothSlider(lightpack.getSmooth());
     setGammaSlider(lightpack.getGamma());
     setPortInput(lightpack.getPort());
-    Ledmap.setPositions(lightpack.getSavedPositions());
+
+    // Update ledmap positions
+    var pos = lightpack.getSavedPositions();
+    if (pos.length) {
+        Ledmap.setPositions(pos);
+    } else {
+        lightpack.sendPositions(Ledmap.getPositions());
+    }
 
     lightApi.on("connect", function(){
         log("Lights have connected");
