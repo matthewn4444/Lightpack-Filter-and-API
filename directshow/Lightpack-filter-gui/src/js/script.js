@@ -137,7 +137,9 @@ $("#nav-adjust-position").click(function(){
 
 // Reset button to send the lights again
 $("#page-adjust-position .led-map-screen .reset-default-button").click(function(){
+    Ledmap.arrangeDefault();
     displayLedMapColors();
+    lightpack.sendPositions(Ledmap.getPositions());
 });
 
 // Fullscreen button
