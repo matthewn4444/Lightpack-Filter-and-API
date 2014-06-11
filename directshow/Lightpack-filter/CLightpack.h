@@ -54,15 +54,6 @@ static UINT64 getTime()
 static const GUID CLSID_Lightpack =
 { 0x188fb505, 0x04ff, 0x4257, { 0x9b, 0xdb, 0x3f, 0xf4, 0x31, 0x85, 0x2f, 0x99 } };
 
-static void GetDesktopResolution(int& horizontal, int& vertical)        // TODO make smarter for multiple desktops
-{
-    RECT desktop;
-    const HWND hDesktop = GetDesktopWindow();
-    GetWindowRect(hDesktop, &desktop);
-    horizontal = desktop.right;
-    vertical = desktop.bottom;
-}
-
 class CLightpack : public CTransInPlaceFilter {
 public:
     DECLARE_IUNKNOWN;
@@ -171,6 +162,9 @@ private:
     void clearQueue();
 
     void loadSettingsFile();
+    bool parseLedRectLine(const char* line, Lightpack::Rect* outRect);
+    void percentageRectToVideoRect(double x, double y, double w, double h, Lightpack::Rect* outRect);
+    void updateScaledRects(std::vector<Lightpack::Rect>& rects);
     wchar_t* getCurrentDirectory();
 
     // Thread function
@@ -192,7 +186,6 @@ private:
 #ifdef LOG_ENABLED
     Log* mLog;
 #endif
-    std::vector<Lightpack::Rect> mLedArea;
     std::vector<Lightpack::Rect> mScaledRects;
 
     // Threading variables
@@ -204,7 +197,6 @@ private:
     CRITICAL_SECTION mAdviseLock;
     CRITICAL_SECTION mDeviceLock;
     CRITICAL_SECTION mCommSendLock;
-    CRITICAL_SECTION mFileLock;
 
     // Communication thread to the GUI
     HANDLE mhCommThread;

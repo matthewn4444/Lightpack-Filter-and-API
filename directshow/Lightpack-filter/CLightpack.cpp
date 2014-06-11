@@ -42,26 +42,10 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
 #endif
-
-    // Hard coded values from profile
-    mLedArea = {
-        { 2269, 947, 291, 493 },
-        { 2268, 441, 294, 500 },
-        { 2347, 0, 216, 441 },
-        { 1835, 0, 514, 264 },
-        { 1320, 0, 514, 264 },
-        { 807, 0, 514, 263 },
-        { 294, 0, 513, 262 },
-        { 78, 0, 216, 441 },
-        { 79, 440, 293, 500 },
-        { 80, 941, 293, 506 }
-    };
-
     InitializeCriticalSection(&mQueueLock);
     InitializeCriticalSection(&mAdviseLock);
     InitializeCriticalSection(&mDeviceLock);
     InitializeCriticalSection(&mCommSendLock);
-    InitializeCriticalSection(&mFileLock);
 
     // Try to connect to the lights directly,
     // if fails the try to connect to Prismatik in the thread
@@ -157,27 +141,28 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
                 mVideoType = VideoFormat::OTHER;
             }
 
-            loadSettingsFile();
-
-            int desktopWidth, desktopHeight;
-            GetDesktopResolution(desktopWidth, desktopHeight);
-
-            //logf("Desktop: %d %d", desktopWidth, desktopHeight);
-
-            float scaleX = (float)mWidth / desktopWidth;
-            float scaleY = (float)mHeight / desktopHeight;
-
-            //logf("Scale: %f %f", scaleX, scaleY);
-
-            for (size_t i = 0; i < mLedArea.size(); i++) {
-                Lightpack::Rect rect = mLedArea[i];
-                int x = (int)(scaleX * rect.x), y = (int)(scaleY * rect.y), w = (int)(scaleX * rect.width), h = (int)(scaleY * rect.height);
-                mScaledRects.push_back({
-                    x, y, ( x + w >= mWidth ? mWidth - x : w ), ( y + h >= mHeight ? mHeight - y : h )
-                });
-
-                //logf("%d [%d %d %d %d]", i, x, y, w, h);
+            // Default position for 10 LEDs
+            const std::vector<std::vector<double>> defaultPositions = {
+                { 85, 72.78, 15, 20.76 },
+                { 85, 39.58, 15, 20.76 },
+                { 85, 6.39, 15, 20.76 },
+                { 81.68, 0, 11.68, 20 },
+                { 39.92, 80, 11.68, 20 },
+                { 0, 25.07, 15, 16.6 },
+                { 6.6, 0, 11.68, 20 },
+                { 0, 8.47, 15, 16.6 },
+                { 0, 41.67, 15, 16.6 },
+                { 0, 66.53, 15, 33.19 }
+            };
+            for (size_t i = 0; i < defaultPositions.size(); i++) {
+                Lightpack::Rect rect;
+                percentageRectToVideoRect(defaultPositions[i][0], defaultPositions[i][1],
+                    defaultPositions[i][2], defaultPositions[i][3], &rect);
+                mScaledRects.push_back(rect);
             }
+
+            // Load the settings file
+            loadSettingsFile();
 
             if (!mFrameBuffer) {
                 mFrameBuffer = new BYTE[mWidth * mHeight * 4];
@@ -378,24 +363,66 @@ wchar_t* CLightpack::getCurrentDirectory()
 void CLightpack::loadSettingsFile()
 {
     if (!mHasReadSettings) {
-        EnterCriticalSection(&mFileLock);
-        if (!mHasReadSettings) {
-            mHasReadSettings = true;
-            // Prepare the path to the settings file
-            char path[MAX_PATH];
-            wcstombs(path, getCurrentDirectory(), wcslen(getCurrentDirectory()));
-            strcat(path, "\\"SETTINGS_FILE);
+        mHasReadSettings = true;
+        // Prepare the path to the settings file
+        char path[MAX_PATH];
+        wcstombs(path, getCurrentDirectory(), wcslen(getCurrentDirectory()));
+        strcat(path, "\\"SETTINGS_FILE);
 
-            // Read the file and parse it
-            INIReader reader(path);
-            if (!reader.ParseError()) {
-                mPropPort = reader.GetInteger("General", "port", DEFAULT_GUI_PORT);
-                mPropSmooth = reader.GetInteger("State", "smooth", DEFAULT_SMOOTH);
-                mPropBrightness = reader.GetInteger("State", "brightness", Lightpack::DefaultBrightness);
-                mPropGamma = reader.GetReal("State", "gamma", Lightpack::DefaultGamma);
+        // Read the file and parse it
+        INIReader reader(path);
+        if (!reader.ParseError()) {
+            mPropPort = reader.GetInteger("General", "port", DEFAULT_GUI_PORT);
+            mPropSmooth = (unsigned char) reader.GetInteger("State", "smooth", DEFAULT_SMOOTH);
+            mPropBrightness = (unsigned char) reader.GetInteger("State", "brightness", Lightpack::DefaultBrightness);
+            mPropGamma = reader.GetReal("State", "gamma", Lightpack::DefaultGamma);
+
+            // Read positions
+            int i = 1;
+            int x = 0, y = 0, w = 0, h = 0;
+            char key[32] = "led1";
+            std::vector<Lightpack::Rect> rects;
+            Lightpack::Rect rect;
+            while (parseLedRectLine(reader.Get("Positions", key, "").c_str(), &rect)) {
+                rects.push_back(rect);
+                logf("Got led %d: %d, %d, %d, %d", i, rect.x, rect.y, rect.width, rect.height);
+                sprintf(key, "led%d", ++i);
             }
+            updateScaledRects(rects);
         }
-        LeaveCriticalSection(&mFileLock);
+    }
+}
+
+bool CLightpack::parseLedRectLine(const char* line, Lightpack::Rect* outRect)
+{
+    ASSERT(mWidth > 0);
+    ASSERT(mHeight > 0);
+    if (strlen(line) > 0) {
+        double x, y, w, h;
+        if (sscanf(line, "%*c%*lf:%lf,%lf,%lf,%lf", &x, &y, &w, &h) != EOF) {
+            percentageRectToVideoRect(x, y, w, h, outRect);
+            return true;
+        }
+    }
+    return false;
+}
+
+void CLightpack::percentageRectToVideoRect(double x, double y, double w, double h, Lightpack::Rect* outRect)
+{
+    outRect->x = (int)(min(x / 100.0, 1) * mWidth);
+    outRect->y = (int)(min(y / 100.0, 1) * mHeight);
+    outRect->width = (int)(min(w / 100.0, 1) * mWidth);
+    outRect->height = (int)(min(h / 100.0, 1) * mHeight);
+}
+
+void CLightpack::updateScaledRects(std::vector<Lightpack::Rect>& rects)
+{
+    size_t i = 0;
+    for (; i < min(mScaledRects.size(), rects.size()); i++) {
+        mScaledRects[i] = rects[i];
+    }
+    for (; i < rects.size(); i++) {
+        mScaledRects.push_back(rects[i]);
     }
 }
 
@@ -503,7 +530,6 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 
 DWORD CLightpack::lightThreadStart()
 {
-    loadSettingsFile();
     bool isConnected  = connectPrismatik();
 
     // Start the communication thread guarenteed after device is connected or not
