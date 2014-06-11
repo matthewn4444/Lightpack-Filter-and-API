@@ -123,7 +123,7 @@ Ledmap.on("end", function() {
 }).on("startSelection", function() {
     if (canDisplayColors()) {
         normalSmooth = lightpack.getSmooth();
-        var n = parseInt($(this).attr("data-led"), 10);
+        var n = parseInt($(this).parent().attr("data-led"), 10);
         lightpack.setSmooth(10);
         lightApi.setColorToAll(180, 180, 180);
         lightApi.setColor(n, 255, 0, 0);
