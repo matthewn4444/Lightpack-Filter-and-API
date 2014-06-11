@@ -34,7 +34,6 @@ void CLightpack::startCommThread()
         return;
     }
 
-    CAutoLock lock(m_pLock);
     ASSERT(mCommThreadId == NULL);
     ASSERT(mhCommThread == INVALID_HANDLE_VALUE);
 
