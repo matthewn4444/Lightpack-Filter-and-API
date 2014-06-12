@@ -46,6 +46,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     InitializeCriticalSection(&mAdviseLock);
     InitializeCriticalSection(&mDeviceLock);
     InitializeCriticalSection(&mCommSendLock);
+    InitializeCriticalSection(&mScaledRectLock);
 
     // Try to connect to the lights directly,
     // if fails the try to connect to Prismatik in the thread
@@ -417,13 +418,19 @@ void CLightpack::percentageRectToVideoRect(double x, double y, double w, double 
 
 void CLightpack::updateScaledRects(std::vector<Lightpack::Rect>& rects)
 {
+    EnterCriticalSection(&mScaledRectLock);
     size_t i = 0;
     for (; i < min(mScaledRects.size(), rects.size()); i++) {
-        mScaledRects[i] = rects[i];
+        if (rects[i].width > 0 && rects[i].height > 0) {
+            mScaledRects[i] = rects[i];
+        }
     }
     for (; i < rects.size(); i++) {
-        mScaledRects.push_back(rects[i]);
+        if (rects[i].width > 0 && rects[i].height > 0) {
+            mScaledRects.push_back(rects[i]);
+        }
     }
+    LeaveCriticalSection(&mScaledRectLock);
 }
 
 void CLightpack::startLightThread()
@@ -476,6 +483,7 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
 {
     CAutoLock lock(m_pLock);
 
+    EnterCriticalSection(&mScaledRectLock);
     Lightpack::RGBCOLOR* colors = new Lightpack::RGBCOLOR[mScaledRects.size()];
     for (size_t i = 0; i < mScaledRects.size(); i++) {
 
@@ -491,6 +499,7 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
         }
         //logf("Pixel: %d [%d, %d, %d]", i, RED(colors[i]), GREEN(colors[i]), BLUE(colors[i]));
     }
+    LeaveCriticalSection(&mScaledRectLock);
 
     EnterCriticalSection(&mQueueLock);
     // Render the first frame on startup while renderer buffers; happens only once
@@ -510,14 +519,14 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
     if (mDevice) {
         EnterCriticalSection(&mDeviceLock);
         if (mDevice) {
-            if (mDevice->setColors(colors, mScaledRects.size()) != Lightpack::RESULT::OK) {
+            if (mDevice->setColors(colors, mPropColors.size()) != Lightpack::RESULT::OK) {
                 // Device is/was disconnected
                 LeaveCriticalSection(&mDeviceLock);
                 mLightThreadCleanUpRequested = true;
                 disconnectAllDevices();
                 return;
             }
-            for (size_t i = 0; i < mScaledRects.size(); i++) {
+            for (size_t i = 0; i < mPropColors.size(); i++) {
                 if (i < 0) {
                     continue;
                 }
@@ -661,7 +670,7 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
             mLastDeviceCheck = now;
         }
     } else {
-        if (!mScaledRects.empty() && mVideoType != VideoFormat::OTHER) {
+        if (!mPropColors.empty() && mVideoType != VideoFormat::OTHER) {
             ASSERT(mStride >= mWidth);
 
             REFERENCE_TIME startTime, endTime;

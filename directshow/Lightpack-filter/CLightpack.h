@@ -197,6 +197,7 @@ private:
     CRITICAL_SECTION mAdviseLock;
     CRITICAL_SECTION mDeviceLock;
     CRITICAL_SECTION mCommSendLock;
+    CRITICAL_SECTION mScaledRectLock;
 
     // Communication thread to the GUI
     HANDLE mhCommThread;
