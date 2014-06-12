@@ -13,10 +13,12 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define SETTINGS_FILE "settings.ini"
 
 const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
+bool CLightpack::sAlreadyRunning = false;
 
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 : CTransInPlaceFilter(FILTER_NAME, pUnk, CLSID_Lightpack, phr)
 , mDevice(NULL)
+, mIsFirstInstance(false)
 , mWidth(0)
 , mHeight(0)
 , mFrameBuffer(0)
@@ -39,20 +41,24 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mPropPort(DEFAULT_GUI_PORT)
 , mHasReadSettings(false)
 {
+    if (!sAlreadyRunning) {
 #ifdef LOG_ENABLED
     mLog = new Log("log.txt");
 #endif
-    InitializeCriticalSection(&mQueueLock);
-    InitializeCriticalSection(&mAdviseLock);
-    InitializeCriticalSection(&mDeviceLock);
-    InitializeCriticalSection(&mCommSendLock);
-    InitializeCriticalSection(&mScaledRectLock);
+        mIsFirstInstance = true;
+        InitializeCriticalSection(&mQueueLock);
+        InitializeCriticalSection(&mAdviseLock);
+        InitializeCriticalSection(&mDeviceLock);
+        InitializeCriticalSection(&mCommSendLock);
+        InitializeCriticalSection(&mScaledRectLock);
 
-    // Try to connect to the lights directly,
-    // if fails the try to connect to Prismatik in the thread
-    connectDevice();
+        // Try to connect to the lights directly,
+        // if fails the try to connect to Prismatik in the thread
+        connectDevice();
 
-    startLightThread();
+        startLightThread();
+    }
+    sAlreadyRunning = true;
 }
 
 CLightpack::~CLightpack(void)
@@ -84,6 +90,9 @@ CLightpack::~CLightpack(void)
 HRESULT CLightpack::CheckInputType(const CMediaType* mtIn)
 {
     CAutoLock lock(m_pLock);
+    if (!mIsFirstInstance) {
+        return E_FAIL;
+    }
 
     if (mtIn->majortype != MEDIATYPE_Video)
     {

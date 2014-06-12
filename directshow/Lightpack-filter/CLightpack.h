@@ -167,6 +167,10 @@ private:
     void updateScaledRects(std::vector<Lightpack::Rect>& rects);
     wchar_t* getCurrentDirectory();
 
+    // Avoid multiple MPC for making multiple instances of this class
+    static bool sAlreadyRunning;
+    bool mIsFirstInstance;
+
     // Thread function
     void startLightThread();
     void destroyLightThread();
