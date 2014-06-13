@@ -218,7 +218,6 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
         // Format: <12>
         case COMM_REC_IS_RUNNING:
             result = 0;
-            logf("isrunning? %s", mIsRunning ? "true" : "false");
             sprintf(buffer, "%d%d", COMM_SEND_RETURN, mIsRunning ? 1 : 0);
             break;
     }
