@@ -268,14 +268,18 @@ void CLightpack::handleMessages(Socket& socket)
         if (mShouldSendPauseEvent) {
             mShouldSendPauseEvent = false;
             LeaveCriticalSection(&mCommSendLock);
-            sprintf(buffer, "%d", COMM_SEND_PAUSED);
-            socket.Send(buffer);
+            if (!mIsRunning) {
+                sprintf(buffer, "%d", COMM_SEND_PAUSED);
+                socket.Send(buffer);
+            }
         }
         else if (mShouldSendPlayEvent) {
             mShouldSendPlayEvent = false;
             LeaveCriticalSection(&mCommSendLock);
-            sprintf(buffer, "%d", COMM_SEND_PLAYING);
-            socket.Send(buffer);
+            if (mIsRunning) {
+                sprintf(buffer, "%d", COMM_SEND_PLAYING);
+                socket.Send(buffer);
+            }
         }
         else if (mShouldSendConnectEvent) {
             mShouldSendConnectEvent = false;
