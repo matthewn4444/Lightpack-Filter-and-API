@@ -215,11 +215,6 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
                 sprintf(buffer, "%d1", COMM_SEND_RETURN);
             }
             break;
-        // Format: <12>
-        case COMM_REC_IS_RUNNING:
-            result = 0;
-            sprintf(buffer, "%d%d", COMM_SEND_RETURN, mIsRunning ? 1 : 0);
-            break;
     }
     return result != EOF;
 }
@@ -308,7 +303,12 @@ void CLightpack::handleMessages(Socket& socket)
             if (strlen(buffer) > 0) {
                 int messageType = buffer[0] - 'a';
                 bool parsingError = true;
-                if (mDevice != NULL) {
+                // Format: <12>
+                if (messageType == COMM_REC_IS_RUNNING) {
+                    parsingError = false;
+                    sprintf(buffer, "%d%d", COMM_SEND_RETURN, mIsRunning ? 1 : 0);
+                }
+                else if (mDevice != NULL) {
                     // Parse the message: you can never get a parsing error and a disconnect, they are mutually exclusive!
                     bool isDeviceConnected = true;
                     parsingError = !parseReceivedMessages(messageType, buffer, &isDeviceConnected);
