@@ -51,8 +51,10 @@ lightpack.init(function(api){
         Ledmap.setGroups(numLeds / 10);
         isConnected = true;
 
-        var color = randomColor();
-        lightApi.setColorToAll(color[0], color[1], color[2]);
+        if (canDisplayColors()) {
+            var color = randomColor();
+            lightApi.setColorToAll(color[0], color[1], color[2]);
+        }
 
         // Set the colors if on the adjustment page
         if ($("#page-adjust-position.open").length) {

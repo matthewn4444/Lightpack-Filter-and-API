@@ -19,6 +19,7 @@
 #define COMM_REC_TURN_ON        9
 #define COMM_REC_CONNECT        10
 #define COMM_REC_NEW_PORT       11
+#define COMM_REC_IS_RUNNING     12
 
 // These messages are used to send data back to the server
 #define COMM_SEND_RETURN        0
@@ -190,6 +191,12 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
                 mPropPort = n;
                 sprintf(buffer, "%d1", COMM_SEND_RETURN);
             }
+            break;
+        // Format: <12>
+        case COMM_REC_IS_RUNNING:
+            result = 0;
+            logf("isrunning? %s", mIsRunning ? "true" : "false");
+            sprintf(buffer, "%d%d", COMM_SEND_RETURN, mIsRunning ? 1 : 0);
             break;
     }
     return result != EOF;
