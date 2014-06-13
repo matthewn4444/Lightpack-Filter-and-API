@@ -11,7 +11,7 @@
 #define COMM_REC_SET_COLOR      1
 #define COMM_REC_SET_COLORS     2
 #define COMM_REC_SET_ALL_COLOR  3
-#define COMM_REC_SET_RECTS      4
+#define COMM_REC_SET_POSITIONS  4
 #define COMM_REC_SET_BRIGHTNESS 5
 #define COMM_REC_SET_SMOOTH     6
 #define COMM_REC_SET_GAMMA      7
@@ -130,7 +130,30 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
                 }
             }
             break;
-        case COMM_REC_SET_RECTS:
+        // Format: <4>...
+        case COMM_REC_SET_POSITIONS:
+            {
+                std::vector<Lightpack::Rect> rects;
+                std::istringstream ss(buffer + 1);
+                std::string part;
+                Lightpack::Rect rect;
+                bool success = true;
+
+                while (std::getline(ss, part, '|')) {
+                    if (parseLedRectLine(part.c_str(), &rect)) {
+                        rects.push_back(rect);
+                    }
+                    else {
+                        success = false;
+                        break;
+                    }
+                }
+                if (success) {
+                    updateScaledRects(rects);
+                    result = 0;
+                    sprintf(buffer, "%d1", COMM_SEND_RETURN);
+                }
+            }
             break;
         // Format: <5><[0-100]>
         case COMM_REC_SET_BRIGHTNESS:
