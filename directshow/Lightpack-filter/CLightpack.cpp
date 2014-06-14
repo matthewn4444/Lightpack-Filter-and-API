@@ -79,6 +79,11 @@ CLightpack::~CLightpack(void)
 
     disconnectAllDevices();
     ASSERT(mDevice == NULL);
+
+    // Once the first instance is deallocated, we should allow usage of this filter again
+    if (mIsFirstInstance) {
+        sAlreadyRunning = false;
+    }
 #ifdef LOG_ENABLED
     if (mLog) {
         delete mLog;
