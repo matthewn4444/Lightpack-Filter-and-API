@@ -1,8 +1,33 @@
 var lightpack = require("lightpack/lightpack-api"),
     gui = require('nw.gui'),
     lightApi = null,
-    win = gui.Window.get();
-//win.showDevTools()
+    win = gui.Window.get(),
+    tray = new gui.Tray({ icon: "/src/images/icon.png" }),
+
+    // Window states
+    isFilterConnected = false,
+    isShowing = false;
+
+function showWindow() {
+    isShowing = true;
+    win.show();
+    win.focus();
+}
+
+//  ============================================
+//  Command Line
+//  ============================================
+var shouldShowWindow = true;
+for (var i = 0; i < gui.App.argv.length; i++) {
+    var cmd = gui.App.argv[0];
+    if (cmd == "--hide") {
+        shouldShowWindow = false;
+    }
+}
+// Show window by default
+if (shouldShowWindow) {
+    showWindow();
+}
 
 function log(/*...*/) {
     var div = document.createElement("div");
@@ -17,6 +42,44 @@ function log(/*...*/) {
     div.appendChild(document.createTextNode(text));
     document.getElementById("output").appendChild(div);
 }
+
+//  ============================================
+//  Handle Tray and window properties
+//  ============================================
+function close() {
+    win.hide();
+    lightpack.close(function(){
+        if (tray) {
+            tray.remove();
+            tray = null;
+        }
+        win.close(true);
+    });
+}
+tray.tooltip = "Lightpack Filter";
+var trayMenu = new gui.Menu();
+trayMenu.append(new gui.MenuItem({ label: "Edit Settings", click: showWindow }));
+trayMenu.append(new gui.MenuItem({ type: "separator" }));
+trayMenu.append(new gui.MenuItem({ label: "Close", click: close }));
+tray.menu = trayMenu;
+tray.on("click", showWindow);
+win.on("minimize", function() {
+    if (isFilterConnected) {
+        this.hide();
+    }
+    isShowing = false;
+});
+win.on("restore", function() {
+    isShowing = true;
+});
+win.on("close", function(){
+    if (isFilterConnected) {
+        win.hide();
+        isShowing = false;
+    } else {
+        close();
+    }
+});
 
 //  ============================================
 //  Handle Lightpack
@@ -73,6 +136,15 @@ lightpack.init(function(api){
         // Paused and showing
         if ($("#page-adjust-position.open").length) {
             displayLedMapColors();
+        }
+    }).on("filterConnect", function() {
+        isFilterConnected = true;
+    }).on("filterDisconnect", function() {
+        isFilterConnected = false;
+
+        // If not shown and video is disconnected, we will close this
+        if (!isShowing) {
+            close();
         }
     }).connect();
 });
@@ -179,13 +251,6 @@ function randomColor() {
     }
     return color;
 }
-
-win.on("close", function(){
-    win.hide();
-    lightpack.close(function(){
-        win.close(true);
-    });
-});
 
 $("#turn-off-on").click(function(){
     if ($(this).text() == "Turn On") {

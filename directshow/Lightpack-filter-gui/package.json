@@ -7,6 +7,8 @@
         "width": 750,
         "min_width": 600,
         "min_height": 400,
-        "resizable": false
+        "resizable": false,
+        "icon": "/src/images/icon.png",
+        "show": false
     }
 }
