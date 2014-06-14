@@ -221,6 +221,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
 
 void CLightpack::handleMessages(Socket& socket)
 {
+    log("Connected to gui")
     char buffer[512] = { 0 };
     unsigned int currentPort = socket.getPort();
     mShouldSendPlayEvent = false;
@@ -391,7 +392,7 @@ DWORD CLightpack::commThreadStart()
         }
         else {
             // Run the application (if already running this does nothing), try to connect, if fail then give up
-            ShellExecute(NULL, NULL, L"nw.exe", L"app.nw", getCurrentDirectory(), SW_SHOW);   // TODO change this when gui is complete
+            ShellExecute(NULL, NULL, L"nw.exe", L"app.nw --hide", getCurrentDirectory(), SW_SHOW);
             if (socket.Open(DEFAULT_GUI_HOST, mPropPort)) {
                 handleMessages(socket);
             }
