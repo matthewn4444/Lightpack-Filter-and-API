@@ -114,11 +114,6 @@ lightpack.init(function(api){
         Ledmap.setGroups(numLeds / 10);
         isConnected = true;
 
-        if (canDisplayColors()) {
-            var color = randomColor();
-            lightApi.setColorToAll(color[0], color[1], color[2]);
-        }
-
         // Set the colors if on the adjustment page
         if ($("#page-adjust-position.open").length) {
             displayLedMapColors();
@@ -237,59 +232,11 @@ win.on("leave-fullscreen", function() {
     Ledmap.updateMetrics();
 });
 
-//  ============================================
-//  GUI stuff
-//  ============================================
-function rand(max) {
-    return Math.floor((Math.random() * max));
-}
-
-function randomColor() {
-    var color = [];
-    for (var i = 0; i < 3; i++) {
-        color.push(rand(256));
-    }
-    return color;
-}
-
+// Turn off and on button
 $("#turn-off-on").click(function(){
     if ($(this).text() == "Turn On") {
         lightApi.turnOff();
     } else {
         lightApi.turnOn();
     }
-});
-
-$("#randomColor").click(function(){
-    if (numLeds) {
-        var color = randomColor();
-        var randLed = rand(numLeds);
-        lightApi.setColor(randLed, color[0], color[1], color[2]);
-    }
-});
-
-$("#randomEachColorAll").click(function(){
-    if (numLeds) {
-        var colors = [];
-        for (var i = 0; i < numLeds; i++) {
-            colors.push(randomColor());
-        }
-        lightApi.setColors(colors);
-    }
-});
-
-$("#randomColorAll").click(function(){
-    var color = randomColor();
-    lightApi.setColorToAll(color[0], color[1], color[2]);
-});
-
-$("#brightness").change(function(){
-    var val = $(this).val();
-    lightpack.setBrightness(parseInt(val, 10));
-});
-
-$("#smooth").change(function(){
-    var val = $(this).val();
-    var percent = parseInt(val, 10);
-    lightpack.setSmooth(parseInt(val, 10));
 });
