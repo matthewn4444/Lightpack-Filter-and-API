@@ -13,8 +13,10 @@ function setAPIValueFromSlider(id, value) {
         setLPSmooth(value);
     } else if (id == "horizontal-height-slider") {
         Ledmap.setHorizontalDepth(value / 2);
+        setLPHorizontalDepth(value / 2);
     } else if (id == "vertical-height-slider") {
         Ledmap.setVerticalDepth(value / 2);
+        setLPVerticalDepth(value / 2);
     }
 }
 
@@ -40,6 +42,16 @@ function setSmoothSlider(val) {
 
 function setPortInput(port) {
     $("#port-input").val(port);
+}
+
+function setHorizontalDepthSlider(v) {
+    Ledmap.setHorizontalDepth(v);
+    $("#horizontal-height-slider").slider("value", v * 2);
+}
+
+function setVerticalDepthSlider(v) {
+    Ledmap.setVerticalDepth(v);
+    $("#vertical-height-slider").slider("value", v * 2);
 }
 
 // Port

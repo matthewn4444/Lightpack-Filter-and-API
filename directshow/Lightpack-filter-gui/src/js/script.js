@@ -98,6 +98,8 @@ lightpack.init(function(api){
     setSmoothSlider(lightpack.getSmooth());
     setGammaSlider(lightpack.getGamma());
     setPortInput(lightpack.getPort());
+    setHorizontalDepthSlider(lightpack.getHorizontalDepth());
+    setVerticalDepthSlider(lightpack.getVerticalDepth());
 
     // Update ledmap positions
     var pos = lightpack.getSavedPositions();
@@ -184,6 +186,18 @@ function setLPPort(port) {
     }
 }
 
+function setLPHorizontalDepth(percent) {
+    if (!isNaN(percent)) {
+        lightpack.setHorizontalDepth(percent);
+    }
+}
+
+function setLPVerticalDepth(percent) {
+    if (!isNaN(percent)) {
+        lightpack.setVerticalDepth(percent);
+    }
+}
+
 //  ============================================
 //  Handle Ledmap
 //  ============================================
@@ -209,6 +223,11 @@ $("#nav-adjust-position").click(function(){
     if (id == "nav-adjust-position") {
         displayLedMapColors();
     }
+});
+
+// Drag end of slider
+$("#page-adjust-position").on("slidestop", ".slider", function() {
+    lightpack.sendPositions(Ledmap.getPositions());
 });
 
 // Reset button to send the lights again
