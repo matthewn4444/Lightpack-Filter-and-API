@@ -214,6 +214,8 @@ $("#nav-adjust-position").click(function(){
 // Reset button to send the lights again
 $("#page-adjust-position .led-map-screen .reset-default-button").click(function(){
     Ledmap.arrangeDefault();
+    Ledmap.setHorizontalDepth(20);
+    Ledmap.setVerticalDepth(15);
     displayLedMapColors();
     lightpack.sendPositions(Ledmap.getPositions());
 });

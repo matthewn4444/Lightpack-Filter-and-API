@@ -41,6 +41,14 @@
  *      Ledmap.on(eventName, callback)
  *    Possible Events: start | drag | end | mouseover | mouseout | startSelection | endSelection
  *
+ *  Set the horizontal height depth percentage
+ *      @param percent      number from 0-50 that represents the depth (height)
+ *      Ledmap.setHorizontalDepth(percent)
+ *
+ *  Set the vertical width depth percentage
+ *      @param percent      number from 0-50 that represents the depth (width)
+ *      Ledmap.setVerticalDepth(percent)
+ *
  *  Side Data:
  *      'r' = Right
  *      't' = Top
@@ -124,6 +132,22 @@ function init($screen, numOfGroups) {
             listeners.mouseout.apply(this, arguments);
         }
     });
+}
+
+function setHorizontalDepth(percent) {
+    percent = Math.min(Math.max(percent, 0), 50);
+    if (horizontalDepthPercent != percent) {
+        horizontalDepthPercent = percent / 100;
+        updateRectangles();
+    }
+}
+
+function setVerticalDepth(percent) {
+    percent = Math.min(Math.max(percent, 0), 50);
+    if (verticalDepthPercent != percent) {
+        verticalDepthPercent = percent / 100;
+        updateRectangles();
+    }
 }
 
 function updateRectangles() {
@@ -707,6 +731,8 @@ w.Ledmap = {
     getPositions: getLedPositions,
     setColorGroup: setColorGroup,
     getColorGroup: getColorGroup,
+    setHorizontalDepth: setHorizontalDepth,
+    setVerticalDepth: setVerticalDepth,
     setGroups: setDefaultGroups,
     updateMetrics: updateMetrics,
     arrangeDefault: arrangeDefault,

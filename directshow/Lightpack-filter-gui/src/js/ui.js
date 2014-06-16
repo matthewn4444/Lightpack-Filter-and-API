@@ -11,6 +11,10 @@ function setAPIValueFromSlider(id, value) {
         setLPGamma(value);
     } else if (id == "smooth-slider") {
         setLPSmooth(value);
+    } else if (id == "horizontal-height-slider") {
+        Ledmap.setHorizontalDepth(value / 2);
+    } else if (id == "vertical-height-slider") {
+        Ledmap.setVerticalDepth(value / 2);
     }
 }
 
