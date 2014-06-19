@@ -120,9 +120,11 @@ lightpack.init(function(api){
         if ($("#page-adjust-position.open").length) {
             displayLedMapColors();
         }
+        $(document.body).addClass("connected");
     }).on("disconnect", function(){
         isConnected = false;
         log("Lights have disconnected");
+        $(document.body).removeClass("connected");
     }).on("play", function(){
         log("Filter is playing");
         isPlaying = true;
@@ -158,6 +160,14 @@ function displayLedMapColors() {
             c = c.concat(colors);
         }
         lightApi.setColors(c);
+    }
+}
+
+function setLPEnableLights(flag) {
+    if (flag) {
+        lightApi.turnOn();
+    } else {
+        lightApi.turnOff();
     }
 }
 
@@ -231,33 +241,24 @@ $("#page-adjust-position").on("slidestop", ".slider", function() {
 });
 
 // Reset button to send the lights again
-$("#page-adjust-position .led-map-screen .reset-default-button").click(function(){
+$("#page-adjust-position .restore-button").click(function(){
     Ledmap.arrangeDefault();
-    Ledmap.setHorizontalDepth(20);
-    Ledmap.setVerticalDepth(15);
+    setHorizontalDepthSlider(20);
+    setVerticalDepthSlider(15);
     displayLedMapColors();
     lightpack.sendPositions(Ledmap.getPositions());
+    lightpack.setHorizontalDepth(20);
+    lightpack.setVerticalDepth(15);
 });
 
 // Fullscreen button
 $("#fullscreen").click(function(){
-    win.toggleFullscreen();
     $(document.body).toggleClass("fullscreen");
+    win.toggleFullscreen();
 });
 win.on("enter-fullscreen", function() {
-    $("#fullscreen").text("Exit Fullscreen");
     Ledmap.updateMetrics();
 });
 win.on("leave-fullscreen", function() {
-    $("#fullscreen").text("Fullscreen");
     Ledmap.updateMetrics();
-});
-
-// Turn off and on button
-$("#turn-off-on").click(function(){
-    if ($(this).text() == "Turn On") {
-        lightApi.turnOff();
-    } else {
-        lightApi.turnOn();
-    }
 });

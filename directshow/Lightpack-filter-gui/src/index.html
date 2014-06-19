@@ -5,76 +5,73 @@
         * { font-family:Arial; }
         #controls { margin-top:20px; }
         #controls, #controls * { font-size:18px; }
+        body{width:650px !important; height:450px !important;}
         </style>
-        <title>Node webkit socket test</title>
+        <title>Lightpack Filter</title>
         <link href='css/style.css' rel='stylesheet'/>
-        <link href='css/smoothness/jquery-ui-1.10.4.custom.min.css' rel='stylesheet'/>
+        <link href='css/slider.css' rel='stylesheet'/>
         <script src='js/jquery-2.1.1.min.js'></script>
         <script src='js/jquery-ui-1.10.4.custom.min.js'></script>
+        <script src='js/switchbutton.js'></script>
         <script src='js/ledmap.js'></script>
     </head>
     <body>
         <nav>
             <ul>
-                <li id='nav-light-settings'><span class='title'>Light Settings</span></li>
-                <li id='nav-adjust-position'><span class='title'>Adjust Position</span></li>
-                <li id='nav-connection'><span class='title'>Connection</span></li>
+                <li id='nav-light-settings' class='selected'>Lights</li>
+                <li id='nav-adjust-position'>Positioning</li>
+                <li id='nav-connection'>Connection</li>
             </ul>
         </nav>
         <section id='content'>
             <div id='page-light-settings' class='page open'>
                 <fieldset>
-                    <label for='turn-off-on'>LED Status</label>
-                    <button id='turn-off-on' data-alternate='Turn On' class='toggle-button'>Turn Off</button>
+                    <label for='turn-off-on'>Enable Lights</label>
+                    <div id='turn-off-on'></div>
                 </fieldset>
                 <fieldset>
                     <label for='brightness-slider'>Brightness</label>
-                    <span class='slider-label left'>0%</span>
-                    <span class='slider-label right'>100%</span>
-                    <div id='brightness-slider' class='slider with-labels'></div>
+                    <div id='brightness-slider' class='slider'></div>
                 </fieldset>
                 <fieldset>
-                    <label for='smooth-slider'>Smooth transitions when colors change</label>
-                    <span class='slider-label left'>0%</span>
-                    <span class='slider-label right'>100%</span>
-                    <div id='smooth-slider' class='slider with-labels'></div>
+                    <label for='smooth-slider'>Transition Smoothness</label>
+                    <div id='smooth-slider' class='slider'></div>
                 </fieldset>
                 <fieldset>
-                    <label for='gamma-slider'>Gamma Correction</label>
-                    <span class='slider-label left'>MIN</span>
-                    <span class='slider-label right'>MAX</span>
-                    <div id='gamma-slider' class='slider with-labels'></div>
+                    <label for='gamma-slider'>Gamma Color Correction</label>
+                    <div id='gamma-slider' class='slider'></div>
                 </fieldset>
-                <div id='output' style='width:100%; overflow-y:auto; border: 1px solid black;height:250px;padding:30px;box-sizing:border-box;'></div>
-                <button class='reset-default-button'>Reset to Defaults</button>
+                <button class='restore-button'>Restore Defaults</button>
             </div>
             <div id='page-adjust-position' class='page'>
-                <span class='title'>Adjust Position</span>
-                <div id='led-position-screen'>
-                    <div class='center-section'>
-                        <button id='fullscreen'>Fullscreen</button>
-                        <button class='reset-default-button'>Revert to defaults</button>
+                <div class='monitor'>
+                    <div id='led-position-screen'>
+                        <div class='center-section'>
+                            <div id='fullscreen'></div>
+                        </div>
                     </div>
                 </div>
                 <fieldset>
-                    <label for='horizontal-height-slider'>Height Depth Percentage</label>
-                    <span class='slider-label left'>0%</span>
-                    <span class='slider-label right'>50%</span>
-                    <div id='horizontal-height-slider' class='slider with-labels'></div>
+                    <label for='vertical-height-slider'>Width %</label>
+                    <div id='vertical-height-slider' class='slider reverse'></div>
                 </fieldset>
                 <fieldset>
-                    <label for='vertical-height-slider'>Width Depth Percentage</label>
-                    <span class='slider-label left'>0%</span>
-                    <span class='slider-label right'>50%</span>
-                    <div id='vertical-height-slider' class='slider with-labels'></div>
+                    <label for='horizontal-height-slider'>Height %</label>
+                    <div id='horizontal-height-slider' class='slider reverse'></div>
                 </fieldset>
+                <button class='restore-button'>Restore Defaults</button>
             </div>
             <div id='page-connection' class='page'>
+                <div class='connection-status'>
+                    <span id='icon-connection-status' class='icon'></span>
+                    <span class='text connected'>Lightpack is connected!</span>
+                    <span class='text disconnected'>Lightpack is not connected.</span>
+                </div>
                 <fieldset>
-                    <label for='port-input'>Port</label>
+                    <label for='port-input'>Communication Port</label>
                     <input id='port-input'/>
                 </fieldset>
-                <button class='reset-default-button'>Reset to Defaults</button>
+                <div id='output' style='width:100%; overflow-y:auto; border: 1px solid black;height:250px;padding:30px;box-sizing:border-box;'></div>
             </div>
         </section>
         <script src="js/ui.js"></script>
