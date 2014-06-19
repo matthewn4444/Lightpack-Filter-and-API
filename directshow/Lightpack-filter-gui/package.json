@@ -5,7 +5,6 @@
         "title": "Lightpack Filter",
         "toolbar": false,
         "width": 650,
-        "min_width": 600,
         "min_height": 380,
         "resizable": false,
         "icon": "/src/images/icon.png",
