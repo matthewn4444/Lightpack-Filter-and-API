@@ -127,7 +127,11 @@ $(".ui-slider-handle").on("mouseenter", function() {
     if (!$(this).hasClass("ui-state-active")) {
         $(this).find(".tooltip").removeClass("show");
     }
-})
+}).on("mousedown", function() {
+    $("#page-adjust-position .led-map-screen").addClass("no-rect-animation");
+}).on("mouseup", function() {
+    $("#page-adjust-position .led-map-screen").removeClass("no-rect-animation");
+});
 
 // Port
 var inputDelay = (function(){

@@ -422,47 +422,85 @@ input#port-input {
 .group.selected .led-item .pointer, .group.selected .rect{
     background: red !important;
 }
-.holder[data-direction='left'], .holder[data-direction='right'] {
+.group[data-direction='left'] .holder, .holder[data-direction='right'] {
     height:8%;
     width:5.5%;
 }
-.holder[data-direction='left'] .led-item {
+.group[data-direction='left'] .holder .led-item {
     -webkit-transform: rotate(-90deg);
     left:12%;
     top:-18%;
     width:82%;
     height:125%;
 }
-.holder[data-direction='right'] .led-item {
+.group[data-direction='right'] .holder .led-item {
     top:-17%;
     left:5%;
     width:82%;
     height:125%;
     -webkit-transform: rotate(90deg);
 }
-.holder[data-direction='down'] .led-item {
+.group[data-direction='down'] .holder .led-item {
     -webkit-transform: rotate(180deg);
     top:-5%;
 }
-.holder[data-direction='left-up'] .led-item {
+.group[data-direction='left-up'] .holder .led-item {
     -webkit-transform: rotate(-45deg);
     left:-2%;
     top:-17%;
 }
-.holder[data-direction='right-up'] .led-item {
+.group[data-direction='right-up'] .holder .led-item {
     -webkit-transform: rotate(45deg);
     left:33%;
     top:-19%;
 }
-.holder[data-direction='left-down'] .led-item {
+.group[data-direction='left-down'] .holder .led-item {
     -webkit-transform: rotate(225deg);
     top:8%;
     left:-2%;
 }
-.holder[data-direction='right-down'] .led-item {
+.group[data-direction='right-down'] .holder .led-item {
     -webkit-transform: rotate(-225deg);
     left:36%;
     top:13%;
+}
+
+/* Ledmap Rect Animations */
+.group[data-direction='right'] .rect,
+.group[data-direction='right-down'] .rect,
+.group[data-direction='right-up'] .rect {
+    right: 0 !important;
+    left: auto !important;
+}
+
+.group[data-direction='down'] .rect,
+.group[data-direction='left-down'] .rect,
+.group[data-direction='right-down'] .rect {
+    bottom: 0 !important;
+    top: auto !important;
+}
+
+.group[data-direction='left'] .rect,
+.group[data-direction='right'] .rect {
+    transition: width 0.2s linear, background-color 0.1s linear;
+}
+
+.group[data-direction='up'] .rect,
+.group[data-direction='down'] .rect {
+    transition: height 0.2s linear, background-color 0.1s linear;
+}
+
+.group[data-direction='right-up'] .rect,
+.group[data-direction='left-up'] .rect,
+.group[data-direction='left-down'] .rect,
+.group[data-direction='right-down'] .rect {
+    transition: width 0.2s linear, height 0.2s linear, background-color 0.1s linear;
+}
+
+.group.group.not-selected .rect,
+.group.group.selected .rect,
+.no-rect-animation .group .rect {
+    transition: background-color 0.1s linear !important;
 }
 
 /* Lights positioning page */

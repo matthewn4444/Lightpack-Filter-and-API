@@ -422,7 +422,7 @@ function setDefaultGroups(numOfGroups) {
 }
 
 function arrangeLed($holder, side, percentValue) {
-    $holder.attr("data-direction", "up");
+    $holder.parent().attr("data-direction", "up");
     var verticalPos = Math.round(screenHeight * percentValue / 100.0) - smallSide / 2,
         horizontalPos = Math.round(screenWidth * percentValue / 100.0) - smallSide / 2,
         leftBound = smallSide / 4.0, rightBound = (screenWidth - smallSide) - smallSide / 4.0,
@@ -431,41 +431,41 @@ function arrangeLed($holder, side, percentValue) {
     switch(side) {
         case 'r':    // Right
             if (verticalPos < topBound) {
-                $holder.attr("data-direction", "right-up").css({ left: rightEdge, top: 0 });
+                $holder.css({ left: rightEdge, top: 0 }).parent().attr("data-direction", "right-up");
             } else if (verticalPos > bottomBound) {
-                $holder.attr("data-direction", "right-down").css({ left: rightEdge, top: bottomEdge });
+                $holder.css({ left: rightEdge, top: bottomEdge }).parent().attr("data-direction", "right-down");
             } else {
-                $holder.attr("data-direction", "right").css({ left: rightEdge, top: verticalPos });
+                $holder.css({ left: rightEdge, top: verticalPos }).parent().attr("data-direction", "right");
             }
             $holder.draggable("option", "axis", "y");
             break;
         case 't':    // Top
             if (horizontalPos < leftBound) {
-                $holder.attr("data-direction", "left-up").css({ left: 0, top: 0 });
+                $holder.css({ left: 0, top: 0 }).parent().attr("data-direction", "left-up");
             } else if (horizontalPos > rightBound) {
-                $holder.attr("data-direction", "right-up").css({ left: rightEdge, top: 0 });
+                $holder.css({ left: rightEdge, top: 0 }).parent().attr("data-direction", "right-up");
             } else {
-                $holder.attr("data-direction", "up").css({ left: horizontalPos, top: 0 });
+                $holder.css({ left: horizontalPos, top: 0 }).parent().attr("data-direction", "up");
             }
             $holder.draggable("option", "axis", "x");
             break;
         case 'l':    // Left
             if (verticalPos < topBound) {
-                $holder.attr("data-direction", "left-up").css({ left: 0, top: 0 });
+                $holder.css({ left: 0, top: 0 }).parent().attr("data-direction", "left-up");
             } else if (verticalPos > bottomBound) {
-                $holder.attr("data-direction", "left-down").css({ left: 0, top: bottomEdge });
+                $holder.css({ left: 0, top: bottomEdge }).parent().attr("data-direction", "left-down");
             } else {
-                $holder.attr("data-direction", "left").css({ left: 0, top: verticalPos });
+                $holder.css({ left: 0, top: verticalPos }).parent().attr("data-direction", "left");
             }
             $holder.draggable("option", "axis", "y");
             break;
         case 'b':    // Bottom
             if (horizontalPos < leftBound) {
-                $holder.attr("data-direction", "left-down").css({ left: 0, top: bottomEdge });
+                $holder.css({ left: 0, top: bottomEdge }).parent().attr("data-direction", "left-down");
             } else if (horizontalPos > rightBound) {
-                $holder.attr("data-direction", "right-down").css({ left: rightEdge, top: bottomEdge });
+                $holder.css({ left: rightEdge, top: bottomEdge }).parent().attr("data-direction", "right-down");
             } else {
-                $holder.attr("data-direction", "down").css({ left: horizontalPos, top: bottomEdge });
+                $holder.css({ left: horizontalPos, top: bottomEdge }).parent().attr("data-direction", "down");
             }
             $holder.draggable("option", "axis", "x");
             break;
@@ -489,7 +489,7 @@ function getPositionAndSideOfLed(i) {
                     height: $rect.height() * 100 / screenHeight
                 };
             // Corners
-            switch($led.attr("data-direction")) {
+            switch($led.parent().attr("data-direction")) {
                 case "left-up":
                     side = 'l';
                     break;
@@ -584,16 +584,16 @@ function addLed(side, percentValue) {
                     $(this).css("left", 0);
                     if (y < topBound) {             // Top
                         console.log("left-up:x")
-                        $(this).attr("data-direction", "left-up").css("top", 0)
-                            .draggable("option", "axis", x > y ? "x" : "y");
+                        $(this).css("top", 0).draggable("option", "axis", x > y ? "x" : "y")
+                            .parent().attr("data-direction", "left-up");
                         ui.position.top = 0;
                     } else if (y < bottomBound) {   // Vertical middle
                         console.log("left");
-                        $(this).attr("data-direction", "left").draggable("option", "axis", "y");
+                        $(this).draggable("option", "axis", "y").parent().attr("data-direction", "left");
                     } else if (y > bottomBound) {   // Below bottom
                         console.log("left-down:x");
-                        $(this).attr("data-direction", "left-down").css("top", bottomEdge)
-                            .draggable("option", "axis", (bottomEdge - y) > x ? "y" : "x");
+                        $(this).css("top", bottomEdge).draggable("option", "axis", (bottomEdge - y) > x ? "y" : "x")
+                            .parent().attr("data-direction", "left-down")
                         ui.position.top = bottomEdge;
                     }
                 } else if (x > rightBound) {        // Right
@@ -601,23 +601,23 @@ function addLed(side, percentValue) {
                     $(this).css("left", rightEdge);
                     if (y < topBound) {             // Top
                         console.log("right-up:x");
-                        $(this).attr("data-direction", "right-up").css("top", 0)
-                            .draggable("option", "axis", (rightEdge - x) > y ? "x" : "y");
+                        $(this).css("top", 0).draggable("option", "axis", (rightEdge - x) > y ? "x" : "y")
+                            .parent().attr("data-direction", "right-up");
                         ui.position.top = 0;
                     } else if (y < bottomBound) {   // Vertical Middle
                         console.log("right:x");
-                        $(this).attr("data-direction", "right").draggable("option", "axis", "y");
+                        $(this).draggable("option", "axis", "y").parent().attr("data-direction", "right");
                     } else if (y > bottomBound) {   // Bottom
                         console.log("right-down:x");
-                        $(this).attr("data-direction", "right-down").css("top", bottomEdge)
-                            .draggable("option", "axis", y > x ? "y" : "x");
+                        $(this).css("top", bottomEdge).draggable("option", "axis", y > x ? "y" : "x")
+                            .parent().attr("data-direction", "right-down");
                         ui.position.top = bottomEdge;
                     }
                 } else {                            // Horizontal Center
                     if (y < topBound && top < topBound) {               // Top
-                        $(this).attr("data-direction", "up");
+                        $(this).parent().attr("data-direction", "up");
                     } else if (y > bottomBound && top > bottomBound) {  // Bottom
-                        $(this).attr("data-direction", "down");
+                        $(this).parent().attr("data-direction", "down");
                     } else {                                            // Vertical middle
                         // Move it to the left if equals or if user moved mouse above
                         // the diagonal (eq of line: y-(h/w)*x=0) to below
@@ -628,8 +628,8 @@ function addLed(side, percentValue) {
                             // Moving mouse up
                             || prevY + screenRatio * prevX - screenHeight > 0
                             && y + screenRatio * x - screenHeight < 0) {
-                                $(this).attr("data-direction", "left").draggable("option", "axis", "y")
-                                    .css({ left: 0, top: ui.position.left });
+                                $(this).draggable("option", "axis", "y").css({ left: 0, top: ui.position.left })
+                                    .parent().attr("data-direction", "left");
                                 }
                         } else {
                             // Moving mouse down
@@ -638,8 +638,8 @@ function addLed(side, percentValue) {
                             // Moving mouse up
                             || prevY + screenRatio * (screenWidth - prevX) - screenHeight > 0
                             && y + screenRatio * (screenWidth - x) - screenHeight < 0) {
-                                $(this).attr("data-direction", "right").draggable("option", "axis", "y")
-                                    .css({ left: rightEdge, top: ui.position.left });
+                                $(this).draggable("option", "axis", "y").css({ left: rightEdge, top: ui.position.left })
+                                    .parent().attr("data-direction", "right");
                             }
                         }
                     }
@@ -650,16 +650,16 @@ function addLed(side, percentValue) {
                     $(this).css("top", 0);
                     if (x < leftBound) {            // Left
                         console.log("left-up:y");
-                        $(this).attr("data-direction", "left-up").css("left", 0)
-                            .draggable("option", "axis", x > y ? "x" : "y");
+                        $(this).css("left", 0).draggable("option", "axis", x > y ? "x" : "y")
+                            .parent().attr("data-direction", "left-up");
                         ui.position.left = 0;
                     } else if (x < rightBound) {    // Horizontal middle
                         console.log("up:y");
-                        $(this).attr("data-direction", "up").draggable("option", "axis", "x");
+                        $(this).draggable("option", "axis", "x").parent().attr("data-direction", "up");
                     } else if (x > rightBound) {    // Right
                         console.log("right-up:y");
-                        $(this).attr("data-direction", "right-up").css("left", rightEdge)
-                            .draggable("option", "axis", (rightEdge - x) > y ? "x" : "y");
+                        $(this).css("left", rightEdge).draggable("option", "axis", (rightEdge - x) > y ? "x" : "y")
+                            .parent().attr("data-direction", "right-up");
                         ui.position.left = rightEdge;
                     }
                 } else if (y > bottomBound) {       // Bottom
@@ -667,23 +667,23 @@ function addLed(side, percentValue) {
                     $(this).css("top", bottomEdge);
                     if (x < leftBound) {            // Left
                         console.log("left-down:y");
-                        $(this).attr("data-direction", "left-down").css("left", 0)
-                            .draggable("option", "axis", (bottomEdge - y) > x ? "y" : "x");
+                        $(this).css("left", 0).draggable("option", "axis", (bottomEdge - y) > x ? "y" : "x")
+                            .parent().attr("data-direction", "left-down");
                         ui.position.left = 0;
                     } else if (x < rightBound) {   // Horizontal middle
                         console.log("down:y");
-                        $(this).attr("data-direction", "down").draggable("option", "axis", "x");
+                        $(this).draggable("option", "axis", "x").parent().attr("data-direction", "down");
                     } else if (x > rightBound) {    // Right
                         console.log("right-down:y");
-                        $(this).attr("data-direction", "right-down").css("left", rightEdge)
-                            .draggable("option", "axis", y > x ? "y" : "x");
+                        $(this).css("left", rightEdge).draggable("option", "axis", y > x ? "y" : "x")
+                            .parent().attr("data-direction", "right-down");
                         ui.position.left = rightEdge;
                     }
                 } else {                            // Vertical middle
                     if (x < leftBound && left < leftBound) {            // Left
-                        $(this).attr("data-direction", "left");
+                        $(this).parent().attr("data-direction", "left");
                     } else if (x > rightBound && left > rightBound) {   // Right
-                        $(this).attr("data-direction", "right");
+                        $(this).parent().attr("data-direction", "right");
                     } else {                                            // Horizontal middle
                         // Move it to top or bottom
                         //  Top   : same equation as above, '> 0' -> '< 0'
@@ -694,8 +694,8 @@ function addLed(side, percentValue) {
                             // Moving mouse left
                             || prevY - screenRatio * (screenWidth - prevX) > 0
                             && y - screenRatio * (screenWidth - x) < 0) {
-                                $(this).attr("data-direction", "up").draggable("option", "axis", "x")
-                                    .css({ left: ui.position.top, top: 0 });
+                                $(this).draggable("option", "axis", "x").css({ left: ui.position.top, top: 0 })
+                                    .parent().attr("data-direction", "up");
                                 }
                         } else {
                             // Moving mouse left
@@ -705,8 +705,8 @@ function addLed(side, percentValue) {
                             || (screenHeight - prevY) - (screenWidth - prevX) > 0
                             && (screenHeight - y) - (screenWidth - x) < 0) {
                                 console.log("yooo")
-                                $(this).attr("data-direction", "down").draggable("option", "axis", "x")
-                                    .css({ left: ui.position.top, top: bottomEdge });
+                                $(this).draggable("option", "axis", "x").css({ left: ui.position.top, top: bottomEdge })
+                                    .parent().attr("data-direction", "down");
                             }
                         }
                     }
