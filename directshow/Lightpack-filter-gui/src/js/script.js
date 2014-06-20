@@ -241,14 +241,10 @@ $("#page-adjust-position").on("slidestop", ".slider", function() {
 });
 
 // Reset button to send the lights again
-$("#page-adjust-position .restore-button").click(function(){
-    Ledmap.arrangeDefault();
-    setHorizontalDepthSlider(20);
-    setVerticalDepthSlider(15);
-    displayLedMapColors();
+$("#page-adjust-position .restore-button").click(function() {
     lightpack.sendPositions(Ledmap.getPositions());
-    lightpack.setHorizontalDepth(20);
-    lightpack.setVerticalDepth(15);
+    lightpack.setHorizontalDepth(Ledmap.getHorizontalDepth());
+    lightpack.setVerticalDepth(Ledmap.getVerticalDepth());
 });
 
 // Fullscreen button

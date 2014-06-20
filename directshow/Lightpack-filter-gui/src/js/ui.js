@@ -1,29 +1,24 @@
 setInterval(function(){}, 100);
 
+// Default values
+var DEFAULTS = {
+    brightness: 100,
+    smooth: 20,
+    gamma: 67,
+    horizontalDepth: 20,
+    verticalDepth: 15,
+    port: 6000
+};
+
 // Initialize the led map for dragging and updating
 Ledmap.init($("#led-position-screen"));
 
 // Init sliders
-function setAPIValueFromSlider(id, value) {
-    if (id == "brightness-slider") {
-        setLPBrightness(value);
-    } else if (id == "gamma-slider") {
-        setLPGamma(value);
-    } else if (id == "smooth-slider") {
-        setLPSmooth(value);
-    } else if (id == "horizontal-height-slider") {
-        Ledmap.setHorizontalDepth(value);
-        setLPHorizontalDepth(value);
-    } else if (id == "vertical-height-slider") {
-        Ledmap.setVerticalDepth(value);
-        setLPVerticalDepth(value);
-    }
-}
-
 var sliderData = {
     min: 0,
     max: 100,
     range: "min",
+    animate: 150,
     slide: function(e, ui) {
         var v = $(this).hasClass("reverse") ?
             $(this).slider("option", "max") - ui.value : ui.value;
@@ -46,15 +41,7 @@ sliderData.max = 50;
 sliderData.value = 50;
 $("#page-adjust-position div.slider").slider(sliderData);
 
-// Init Switch button
-$("#turn-off-on").switchButton({
-    onText: "On",
-    offText: "Off",
-    click: function(e, ui) {
-        setLPEnableLights(ui.checked);
-    }
-});
-
+// Input functions
 function setBrightnessSlider(val) {
     $("#brightness-slider").slider("value", val);
 }
@@ -66,6 +53,55 @@ function setGammaSlider(val) {
 function setSmoothSlider(val) {
     $("#smooth-slider").slider("value", val);
 }
+
+function setPortInput(port) {
+    $("#port-input").val(port);
+}
+
+function setHorizontalDepthSlider(v) {
+    Ledmap.setHorizontalDepth(v);
+    $("#horizontal-height-slider").slider("value", 50 - v);
+}
+
+function setVerticalDepthSlider(v) {
+    Ledmap.setVerticalDepth(v);
+    $("#vertical-height-slider").slider("value", 50 - v);
+}
+
+// Apply Defaults
+setBrightnessSlider(DEFAULTS.brightness);
+setGammaSlider(DEFAULTS.gamma);
+setSmoothSlider(DEFAULTS.smooth);
+setPortInput(DEFAULTS.port);
+setHorizontalDepthSlider(DEFAULTS.horizontalDepth);
+setVerticalDepthSlider(DEFAULTS.verticalDepth);
+
+function setAPIValueFromSlider(id, value) {
+    try {
+    if (id == "brightness-slider") {
+        setLPBrightness(value);
+    } else if (id == "gamma-slider") {
+        setLPGamma(value);
+    } else if (id == "smooth-slider") {
+        setLPSmooth(value);
+    } else if (id == "horizontal-height-slider") {
+        Ledmap.setHorizontalDepth(value);
+        setLPHorizontalDepth(value);
+    } else if (id == "vertical-height-slider") {
+        Ledmap.setVerticalDepth(value);
+        setLPVerticalDepth(value);
+    }
+    }catch(e){}
+}
+
+// Init Switch button
+$("#turn-off-on").switchButton({
+    onText: "On",
+    offText: "Off",
+    click: function(e, ui) {
+        setLPEnableLights(ui.checked);
+    }
+});
 
 /* Add tooltip to the sliders */
 function buildTooltip(text) {
@@ -93,20 +129,6 @@ $(".ui-slider-handle").on("mouseenter", function() {
     }
 })
 
-function setPortInput(port) {
-    $("#port-input").val(port);
-}
-
-function setHorizontalDepthSlider(v) {
-    Ledmap.setHorizontalDepth(v);
-    $("#horizontal-height-slider").slider("value", 50 - v);
-}
-
-function setVerticalDepthSlider(v) {
-    Ledmap.setVerticalDepth(v);
-    $("#vertical-height-slider").slider("value", 50 - v);
-}
-
 // Port
 var inputDelay = (function(){
     var timer = 0;
@@ -132,4 +154,26 @@ $("nav ul").on("click", "li", function(){
     if (name == "-adjust-position") {
         Ledmap.updateMetrics();
     }
+});
+
+// Restore button
+$("#page-adjust-position .restore-button").click(function() {
+    Ledmap.arrangeDefault();
+    $(document.body).addClass("restoring");         // Start animation
+    setHorizontalDepthSlider(DEFAULTS.horizontalDepth);
+    setVerticalDepthSlider(DEFAULTS.verticalDepth);
+});
+
+$(".restore-button").on("click", function() {
+    // Animate the restoration
+    $(document.body).addClass("restoring");
+    setTimeout(function(){
+        $(document.body).removeClass("restoring");
+    }, 150);
+});
+
+$("#page-light-settings .restore-button").click(function() {
+    setBrightnessSlider(DEFAULTS.brightness);
+    setSmoothSlider(DEFAULTS.smooth);
+    setGammaSlider(DEFAULTS.gamma);
 });

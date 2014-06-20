@@ -480,6 +480,11 @@ input#port-input {
     height: 270px;
 }
 
+/* Restore animations */
+body.restoring .led-map-screen * {
+    transition: all 0.15s linear !important;
+}
+
 /* Fullscreen */
 #fullscreen {
     margin: 1px;
