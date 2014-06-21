@@ -45,9 +45,17 @@
  *      @param percent      number from 0-50 that represents the depth (height)
  *      Ledmap.setHorizontalDepth(percent)
  *
+ *  Get the horizontal height depth percentage
+ *      @return percent     number from 0-50 that represents the depth (height)
+ *      Ledmap.getHorizontalDepth()
+ *
  *  Set the vertical width depth percentage
  *      @param percent      number from 0-50 that represents the depth (width)
  *      Ledmap.setVerticalDepth(percent)
+ *
+ *  Get the vertical width depth percentage
+ *      @return percent     number from 0-50 that represents the depth (width)
+ *      Ledmap.getVerticalDepth()
  *
  *  Side Data:
  *      'r' = Right
@@ -412,9 +420,16 @@ function setDefaultGroups(numOfGroups) {
         $groups.remove();
         for (var i = 0; i < numOfGroups * 10; i++) {
             var color = colorGroup[i % 10],
+                className = "",
                 colorObj = {"background-color": "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")"};
+            for (var j = 0; j < 3; j++) {
+                if (color[j] == 0) {
+                    className += "0";
+                }
+                className += color[j].toString(16);
+            }
             $led = addLed('t', 0)
-            $led.find(".pointer").css(colorObj);
+            $led.find(".pointer").addClass(className);
             $led.parent().find(".rect").css(colorObj);
         }
         arrangeDefault();
@@ -532,12 +547,11 @@ function addLed(side, percentValue) {
     }
     var num = $ledscreen.find(".group");
     var $holder = $("<div>").addClass("holder");
-    var $led = $("<div>").addClass("led-item");
     var $pointer = $("<div>").addClass("pointer");
     var $rect = $("<div>").addClass("rect");
     var $group = $("<div>").addClass("group").attr("data-led", num.length);
-    $led.append($pointer);
-    $group.append($holder.append($led));
+    $holder.append($pointer);
+    $group.append($holder);
     $group.append($rect);
     $ledscreen.append($group);
     var s1 = $holder.outerWidth(),
@@ -732,7 +746,9 @@ w.Ledmap = {
     setColorGroup: setColorGroup,
     getColorGroup: getColorGroup,
     setHorizontalDepth: setHorizontalDepth,
+    getHorizontalDepth: function() { return Math.round(horizontalDepthPercent * 100); },
     setVerticalDepth: setVerticalDepth,
+    getVerticalDepth: function() { return Math.round(verticalDepthPercent * 100); },
     setGroups: setDefaultGroups,
     updateMetrics: updateMetrics,
     arrangeDefault: arrangeDefault,

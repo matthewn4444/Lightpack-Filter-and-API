@@ -390,91 +390,107 @@ input#port-input {
 
 .holder {
     position:absolute;
-    width:4.4%;
-    height:10%;
     -webkit-box-sizing: content-box;
+     width:4.4%;
+     height:10%;
 }
 
-.led-item {
-    position:absolute;
-    -webkit-box-sizing: content-box;
-    display:inline-block;
-    overflow:hidden;
-    width:100%;
-    height:100%;
-    border-bottom: 2px solid black;
-    left: 0;
-    top:0;
+.holder .pointer {
+    width: 120%;
+    height: 120%;
+    background-image: url("../images/pointers/red.png");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
-.led-item .pointer{
-    left:-20%;
-    top:-3%;
-    position:absolute;
-    -webkit-box-sizing: border-box;
-    width: 140%;
-    height:109%;
-    border: 2px solid black;
-    -webkit-transition: background-color 0.1s linear;
-    -webkit-transform: rotate(45deg) skew(24deg, 24deg) translate(26%, 26%);
+
+.pointer.ffff00 {
+    background-image: url("../images/pointers/yellow.png");
 }
+.pointer.78a3b9 {
+    background-image: url("../images/pointers/dark-blue.png");
+}
+.pointer.00ff00 {
+    background-image: url("../images/pointers/green.png");
+}
+.pointer.00ff00 {
+    background-image: url("../images/pointers/pink.png");
+}
+.pointer.ff9000 {
+    background-image: url("../images/pointers/orange.png");
+}
+.pointer.00ffff {
+    background-image: url("../images/pointers/light-blue.png");
+}
+.pointer.c03c44 {
+    background-image: url("../images/pointers/dark-red.png");
+}
+.pointer.ffd6a0 {
+    background-image: url("../images/pointers/peach.png");
+}
+.pointer.aa66cc {
+    background-image: url("../images/pointers/purple.png");
+}
+
 .group.not-selected .rect {
     background: black !important;
 }
-.group.not-selected .led-item .pointer, body.fullscreen .group.not-selected .rect{
+
+.group.not-selected .pointer {
+    background-image: url("../images/pointers/white.png");
+}
+
+body.fullscreen .group.not-selected .rect{
     background: white !important;
 }
-.group.selected .led-item .pointer, .group.selected .rect{
+
+.group.selected .pointer {
+    background-image: url("../images/pointers/red.png");
+}
+
+.group.selected .rect{
     background: red !important;
 }
-.group[data-direction='left'] .holder, .holder[data-direction='right'] {
+.group[data-direction='left'] .holder, .group[data-direction='right'] .holder {
     height:8%;
     width:5.5%;
 }
-.group[data-direction='left'] .holder .led-item {
-    -webkit-transform: rotate(-90deg);
-    left:12%;
-    top:-18%;
-    width:82%;
-    height:125%;
+.group[data-direction='up'] .holder .pointer {
+    position: relative;
+    top:-15%;
 }
-.group[data-direction='right'] .holder .led-item {
-    top:-17%;
-    left:5%;
-    width:82%;
-    height:125%;
+.group[data-direction='left'] .holder .pointer {
+    -webkit-transform: rotate(-90deg);
+    width:100%;
+    height:150%;
+}
+.group[data-direction='right'] .holder .pointer {
+    width:100%;
+    height:150%;
     -webkit-transform: rotate(90deg);
 }
-.group[data-direction='down'] .holder .led-item {
+.group[data-direction='down'] .holder .pointer {
     -webkit-transform: rotate(180deg);
-    top:-5%;
 }
-.group[data-direction='left-up'] .holder .led-item {
+.group[data-direction='left-up'] .holder .pointer {
     -webkit-transform: rotate(-45deg);
-    left:-2%;
-    top:-17%;
 }
-.group[data-direction='right-up'] .holder .led-item {
+.group[data-direction='right-up'] .holder .pointer {
     -webkit-transform: rotate(45deg);
-    left:33%;
-    top:-19%;
 }
-.group[data-direction='left-down'] .holder .led-item {
+.group[data-direction='left-down'] .holder .pointer {
     -webkit-transform: rotate(225deg);
-    top:8%;
-    left:-2%;
 }
-.group[data-direction='right-down'] .holder .led-item {
+.group[data-direction='right-down'] .holder .pointer {
     -webkit-transform: rotate(-225deg);
-    left:36%;
-    top:13%;
 }
 
 /* Ledmap Rect Animations */
 .group[data-direction='right'] .rect,
 .group[data-direction='right-down'] .rect,
 .group[data-direction='right-up'] .rect {
-    right: 0 !important;
-    left: auto !important;
+    right: 0;
+    left: auto;
 }
 
 .group[data-direction='down'] .rect,
@@ -594,7 +610,7 @@ body.fullscreen #page-adjust-position button {
     display:none;
 }
 
-body.fullscreen .led-item, body.fullscreen .led-item .pointer {
+body.fullscreen .pointer {
     border-color:white;
 }
 body.fullscreen .led-map-screen {
