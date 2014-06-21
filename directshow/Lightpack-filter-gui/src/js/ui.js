@@ -41,6 +41,13 @@ sliderData.max = 50;
 sliderData.value = 50;
 $("#page-adjust-position div.slider").slider(sliderData);
 
+// Hack fix to make the "slider click" animations for rects to be correct
+$("#page-adjust-position").on("slidestart", ".slider", function() {
+    $("#led-position-screen").addClass("sliding");
+}).on("slidestop", ".slider", function() {
+    $("#led-position-screen").removeClass("sliding");
+});
+
 // Input functions
 function setBrightnessSlider(val) {
     $("#brightness-slider").slider("value", val);

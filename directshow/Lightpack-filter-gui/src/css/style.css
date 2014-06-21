@@ -486,11 +486,11 @@ body.fullscreen .group.not-selected .rect{
 }
 
 /* Ledmap Rect Animations */
-.group[data-direction='right'] .rect,
-.group[data-direction='right-down'] .rect,
-.group[data-direction='right-up'] .rect {
-    right: 0;
-    left: auto;
+.sliding .group[data-direction='right'] .rect,
+.sliding .group[data-direction='right-down'] .rect,
+.sliding .group[data-direction='right-up'] .rect {
+    right: 0 !important;
+    left: auto !important;
 }
 
 .group[data-direction='down'] .rect,
