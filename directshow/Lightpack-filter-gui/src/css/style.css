@@ -524,6 +524,13 @@ body.fullscreen .group.not-selected .rect{
 }
 
 /* Lights positioning page */
+#page-adjust-position .monitor .restore-button {
+    background: url("../images/revert.png");
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+}
+
 #page-adjust-position fieldset {
     display: inline-block;
     vertical-align: top;
@@ -545,8 +552,6 @@ body.restoring .led-map-screen * {
 
 /* Fullscreen */
 #fullscreen {
-    margin: 1px;
-    transition: opacity 0.1s ease, height 0.1s ease, width 0.1s ease, 0.1s ease, margin 0.1s ease;
     width: 60px;
     height: 60px;
     background: url("../images/enter-fullscreen.png");
@@ -556,14 +561,19 @@ body.restoring .led-map-screen * {
     opacity: 1;
 }
 
-#fullscreen:hover {
+#page-adjust-position .center-section div {
+    margin: 1px;
+    transition: opacity 0.1s ease, height 0.1s ease, width 0.1s ease, 0.1s ease, margin 0.1s ease;
+}
+
+#page-adjust-position .center-section div:hover {
     margin: 0;
     width: 62px;
     height: 62px;
     opacity: 0.8;
 }
 
-#fullscreen:active {
+#page-adjust-position .center-section div:active {
     margin: 2px;
     width: 58px;
     height: 58px;
@@ -575,15 +585,19 @@ body.fullscreen #page-adjust-position .center-section {
 }
 body.fullscreen #fullscreen {
     background: url("../images/exit-fullscreen.png");
-    width: 100%;
-    height: 100%;
-    opacity: 0.9;
+    margin-right:10%;
 }
-body.fullscreen #fullscreen:hover {
-    opacity: 1;
+body.fullscreen .center-section div {
+    width: 45% !important;
+    height: 100% !important;
+    opacity: 0.9 !important;
+    display:inline-block !important;
 }
-body.fullscreen #fullscreen:active {
-    opacity: 0.7;
+body.fullscreen .center-section div:hover {
+    opacity: 1 !important;
+}
+body.fullscreen .center-section div:active {
+    opacity: 0.7 !important;
 }
 body.fullscreen nav, body.fullscreen #page-adjust-position .title {
     display:none;
