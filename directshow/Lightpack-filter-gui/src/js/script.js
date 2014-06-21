@@ -41,6 +41,7 @@ function log(/*...*/) {
     }
     div.appendChild(document.createTextNode(text));
     document.getElementById("output").appendChild(div);
+    $('#output').animate({scrollTop: $('#output').prop("scrollHeight")}, 500);
 }
 
 //  ============================================
