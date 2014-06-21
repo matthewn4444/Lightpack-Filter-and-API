@@ -630,3 +630,12 @@ body.fullscreen .pointer {
 body.fullscreen .led-map-screen {
     background-color:black;
 }
+
+/* Watermark */
+.watermark {
+    position: absolute;
+    left: 40px;
+    bottom: 20px;
+    font-weight: normal;
+    font-size: 13px;
+}
