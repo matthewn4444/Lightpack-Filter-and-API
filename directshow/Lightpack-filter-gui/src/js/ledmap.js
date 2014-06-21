@@ -420,7 +420,7 @@ function setDefaultGroups(numOfGroups) {
         $groups.remove();
         for (var i = 0; i < numOfGroups * 10; i++) {
             var color = colorGroup[i % 10],
-                className = "",
+                className = "color_",
                 colorObj = {"background-color": "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")"};
             for (var j = 0; j < 3; j++) {
                 if (color[j] == 0) {

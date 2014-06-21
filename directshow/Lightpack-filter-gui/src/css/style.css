@@ -404,31 +404,31 @@ input#port-input {
     background-position: center;
 }
 
-.pointer.ffff00 {
+.pointer.color_ffff00 {
     background-image: url("../images/pointers/yellow.png");
 }
-.pointer.78a3b9 {
+.pointer.color_78a3b9 {
     background-image: url("../images/pointers/dark-blue.png");
 }
-.pointer.00ff00 {
+.pointer.color_00ff00 {
     background-image: url("../images/pointers/green.png");
 }
-.pointer.00ff00 {
+.pointer.color_ff00ff {
     background-image: url("../images/pointers/pink.png");
 }
-.pointer.ff9000 {
+.pointer.color_ff9000 {
     background-image: url("../images/pointers/orange.png");
 }
-.pointer.00ffff {
+.pointer.color_00ffff {
     background-image: url("../images/pointers/light-blue.png");
 }
-.pointer.c03c44 {
+.pointer.color_c03c44 {
     background-image: url("../images/pointers/dark-red.png");
 }
-.pointer.ffd6a0 {
+.pointer.color_ffd6a0 {
     background-image: url("../images/pointers/peach.png");
 }
-.pointer.aa66cc {
+.pointer.color_aa66cc {
     background-image: url("../images/pointers/purple.png");
 }
 
