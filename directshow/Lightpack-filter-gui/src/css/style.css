@@ -639,3 +639,7 @@ body.fullscreen .led-map-screen {
     font-weight: normal;
     font-size: 13px;
 }
+
+body.fullscreen .watermark {
+    display: none;
+}
