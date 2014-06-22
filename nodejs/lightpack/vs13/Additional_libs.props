@@ -3,9 +3,9 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>..\..\$(Configuration)\</OutDir>
-    <IncludePath>../../include;$(IncludePath)</IncludePath>
-    <LibraryPath>../../lib;$(LibraryPath)</LibraryPath>
+    <OutDir>..\..\..\$(Configuration)\</OutDir>
+    <IncludePath>../../../include;$(IncludePath)</IncludePath>
+    <LibraryPath>../../../lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>

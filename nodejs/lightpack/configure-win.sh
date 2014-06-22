@@ -18,6 +18,6 @@ sed -i '29a\
 
 sed -i 's/MultiThreaded</MultiThreadedDLL</g' $file
 sed -i 's/$(Configuration)\\nw.lib</ia32\\nw.lib;lightpack.lib</g' $file
-sed -i 's/$(SolutionDir)/..\\..\\/g' $file
+sed -i 's/$(SolutionDir)/..\\..\\..\\/g' $file
 
 rm -r build
