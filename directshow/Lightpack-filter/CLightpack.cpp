@@ -10,6 +10,8 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define DEFAULT_SMOOTH 30
 #define DEFAULT_GUI_PORT 6000
 
+#define MUTEX_NAME L"LightpackFilterMutex"
+
 #define SETTINGS_FILE "settings.ini"
 
 const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
@@ -57,6 +59,9 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
         connectDevice();
 
         startLightThread();
+
+        // Define the single instance mutex for uninstallation inno setup
+        mAppMutex = CreateMutex(NULL, FALSE, MUTEX_NAME);
     }
     sAlreadyRunning = true;
 }
@@ -83,6 +88,9 @@ CLightpack::~CLightpack(void)
     // Once the first instance is deallocated, we should allow usage of this filter again
     if (mIsFirstInstance) {
         sAlreadyRunning = false;
+        if (mAppMutex) {
+            CloseHandle(mAppMutex);
+        }
     }
 #ifdef LOG_ENABLED
     if (mLog) {

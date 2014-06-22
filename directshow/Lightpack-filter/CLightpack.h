@@ -230,6 +230,8 @@ private:
     std::queue<DWORD_PTR> mAdviseQueue;
     bool mHasReadSettings;
     wchar_t mCurrentDirectoryCache[MAX_PATH];
+
+    HANDLE mAppMutex;
 };
 
 #endif // __CLIGHTPACK__
