@@ -19,7 +19,7 @@ function showWindow() {
 //  ============================================
 var shouldShowWindow = true;
 for (var i = 0; i < gui.App.argv.length; i++) {
-    var cmd = gui.App.argv[0];
+    var cmd = gui.App.argv[i];
     if (cmd == "--hide") {
         shouldShowWindow = false;
     }
