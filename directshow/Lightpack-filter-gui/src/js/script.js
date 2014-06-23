@@ -35,6 +35,9 @@ if (shouldShowWindow) {
     showWindow();
 }
 
+// Change the window's title with the version number in it
+document.title += " v" + require("./../package.json").version;
+
 function log(/*...*/) {
     var div = document.createElement("div");
     div.style.textAlign = "right";
