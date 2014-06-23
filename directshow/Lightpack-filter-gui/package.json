@@ -1,5 +1,5 @@
 {
-    "name" : "demo",
+    "name" : "Lightpack Filter",
     "main" : "src/index.html",
     "window": {
         "title": "Lightpack Filter",
