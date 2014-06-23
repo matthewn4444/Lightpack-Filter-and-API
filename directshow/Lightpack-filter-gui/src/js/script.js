@@ -51,6 +51,14 @@ function log(/*...*/) {
 }
 
 //  ============================================
+//  Set the settings path
+//  ============================================
+if (lightpack.getSettingsFolder().indexOf("\\Program Files") != -1) {
+    // If this project is in program files, then use the window's app data
+    lightpack.setSettingsFolder(gui.App.dataPath + "/lightpack-filter");
+}
+
+//  ============================================
 //  Handle Tray and window properties
 //  ============================================
 function close() {
