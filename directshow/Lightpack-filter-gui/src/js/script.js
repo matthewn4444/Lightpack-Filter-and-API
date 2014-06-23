@@ -1,4 +1,5 @@
 var lightpack = require("lightpack/lightpack-api"),
+    mutex = require("lightpack/app-mutex"),
     gui = require('nw.gui'),
     lightApi = null,
     win = gui.Window.get(),
@@ -13,6 +14,11 @@ function showWindow() {
     win.show();
     win.focus();
 }
+
+//  ============================================
+//  Set a Windows mutex for Inno setup files
+//  ============================================
+mutex.create("LightpackFilterGUIMutex");
 
 //  ============================================
 //  Command Line
