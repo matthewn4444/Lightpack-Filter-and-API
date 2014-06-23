@@ -13,7 +13,7 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define MUTEX_NAME L"LightpackFilterMutex"
 
 #define SETTINGS_FILE "settings.ini"
-#define PROJECT_NAME "Lightpack Filter"
+#define PROJECT_NAME "lightpack-filter"
 
 const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
 bool CLightpack::sAlreadyRunning = false;

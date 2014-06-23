@@ -13,3 +13,6 @@ log.txt
 *.exe
 nw.pak
 *.node
+.bin
+ncp
+request
