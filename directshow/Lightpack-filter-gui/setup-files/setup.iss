@@ -38,3 +38,19 @@ Filename: https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Usage; D
 Filename: "{app}\nw.exe"; WorkingDir: "{app}"; Description: {#LaunchProgram}; Flags: postinstall shellexec skipifdoesntexist
 [UninstallRun]
 Filename: "{app}\uninstallFilter.bat"; Flags: skipifdoesntexist
+
+[Code]
+var filePath:string;
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  // Asks user if they want their settings to be deleted on uninstall
+  if CurUninstallStep = usPostUninstall then
+  begin
+    filePath := ExpandConstant('{localappdata}\Lightpack Filter');
+    if DirExists(filePath) then
+      if MsgBox('Would you also want to delete your settings?',
+        mbConfirmation, MB_YESNO) = IDYES
+      then
+        DelTree(filePath, True, True, True);
+  end;
+end;
