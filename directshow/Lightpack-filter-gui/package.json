@@ -6,6 +6,9 @@
     "packages" : {
         "win": ""
     },
+    "installers" : {
+        "win": "https://raw.githubusercontent.com/matthewn4444/Lightpack-Filter-and-API/master/directshow/Lightpack-filter-gui/tests/prismatik-client-test.js"
+    },
     "window": {
         "title": "Lightpack Filter",
         "toolbar": false,
