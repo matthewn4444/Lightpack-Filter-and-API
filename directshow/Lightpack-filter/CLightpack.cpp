@@ -13,6 +13,7 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define MUTEX_NAME L"LightpackFilterMutex"
 
 #define SETTINGS_FILE "settings.ini"
+#define PROJECT_NAME "Lightpack Filter"
 
 const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
 bool CLightpack::sAlreadyRunning = false;
@@ -387,33 +388,53 @@ void CLightpack::loadSettingsFile()
 {
     if (!mHasReadSettings) {
         mHasReadSettings = true;
+
         // Prepare the path to the settings file
         char path[MAX_PATH];
         wcstombs(path, getCurrentDirectory(), wcslen(getCurrentDirectory()));
         strcat(path, "\\"SETTINGS_FILE);
 
-        // Read the file and parse it
         INIReader reader(path);
         if (!reader.ParseError()) {
-            mPropPort = reader.GetInteger("General", "port", DEFAULT_GUI_PORT);
-            mPropSmooth = (unsigned char) reader.GetInteger("State", "smooth", DEFAULT_SMOOTH);
-            mPropBrightness = (unsigned char) reader.GetInteger("State", "brightness", Lightpack::DefaultBrightness);
-            mPropGamma = reader.GetReal("State", "gamma", Lightpack::DefaultGamma);
+            readSettingsFile(reader);
+        }
+        else {
+            // If there is no settings file there then we should try appdata file, otherwise just use defaults
+            wchar_t buffer[MAX_PATH];
+            if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, buffer))) {
+                wcstombs(path, buffer, wcslen(buffer));
+                path[wcslen(buffer)] = '\0';
+                strcat(path, "\\"PROJECT_NAME"\\"SETTINGS_FILE);
 
-            // Read positions
-            int i = 1;
-            int x = 0, y = 0, w = 0, h = 0;
-            char key[32] = "led1";
-            std::vector<Lightpack::Rect> rects;
-            Lightpack::Rect rect;
-            while (parseLedRectLine(reader.Get("Positions", key, "").c_str(), &rect)) {
-                rects.push_back(rect);
-                logf("Got led %d: %d, %d, %d, %d", i, rect.x, rect.y, rect.width, rect.height);
-                sprintf(key, "led%d", ++i);
+                // Try again
+                reader = INIReader(path);
+                if (!reader.ParseError()) {
+                    readSettingsFile(reader);
+                }
             }
-            updateScaledRects(rects);
         }
     }
+}
+
+void CLightpack::readSettingsFile(INIReader& reader)
+{
+    mPropPort = reader.GetInteger("General", "port", DEFAULT_GUI_PORT);
+    mPropSmooth = (unsigned char)reader.GetInteger("State", "smooth", DEFAULT_SMOOTH);
+    mPropBrightness = (unsigned char)reader.GetInteger("State", "brightness", Lightpack::DefaultBrightness);
+    mPropGamma = reader.GetReal("State", "gamma", Lightpack::DefaultGamma);
+
+    // Read positions
+    int i = 1;
+    int x = 0, y = 0, w = 0, h = 0;
+    char key[32] = "led1";
+    std::vector<Lightpack::Rect> rects;
+    Lightpack::Rect rect;
+    while (parseLedRectLine(reader.Get("Positions", key, "").c_str(), &rect)) {
+        rects.push_back(rect);
+        logf("Got led %d: %d, %d, %d, %d", i, rect.x, rect.y, rect.width, rect.height);
+        sprintf(key, "led%d", ++i);
+    }
+    updateScaledRects(rects);
 }
 
 bool CLightpack::parseLedRectLine(const char* line, Lightpack::Rect* outRect)

@@ -3,6 +3,7 @@
 
 #include "socket.hpp"
 
+#include <shlobj.h>
 #include <streams.h>
 #include <Dvdmedia.h>
 #include <Lightpack.h>
@@ -162,6 +163,7 @@ private:
     void clearQueue();
 
     void loadSettingsFile();
+    void readSettingsFile(INIReader& reader);
     bool parseLedRectLine(const char* line, Lightpack::Rect* outRect);
     void percentageRectToVideoRect(double x, double y, double w, double h, Lightpack::Rect* outRect);
     void updateScaledRects(std::vector<Lightpack::Rect>& rects);
