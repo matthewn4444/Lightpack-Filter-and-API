@@ -2,3 +2,6 @@
 *.vcxproj
 config.gypi
 *.node
+
+# Node-Webkit Binaries
+nw-binaries
