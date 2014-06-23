@@ -6,6 +6,7 @@ set DEBUG=..\..\Debug
 
 rem Compiles and places the nw file into the release and debug folders
 del %RELEASE%\nw.exe
+del %RELEASE%\setup.exe
 del %RELEASE%\setup.iss
 copy %RELEASE%\lightpack.node node_modules\lightpack\lightpack.node
 copy %RELEASE%\app-mutex.node node_modules\lightpack\app-mutex.node
