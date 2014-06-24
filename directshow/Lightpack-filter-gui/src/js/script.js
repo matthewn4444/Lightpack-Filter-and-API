@@ -114,6 +114,7 @@ updater.checkNewVersion(function(err, manifest){
     if (confirm("Version " + newVersion + " is available, would you like to update?")) {
         //if (wasInstalled) {
         // Start file download
+        showWindow();
         var totalSize = 1, receivedSize = 0;
         updater.downloadInstaller(function(err, path) {
             if (err) {
