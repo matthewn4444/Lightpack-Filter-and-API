@@ -5,6 +5,7 @@
 #define DEFAULT_GUI_HOST "127.0.0.1"
 
 #define RECV_TIMEOUT 200
+#define GUI_MUTEX_NAME L"LightpackFilterGUIMutex"
 
 // These messages are uses in the communication channel to the GUI
 #define COMM_REC_COUNT_LEDS     0
@@ -367,7 +368,6 @@ void CLightpack::handleMessages(Socket& socket)
             // Received a socket error
             log("Socket left");
             socket.Close();
-            mCommThreadStopRequested = true;
             break;
         }
         buffer[0] = '\0';
@@ -385,22 +385,24 @@ DWORD CLightpack::commThreadStart()
     log("Running communication thread");
     Socket socket;
 
+    // Check if GUI is already openned, if not then open it
+    HANDLE h = CreateMutex(NULL, FALSE, GUI_MUTEX_NAME);
+    bool guiIsRunning = GetLastError() == ERROR_ALREADY_EXISTS;
+    if (!guiIsRunning) {
+        CloseHandle(h);
+
+        // Run the application
+        ShellExecute(NULL, NULL, L"nw.exe", L"app.nw --hide", getCurrentDirectory(), SW_SHOW);
+    }
+
     // Trying to connect; when port changes in handleMessages, it will reconnect port
     while (!mCommThreadStopRequested) {
         if (socket.Open(DEFAULT_GUI_HOST, mPropPort)) {
             handleMessages(socket);
         }
         else {
-            // Run the application (if already running this does nothing), try to connect, if fail then give up
-            ShellExecute(NULL, NULL, L"nw.exe", L"app.nw --hide", getCurrentDirectory(), SW_SHOW);
-            if (socket.Open(DEFAULT_GUI_HOST, mPropPort)) {
-                handleMessages(socket);
-            }
-            else {
-                log("Failed to connect to gui");
-                break;
-            }
-
+            log("Failed to connect to gui");
+            Sleep(500);
         }
     }
     mCommThreadStopRequested = true;
