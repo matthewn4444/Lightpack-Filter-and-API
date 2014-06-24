@@ -121,11 +121,12 @@ updater.checkNewVersion(function(err, manifest){
                 $(document.body).removeClass("overlay");
                 return log(err);
             }
-            log("Downloaded new version:", path);
-            //updater.run(path);
-            //var spawn = require("child_process").spawn;
-            //spawn("C:\\Users\\CHaSEdBYmAnYcrAZy\\AppData\\Local\\Temp\\setup.exe");
-            //spawn(path);
+            // Run installer and close this application
+            // setTimeout is needed or else error
+            setTimeout(function(){
+                updater.run(path);
+                close();
+            }, 100);
         }).on("response", function(res){
             totalSize = parseInt(res.headers['content-length'], 10);
             $("#download-done").text(0);
