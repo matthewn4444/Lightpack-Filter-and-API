@@ -48,6 +48,9 @@ $("#page-adjust-position").on("slidestart", ".slider", function() {
     $("#led-position-screen").removeClass("sliding");
 });
 
+// Init progressbar
+$(".progressbar").progressbar();
+
 // Input functions
 function setBrightnessSlider(val) {
     $("#brightness-slider").slider("value", val);

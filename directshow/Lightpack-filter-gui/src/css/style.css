@@ -642,3 +642,80 @@ body.fullscreen .led-map-screen {
 body.fullscreen .watermark {
     display: none;
 }
+
+/* Download overlay */
+#overlay {
+    visibility:hidden;
+    opacity:0;
+    background: rgba(0,0,0,0.5);
+    position: absolute;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    transition: opacity 0.2s ease-out;
+    z-index:1000;
+    padding: 40px;
+}
+
+body.overlay #overlay {
+    visibility: visible;
+    opacity:1;
+}
+
+#overlay .overlay-inner {
+    border-radius: 15px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    width: 400px;
+    background: #ffd794;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+    cursor: default;
+}
+
+#overlay .overlay-inner .detail {
+    font-size: 14px;
+}
+
+#overlay .overlay-inner .title {
+    display: block;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #5f6f8c;
+    padding-bottom:10px;
+}
+
+#overlay .overlay-inner .message {
+    display:block;
+    margin-bottom: 10px;
+    font-size:13px;
+    text-align:center;
+    border-bottom: 2px solid #5f6f8c;
+    padding-bottom:10px;
+}
+
+#overlay .overlay-inner .group {
+    float: right;
+    font-size: 14px;
+}
+
+#download-progress {
+    margin-top: 10px;
+}
+
+/* Progressbar */
+.ui-progressbar.ui-widget-content, .ui-progressbar .ui-progressbar-value {
+    height: 24px;
+    overflow: hidden;
+    border: none;
+    background: #fa726c;
+    box-shadow: 2px 1px 4px rgba(0,0,0,0.5) inset;
+}
+.ui-progressbar .ui-progressbar-value {
+    background: #17c18e;
+}
+.ui-progressbar.ui-corner-all, .ui-progressbar .ui-corner-all {
+    border-radius: 12px;
+}

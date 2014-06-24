@@ -1,9 +1,13 @@
 var lightpack = require("lightpack/lightpack-api"),
     mutex = require("lightpack/app-mutex"),
     gui = require('nw.gui'),
+    Updater = require("updater"),
+    pkg = require("./../package.json"),
+    updater = new Updater(pkg),
     lightApi = null,
     win = gui.Window.get(),
     tray = new gui.Tray({ icon: "/src/images/icon.png" }),
+    wasInstalled = lightpack.getSettingsFolder().indexOf("\\Program Files") != -1,
 
     // Window states
     isFilterConnected = false,
@@ -36,7 +40,7 @@ if (shouldShowWindow) {
 }
 
 // Change the window's title with the version number in it
-document.title += " v" + require("./../package.json").version;
+document.title += " v" + pkg.version;
 
 function log(/*...*/) {
     var div = document.createElement("div");
@@ -56,7 +60,7 @@ function log(/*...*/) {
 //  ============================================
 //  Set the settings path
 //  ============================================
-if (lightpack.getSettingsFolder().indexOf("\\Program Files") != -1) {
+if (wasInstalled) {
     // If this project is in program files, then use the window's app data
     lightpack.setSettingsFolder(gui.App.dataPath);
 }
@@ -96,6 +100,46 @@ win.on("close", function(){
         isShowing = false;
     } else {
         close();
+    }
+});
+
+//  ============================================
+//  Check for new versions
+//  ============================================
+updater.checkNewVersion(function(err, manifest){
+    if (err) {
+        return log(err);
+    }
+    var newVersion = manifest.version;
+    if (confirm("Version " + newVersion + " is available, would you like to update?")) {
+        //if (wasInstalled) {
+        // Start file download
+        var totalSize = 1, receivedSize = 0;
+        updater.downloadInstaller(function(err, path) {
+            if (err) {
+                alert("There was an error retrieving the download.");
+                $(document.body).removeClass("overlay");
+                return log(err);
+            }
+            log("Downloaded new version:", path);
+            //updater.run(path);
+            //var spawn = require("child_process").spawn;
+            //spawn("C:\\Users\\CHaSEdBYmAnYcrAZy\\AppData\\Local\\Temp\\setup.exe");
+            //spawn(path);
+        }).on("response", function(res){
+            totalSize = parseInt(res.headers['content-length'], 10);
+            $("#download-done").text(0);
+            $("#download-percent").text("0%");
+            $("#download-total").text(Math.round(totalSize / 1024));
+            $(document.body).addClass("overlay");
+        }).on("data", function(chunk) {
+            receivedSize += chunk.length;
+            var percent = Math.floor(receivedSize * 100 / totalSize);
+            $("#download-done").text(Math.round(receivedSize / 1024));
+            $("#download-percent").text(percent + "%");
+            $("#download-total").text(Math.round(totalSize / 1024));
+            $("#download-progress").progressbar("option", "value", percent);
+        });
     }
 });
 
