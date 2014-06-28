@@ -4,7 +4,7 @@
     "version" : "0.5.0b",
     "manifestUrl" : "https://raw.githubusercontent.com/matthewn4444/Lightpack-Filter-and-API/master/directshow/Lightpack-filter-gui/package.json",
     "packages" : {
-        "win": "https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.5.0b.zip"
+        "win": "https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/lightpack-filter.zip"
     },
     "installers" : {
         "win": "https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/setup.exe"

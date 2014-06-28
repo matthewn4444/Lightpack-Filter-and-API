@@ -1,5 +1,5 @@
 @echo off
 
-call "2 compile.bat"
+call "compile.bat"
 
 start ../../Release/nw.exe
