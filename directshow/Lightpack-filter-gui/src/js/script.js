@@ -126,7 +126,7 @@ updater.checkNewVersion(function(err, manifest){
             // setTimeout is needed or else error
             setTimeout(function(){
                 updater.run(path);
-                close();
+                lightpack.closeFilterWindow(close);
             }, 100);
         }).on("response", function(res){
             totalSize = parseInt(res.headers['content-length'], 10);

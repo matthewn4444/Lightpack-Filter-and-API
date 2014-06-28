@@ -21,6 +21,7 @@
 #define COMM_REC_CONNECT        10
 #define COMM_REC_NEW_PORT       11
 #define COMM_REC_IS_RUNNING     12
+#define COMM_REC_CLOSE_WINDOW   13
 
 // These messages are used to send data back to the server
 #define COMM_SEND_RETURN        0
@@ -29,6 +30,34 @@
 #define COMM_SEND_CONNECTED     3
 #define COMM_SEND_DISCONNECTED  4
 #define COMM_SEND_INVALID_ARGS  5
+
+// Find the current window's handle
+static HWND __sFoundHandle = NULL;
+static BOOL CALLBACK EnumWindowsProc(HWND h, long processId) {
+    if (IsWindow(h) && IsWindowVisible(h)) {
+        __sFoundHandle = NULL;
+        DWORD handleProcessId;
+        GetWindowThreadProcessId(h, &handleProcessId);
+
+        // Found the correct window
+        if (processId == handleProcessId) {
+            __sFoundHandle = h;
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+static HWND getWindowHandle()
+{
+    DWORD processId = GetCurrentProcessId();
+    EnumWindows(&EnumWindowsProc, processId);
+    if (__sFoundHandle != NULL) {
+        HWND ret = __sFoundHandle;
+        __sFoundHandle = NULL;
+        return ret;
+    }
+    return NULL;
+}
 
 void CLightpack::startCommThread()
 {
@@ -350,6 +379,17 @@ void CLightpack::handleMessages(Socket& socket)
                             sprintf(buffer, "%d1", COMM_SEND_RETURN);
                             mShouldSendConnectEvent = false;
                         }
+                    }
+                }
+                // Format: <13>
+                else if (messageType == COMM_REC_CLOSE_WINDOW) {
+                    parsingError = false;
+                    sprintf(buffer, "%d1", COMM_SEND_RETURN);
+
+                    // Close this window
+                    HWND handle = getWindowHandle();
+                    if (handle != NULL) {
+                        PostMessage(handle, WM_CLOSE, NULL, NULL);
                     }
                 }
 
