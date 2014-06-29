@@ -1,4 +1,4 @@
-var lightpack = require("lightpack/lightpack-api"),
+var lightpack = require("lightpack"),
     mutex = require("lightpack/app-mutex"),
     gui = require('nw.gui'),
     Updater = require("updater"),
