@@ -112,22 +112,37 @@ updater.checkNewVersion(function(err, manifest){
     }
     var newVersion = manifest.version;
     if (confirm("Version " + newVersion + " is available, would you like to update?")) {
-        //if (wasInstalled) {
-        // Start file download
         showWindow();
+        // Start file download
+        var downloadFn = (wasInstalled ? updater.downloadInstaller : updater.download).bind(updater);
         var totalSize = 1, receivedSize = 0;
-        updater.downloadInstaller(function(err, path) {
+
+        downloadFn(function(err, path) {
             if (err) {
                 alert("There was an error retrieving the download.");
                 $(document.body).removeClass("overlay");
                 return log(err);
             }
-            // Run installer and close this application
-            // setTimeout is needed or else error
-            setTimeout(function(){
-                updater.run(path);
-                lightpack.closeFilterWindow(close);
-            }, 100);
+            if (wasInstalled) {
+                // Run installer and close this application
+                // setTimeout is needed or else error
+                setTimeout(function(){
+                    updater.run(path);
+                    lightpack.closeFilterWindow(close);
+                }, 100);
+            } else {
+                // Unpack zip file
+                $("#overlay .group").fadeOut();
+                $("#download-percent").text("Unpacking...");
+
+                var exePath = process.execPath.substring(0, process.execPath.lastIndexOf("\\"));
+                updater.unpack(path, function(err, newPath) {
+                    // Exit app and spawn the bat for final clean up
+                    require('child_process').spawn(require("path").join(newPath, "post-unpack.bat"),
+                        [2, newPath, exePath], {detached: true});
+                    close();
+                });
+            }
         }).on("response", function(res){
             totalSize = parseInt(res.headers['content-length'], 10);
             $("#download-done").text(0);
