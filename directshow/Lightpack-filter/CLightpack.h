@@ -15,15 +15,12 @@
 #include "Converters.h"
 #include "../../LightpackAPI/inih/cpp/INIReader.h"
 
-// TEMP
-#define LOG_ENABLED
-
-#ifdef LOG_ENABLED
+// Log out the settings on debug
+#ifdef _DEBUG
 #include "log.h"
 #define logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
 #define log(x) if (mLog != 0) { mLog->log(x); }
 #else
-#include "log.h"
 #define logf(...)
 #define log(x)
 #endif
@@ -189,7 +186,7 @@ private:
 
     void handleMessages(Socket& socket);
     bool parseReceivedMessages(int messageType, char* buffer, bool* deviceConnected);
-#ifdef LOG_ENABLED
+#ifdef _DEBUG
     Log* mLog;
 #endif
     std::vector<Lightpack::Rect> mScaledRects;

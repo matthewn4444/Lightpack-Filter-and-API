@@ -45,7 +45,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 , mHasReadSettings(false)
 {
     if (!sAlreadyRunning) {
-#ifdef LOG_ENABLED
+#ifdef _DEBUG
     mLog = new Log("log.txt");
 #endif
         mIsFirstInstance = true;
