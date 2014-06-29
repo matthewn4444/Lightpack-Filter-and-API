@@ -64,7 +64,6 @@ class CLightpack : public CTransInPlaceFilter {
 public:
     DECLARE_IUNKNOWN;
 
-
     CLightpack(LPUNKNOWN pUnk, HRESULT *phr);
     virtual ~CLightpack(void);
 
@@ -81,32 +80,104 @@ public:
     enum VideoFormat { RGB32, NV12, OTHER };
 
 private:
+    typedef std::pair<REFERENCE_TIME, Lightpack::RGBCOLOR*> LightEntry;
+
     static const DWORD sDeviceCheckElapseTime;      // Check every 2 seconds
 
     // Video Conversion Methods
     Lightpack::RGBCOLOR meanColorFromRGB32(Lightpack::Rect& rect);
     Lightpack::RGBCOLOR meanColorFromNV12(Lightpack::Rect& rect);
 
-
-    typedef std::pair<REFERENCE_TIME, Lightpack::RGBCOLOR*> LightEntry;
-
+    // Threading Variables and Methods
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
     static DWORD WINAPI CommunicationThread(LPVOID lpvThreadParm);
 
-    void queueLight(REFERENCE_TIME startTime);
-    void displayLight(Lightpack::RGBCOLOR* colors);
+    HANDLE mhLightThread;
+    DWORD mLightThreadId;
+    bool mLightThreadStopRequested;
+    bool mLightThreadCleanUpRequested;
+    CRITICAL_SECTION mQueueLock;
+    CRITICAL_SECTION mAdviseLock;
+    CRITICAL_SECTION mDeviceLock;
+    CRITICAL_SECTION mCommSendLock;
+    CRITICAL_SECTION mScaledRectLock;
+
+    void startLightThread();
+    void destroyLightThread();
+    DWORD lightThreadStart();
+
+    // Communication thread Methods
+    HANDLE mhCommThread;
+    DWORD mCommThreadId;
+    bool mCommThreadStopRequested;
+    bool mShouldSendPlayEvent;
+    bool mShouldSendPauseEvent;
+    bool mShouldSendConnectEvent;
+    bool mShouldSendDisconnectEvent;
+
+    void startCommThread();
+    void destroyCommThread();
+    DWORD commThreadStart();
+    void handleMessages(Socket& socket);
+    bool parseReceivedMessages(int messageType, char* buffer, bool* deviceConnected);
+
+    // Mutexes and only allowing one of these filters per graph
+    HANDLE mAppMutex;
+    static bool sAlreadyRunning;
+    bool mIsFirstInstance;
+
+    // Settings and other file I/O
+    bool mHasReadSettings;
+    wchar_t mCurrentDirectoryCache[MAX_PATH];
+
+    void loadSettingsFile();
+    void readSettingsFile(INIReader& reader);
+    bool parseLedRectLine(const char* line, Lightpack::Rect* outRect);
+    wchar_t* getCurrentDirectory();
+
+    // Rectangles and scaled rectangles
+    std::vector<Lightpack::Rect> mScaledRects;
+
+    void updateScaledRects(std::vector<Lightpack::Rect>& rects);
+    void percentageRectToVideoRect(double x, double y, double w, double h, Lightpack::Rect* outRect);
+
+    // Device/Prismatik Connections
+    Lightpack::LedBase* mDevice;
+    bool mIsConnectedToPrismatik;
+    DWORD mLastDeviceCheck;
+
     bool connectDevice();
     bool connectPrismatik();
     void disconnectAllDevices();
     void postConnection();
 
-    void CancelNotification();
-
-    bool ScheduleNextDisplay();
+    // Lightpack Display Methods and Properties
     CAMEvent mDisplayLightEvent;
-
     std::queue<LightEntry> mColorQueue;
+    std::queue<DWORD_PTR> mAdviseQueue;
 
+    void clearQueue();
+    void CancelNotification();
+    bool ScheduleNextDisplay();
+    void queueLight(REFERENCE_TIME startTime);
+    void displayLight(Lightpack::RGBCOLOR* colors);
+
+    // Lightpack properties
+    std::vector<Lightpack::RGBCOLOR> mPropColors;
+    double mPropGamma;
+    unsigned char mPropBrightness;
+    unsigned char mPropSmooth;
+    unsigned int mPropPort;
+
+    // Video Properties
+    VideoFormat mVideoType;
+    BYTE* mFrameBuffer;
+    int mStride;
+    int mWidth;
+    int mHeight;
+    bool mIsRunning;
+
+    // Miscellaneous
     long getStreamTime() {
         if (!m_tStart) return 0;
         REFERENCE_TIME now;
@@ -118,80 +189,9 @@ private:
         return getStreamTime() / (UNITS / MILLISECONDS);
     }
 
-    void clearQueue();
-
-    void loadSettingsFile();
-    void readSettingsFile(INIReader& reader);
-    bool parseLedRectLine(const char* line, Lightpack::Rect* outRect);
-    void percentageRectToVideoRect(double x, double y, double w, double h, Lightpack::Rect* outRect);
-    void updateScaledRects(std::vector<Lightpack::Rect>& rects);
-    wchar_t* getCurrentDirectory();
-
-    // Avoid multiple MPC for making multiple instances of this class
-    static bool sAlreadyRunning;
-    bool mIsFirstInstance;
-
-    // Thread function
-    void startLightThread();
-    void destroyLightThread();
-    DWORD lightThreadStart();
-
-    // Communication thread
-    void startCommThread();
-    void destroyCommThread();
-    DWORD commThreadStart();
-    bool mShouldSendPlayEvent;
-    bool mShouldSendPauseEvent;
-    bool mShouldSendConnectEvent;
-    bool mShouldSendDisconnectEvent;
-
-    void handleMessages(Socket& socket);
-    bool parseReceivedMessages(int messageType, char* buffer, bool* deviceConnected);
 #ifdef _DEBUG
     Log* mLog;
 #endif
-    std::vector<Lightpack::Rect> mScaledRects;
-
-    // Threading variables
-    HANDLE mhLightThread;
-    DWORD mLightThreadId;
-    bool mLightThreadStopRequested;
-    bool mLightThreadCleanUpRequested;
-    CRITICAL_SECTION mQueueLock;
-    CRITICAL_SECTION mAdviseLock;
-    CRITICAL_SECTION mDeviceLock;
-    CRITICAL_SECTION mCommSendLock;
-    CRITICAL_SECTION mScaledRectLock;
-
-    // Communication thread to the GUI
-    HANDLE mhCommThread;
-    DWORD mCommThreadId;
-    bool mCommThreadStopRequested;
-
-    Lightpack::LedBase* mDevice;
-    bool mIsConnectedToPrismatik;
-
-    VideoFormat mVideoType;
-    int mStride;
-    int mWidth;
-    int mHeight;
-
-    // Lightpack properties
-    std::vector<Lightpack::RGBCOLOR> mPropColors;
-    double mPropGamma;
-    unsigned char mPropBrightness;
-    unsigned char mPropSmooth;
-    unsigned int mPropPort;
-
-    DWORD mLastDeviceCheck;
-    bool mIsRunning;
-
-    BYTE* mFrameBuffer;
-    std::queue<DWORD_PTR> mAdviseQueue;
-    bool mHasReadSettings;
-    wchar_t mCurrentDirectoryCache[MAX_PATH];
-
-    HANDLE mAppMutex;
 };
 
 #endif // __CLIGHTPACK__
