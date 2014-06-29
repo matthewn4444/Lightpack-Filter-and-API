@@ -22,7 +22,8 @@ copy %NW_BIN%\nw.pak %RELEASE%\nw.pak
 copy %NW_BIN%\nw.pak %DEBUG%\nw.pak
 copy %NW_BIN%\icudt.dll %RELEASE%\icudt.dll
 copy %NW_BIN%\icudt.dll %DEBUG%\icudt.dll
-copy %SETUP%\setup.iss %RELEASE%\setup.iss
+xcopy /s /y %SETUP%\files %RELEASE%\
+copy ..\..\LICENSE.txt %RELEASE%\LICENSE.txt
 
 rem Move the bat files (for registering/unregistering the filter)
 copy %SETUP%\bats\installFilter.bat %RELEASE%\installFilter.bat
