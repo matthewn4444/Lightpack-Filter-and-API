@@ -30,6 +30,3 @@ copy %SETUP%\bats\uninstallFilter.bat %RELEASE%\uninstallFilter.bat
 
 rem Clean the app file
 del app.nw
-
-rem Create the zip file
-cd %RELEASE% && zip -r lightpack-filter icon.ico icudt.dll lightpack.ax nw.exe nw.pak installFilter.bat uninstallFilter.bat
