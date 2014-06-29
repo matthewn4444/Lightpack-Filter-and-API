@@ -117,7 +117,17 @@ updater.checkNewVersion(function(err, manifest){
         var downloadFn = (wasInstalled ? updater.downloadInstaller : updater.download).bind(updater);
         var totalSize = 1, receivedSize = 0;
 
+        // Update the progress bar in intervals to avoid CPU hogging
+        var timer = setInterval(function(){
+            var percent = Math.floor(receivedSize * 100 / totalSize);
+            $("#download-done").text(Math.round(receivedSize / 1024));
+            $("#download-percent").text(percent + "%");
+            $("#download-total").text(Math.round(totalSize / 1024));
+            $("#download-progress").progressbar("option", "value", percent);
+        }, 100);
+
         downloadFn(function(err, path) {
+            clearInterval(timer);
             if (err) {
                 alert("There was an error retrieving the download.");
                 $(document.body).removeClass("overlay");
@@ -151,11 +161,6 @@ updater.checkNewVersion(function(err, manifest){
             $(document.body).addClass("overlay");
         }).on("data", function(chunk) {
             receivedSize += chunk.length;
-            var percent = Math.floor(receivedSize * 100 / totalSize);
-            $("#download-done").text(Math.round(receivedSize / 1024));
-            $("#download-percent").text(percent + "%");
-            $("#download-total").text(Math.round(totalSize / 1024));
-            $("#download-progress").progressbar("option", "value", percent);
         });
     }
 });
