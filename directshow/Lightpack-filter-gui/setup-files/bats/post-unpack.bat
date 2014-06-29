@@ -19,6 +19,9 @@ del %3\post-unpack.bat
 rem Delete the zip folder
 del %2\..\lightpack-filter.zip
 
+rem Launch new version
+start /B "" %3\nw.exe
+
 rem Delete this folder
 @RD /S /Q %2
 
