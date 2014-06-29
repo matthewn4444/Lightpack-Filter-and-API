@@ -1,7 +1,9 @@
 {
     "name" : "lightpack-filter",
     "main" : "src/index.html",
+    "author": "Matthew Ng",
     "version" : "0.5.0b",
+    "keywords": ["node-webkit", "lightpack", "mpc", "directshow", "filter"],
     "manifestUrl" : "https://raw.githubusercontent.com/matthewn4444/Lightpack-Filter-and-API/master/directshow/Lightpack-filter-gui/package.json",
     "packages" : {
         "win": "https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/lightpack-filter.zip"
@@ -21,5 +23,16 @@
     "dependencies": {
         "ncp": "^0.5.1",
         "request": "^2.36.0"
-    }
+    },
+    "maintainers": [ {
+        "name": "Matthew Ng",
+        "email": "matthewn4444@gmail.com"
+    }],
+    "repositories": [
+       {
+            "type": "git",
+            "url": "https://github.com/matthewn4444/Lightpack-Filter-and-API",
+            "path": "directshow/Lightpack-filter-gui"
+       }
+    ]
 }
