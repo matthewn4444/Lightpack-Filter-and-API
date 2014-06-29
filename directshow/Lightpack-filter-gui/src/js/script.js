@@ -117,17 +117,22 @@ updater.checkNewVersion(function(err, manifest){
         var downloadFn = (wasInstalled ? updater.downloadInstaller : updater.download).bind(updater);
         var totalSize = 1, receivedSize = 0;
 
-        // Update the progress bar in intervals to avoid CPU hogging
-        var timer = setInterval(function(){
+        function updateProgress(percent) {
             var percent = Math.floor(receivedSize * 100 / totalSize);
             $("#download-done").text(Math.round(receivedSize / 1024));
             $("#download-percent").text(percent + "%");
             $("#download-total").text(Math.round(totalSize / 1024));
             $("#download-progress").progressbar("option", "value", percent);
+        }
+
+        // Update the progress bar in intervals to avoid CPU hogging
+        var timer = setInterval(function(){
+            updateProgress();
         }, 100);
 
         downloadFn(function(err, path) {
             clearInterval(timer);
+            updateProgress();
             if (err) {
                 alert("There was an error retrieving the download.");
                 $(document.body).removeClass("overlay");
@@ -157,9 +162,7 @@ updater.checkNewVersion(function(err, manifest){
             }
         }).on("response", function(res){
             totalSize = parseInt(res.headers['content-length'], 10);
-            $("#download-done").text(0);
-            $("#download-percent").text("0%");
-            $("#download-total").text(Math.round(totalSize / 1024));
+           updateProgress();
             $(document.body).addClass("overlay");
         }).on("data", function(chunk) {
             receivedSize += chunk.length;
