@@ -7,15 +7,11 @@
 #include <ws2tcpip.h>
 #include <stdio.h>
 #include <string>
+#include <sstream>
 
 #pragma comment (lib, "Ws2_32.lib")
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
-
-#include "log.h"
-
-#define logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
-#define log(x) if (mLog != 0) { mLog->log(x); }
 
 #define DEFAULT_BUFLEN 512
 
@@ -25,15 +21,9 @@ public:
         : mRecvTimeout(0)
     {
         InitSocket();
-        mLog = 0;
-        //mLog = new Log("socket.txt");
     }
 
     ~Socket() {
-        if (mLog) {
-            mLog->flush();
-            delete mLog;
-        }
         Close();
         WSACleanup();
     }
@@ -100,7 +90,6 @@ public:
             closesocket(mConnectSocket);
             mConnectSocket = INVALID_SOCKET;
             mRecvTimeout = 0;
-            log("CLose socket");
         }
     }
 
@@ -150,22 +139,16 @@ public:
                 }
                 buffer[n] = '\0';
             }
-            logf("Received: %s", buffer);
         }
         else if (iResult == 0) {
             buffer = '\0';
-            logf("Connection closed");
         }
         else {
             buffer = '\0';
 
             // If there was a timeout and that was the error, then ignore it
             if (WSAGetLastError() == 10060 && mRecvTimeout > 0) {
-                logf("IGNORE recv timeout error: %d", WSAGetLastError());
                 iResult = 1;
-            }
-            else {
-                logf("recv failed with error: %d", WSAGetLastError());
             }
         }
         return iResult;
@@ -188,8 +171,6 @@ private:
     SOCKET mConnectSocket = INVALID_SOCKET;
     int mRecvTimeout;
     unsigned int mPort = 0;
-
-    Log* mLog;
 };
 
 
