@@ -147,10 +147,12 @@ updater.checkNewVersion(function(err, manifest){
 
                 var exePath = process.execPath.substring(0, process.execPath.lastIndexOf("\\"));
                 updater.unpack(path, function(err, newPath) {
-                    // Exit app and spawn the bat for final clean up
-                    require('child_process').spawn(require("path").join(newPath, "post-unpack.bat"),
-                        [2, newPath, exePath], {detached: true});
-                    close();
+                    lightpack.closeFilterWindow(function() {
+                        // Exit app and spawn the bat for final clean up
+                        require('child_process').spawn(require("path").join(newPath, "post-unpack.bat"),
+                            [2, newPath, exePath], {detached: true});
+                        close();
+                    });
                 });
             }
         }).on("response", function(res){
