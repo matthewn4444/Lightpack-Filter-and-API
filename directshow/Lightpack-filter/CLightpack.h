@@ -16,7 +16,7 @@
 #include "../../LightpackAPI/inih/cpp/INIReader.h"
 
 // Log out the settings on debug
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(_PERF)
 #include "log.h"
 #define logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
 #define log(x) if (mLog != 0) { mLog->log(x); }
@@ -25,12 +25,16 @@
 #define log(x)
 #endif
 
+#ifdef _PERF
+// Usage
+//      Prints the elapsed time between the start and print macros
+//
+//      TIME_START
+//          <CODE....>
+//      TIME_PRINT
 #define TIME_START UINT64 start = getTime();
-
 #define TIME_PRINT \
     logf("Elapsed: %I64d milliseconds", (getTime()-start)/10000);
-
-#define FILTER_NAME L"Lightpack"
 
 static UINT64 getTime()
 {
@@ -45,6 +49,12 @@ static UINT64 getTime()
 
     return ui.QuadPart;
 }
+#else
+#define TIME_START
+#define TIME_PRINT
+#endif
+
+#define FILTER_NAME L"Lightpack"
 
 // {188fb505-04ff-4257-9bdb-3ff431852f99}
 static const GUID CLSID_Lightpack =
