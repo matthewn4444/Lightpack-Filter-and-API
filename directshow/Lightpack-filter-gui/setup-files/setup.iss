@@ -22,7 +22,7 @@ OutputBaseFilename=setup
 AppMutex=LightpackFilterMutex,Global/LightpackFilterMutex,LightpackFilterGUIMutex,Global/LightpackFilterGUIMutex
 
 [Files]
-Source: "*"; Excludes: ".git,setup.iss,*.lnk,*.exp,settings.ini,Test.*,*.pdb,*.node,*.lib" ; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "*"; Excludes: ".git,*.zip,setup.iss,*.lnk,*.exp,settings.ini,Test.*,*.pdb,*.node,*.lib" ; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 Source: "icon.ico"; DestDir: "{app}"; DestName: "icon.ico"; Flags: ignoreversion
 
 [Tasks]
