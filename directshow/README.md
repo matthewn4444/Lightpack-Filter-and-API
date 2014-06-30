@@ -21,9 +21,8 @@ Choose either installation or unzip the package anywhere on your computer
 - [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.5.0b.zip)
 
 ## Setup
-This is compatible with [Media Player Classic (MPC)](http://mpc-hc.org/) and 
-[PotPlayer](http://potplayer.daum.net/). You will need to add the filter (lightpack.ax)
-to the player.
+This is compatible with [Media Player Classic (MPC)](http://mpc-hc.org/).
+You will need to add the filter (lightpack.ax) to the player.
 
 For more instructions, view [here](s).
 

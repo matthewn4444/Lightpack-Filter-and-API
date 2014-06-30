@@ -39,8 +39,7 @@ the open source software and created a C++ and Node.js API.
 
 The filter allows you to play a video with lightpack shown in realtime without any
 lag. You can play a video with [Media player classic (MPC)](http://mpc-hc.org/) and 
-[PotPlayer](http://potplayer.daum.net/) and lightpack will update the colors of 
-what is shown on the screen.
+lightpack will update the colors of what is shown on the screen.
 
 For more information, go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/directshow).
 
