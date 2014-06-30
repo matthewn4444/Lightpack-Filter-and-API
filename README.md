@@ -1,6 +1,6 @@
 # Lightpack Filter & API
 
-**_Author_**: Matthew Ng (matthewn4444@gmail)
+**_Author_**: Matthew Ng (matthewn4444@gmail.com)
 
 This includes two projects:
 
@@ -16,8 +16,12 @@ Choose either installation or unzip the package anywhere on your computer
 - [Installer (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/setup.exe)
 - [Zip (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/lightpack-filter.zip)
 
+Go [here](d) for more information on setup and usage.
+
 ###Source Code
 - [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.5.0b.zip)
+
+Go [here](d) for compile and building instructions.
 
 ## What is this?
 
@@ -44,7 +48,7 @@ Prismatik. These APIs are cross-platform and should work on Windows, Mac and Lin
 
 For more information, go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/LightpackAPI).
 
-## API Example Usage
+#### Example Usage
 
 ```cpp
 #include <Lightpack.h>
