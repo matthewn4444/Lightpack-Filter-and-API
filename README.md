@@ -27,8 +27,9 @@ Go [here](d) for compile and building instructions.
 
 ### Lightpack
 [Lightpack](http://lightpack.tv/) was a kickstarted project and the APIs were openned
-source. Users put lights on the back of their televisions and the computer can 
-colors to the lights. I have taken the open source software and created a C++ and Node.js API.
+source. Users put lights on the back of their televisions and the computer can send
+colors to the lights, extending the picture's/video's experience. I have taken 
+the open source software and created a C++ and Node.js API.
 
 ### Filter
 
