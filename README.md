@@ -1,63 +1,89 @@
-# Lightpack API C++ Library
+# Lightpack Filter & API
 
 **_Author_**: Matthew Ng (matthewn4444@gmail)
 
-This is an API for C++ projects similar to [pyLightpack](https://github.com/Atarity/Lightpack/blob/master/Software/apiexamples/pyLightpack/lightpack.py) from the author's site.
-This library uses [dlib](http://dlib.net/) for their sockets API. 
-This library communicates to the Lightpack server [Prismatik](http://lightpack.tv/downloads).
+This includes two projects:
 
-So far this library was compiled on Windows using Visual Studio 2013 however I am sure this will compile on Linux/Mac.
+1. [Directshow Filter](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/directshow)
+2. [Lightpack API (unofficial)](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/LightpackAPI)
 
-## Example Usage
+## Installation
+
+Choose either installation or unzip the package anywhere on your computer
+
+###Binaries (Windows 32bit)
+
+- [Installer (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/setup.exe)
+- [Zip (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/lightpack-filter.zip)
+
+###Source Code
+- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.5.0b.zip)
+
+## What is this?
+
+### Lightpack
+[Lightpack](http://lightpack.tv/) was a kickstarted project and the APIs were openned
+source. Users put lights on the back of their televisions and the computer can 
+colors to the lights. I have taken the open source software and created a C++ and Node.js API.
+
+### Filter
+
+The filter allows you to play a video with lightpack shown in realtime without any
+lag. You can play a video with [Media player classic (MPC)](http://mpc-hc.org/) and 
+[PotPlayer](http://potplayer.daum.net/) and lightpack will update the colors of 
+what is shown on the screen.
+
+For more information, go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/directshow).
+
+**This only works on Windows.**
+
+### API
+
+I have created a single API for C++ and Node.js to interface to the device and
+Prismatik. These APIs are cross-platform and should work on Windows, Mac and Linux.
+
+For more information, go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/LightpackAPI).
+
+## API Example Usage
 
 ```cpp
-
 #include <Lightpack.h>
-#include <string.h>
 #include <iostream>
+
+using namespace std;
+using namespace Lightpack;
 
 #define HOST "127.0.0.1"
 #define PORT 3636
 #define APIKEY "{cb832c47-0a85-478c-8445-0b20e3c28cdd}"
 
-int main() {
-    Lightpack light(HOST, PORT, { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }, APIKEY);
-    try {
-        // Connect and change all the LED's color to red
-        if (light.connect() == Lightpack::RESULT::OK) {
+
+int main()
+{
+    // Send colors to the device
+    LedDevice device;
+    if (device.open()) {
+        cout << "Connected directly to the device" << endl;
+        device.setBrightness(100);
+        device.setColorToAll(255, 255, 0); // RGB value
+    }
+    else {
+        cout << "Prismatik is probably running, try that" << endl;
+
+        // Send colors via Prismatik
+        PrismatikClient light;
+        // Test all the functions in the Lightpack API
+        if (light.connect(HOST, PORT, {}, APIKEY) == Lightpack::OK) {
+            cout << "Connected to Prismatik"
             light.lock();
-            light.setSmooth(100);
-            light.setBrightness(40);
-            light.setColorToAll(255, 0, 0);     // Red
-        } else {
-            std::cout << "Failed to connect." << std::endl;
+            light.setBrightness(100);
+            light.setColorToAll(255, 255, 0);
+        }
+        else {
+            cout << "USB not connected" << endl;
         }
     }
-    catch (std::exception& e) {
-        std::cout << e.what() << std::endl;
-    }
-    return 0;
 }
-
 ```
 
 Check the wiki for the entire API
-
-
-## Include in Your project
-
-- Include the header file **Lightpack.h** in the **_include_** folder
-- Include the library file **Lightpack.lib** for Windows or **Lightpack.a** for Linux/Mac
-- Compile your project (no need to include dlib)
-
-## How to Compile
-
-### Windows
-
-1. Open the project in Visual Studio
-2. There will be two projects: Lightpack and a test project. Compile both
-3. Test if the test.exe application passes (make sure Prismartik is running and usb cable is plugged in)
-
-### Linux/Mac
-
-**TODO**
