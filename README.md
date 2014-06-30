@@ -7,6 +7,10 @@ This includes two projects:
 1. [Directshow Filter](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/directshow)
 2. [Lightpack API (unofficial)](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/LightpackAPI)
 
+[Lightpack](http://i.imgur.com/Kym2v0c.jpg)
+
+_Image from Lightpack's website_
+
 ## Installation
 
 Choose either installation or unzip the package anywhere on your computer
