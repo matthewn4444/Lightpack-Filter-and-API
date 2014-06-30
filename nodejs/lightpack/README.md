@@ -20,7 +20,7 @@ for each platform. Generally you need Python, Git/Cywgin bash and Visual Studio 
 
 2. Run **configure-win.sh** to configure the solution before compiling
 
-3. Open **vs13/lightpack.sln** and run it, it will compile to the Release folder
+3. Open **vs13/lightpack.sln** and **set to Release build** and run it, it will compile to the Release folder
 
 
 **Linix/Mac**
