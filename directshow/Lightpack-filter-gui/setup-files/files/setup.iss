@@ -46,7 +46,7 @@ begin
   // Asks user if they want their settings to be deleted on uninstall
   if CurUninstallStep = usPostUninstall then
   begin
-    filePath := ExpandConstant('{localappdata}\Lightpack Filter');
+    filePath := ExpandConstant('{localappdata}\lightpack-filter');
     if DirExists(filePath) then
       if MsgBox('Would you also want to delete your settings?',
         mbConfirmation, MB_YESNO) = IDYES
