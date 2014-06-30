@@ -83,6 +83,7 @@ int main()
             cout << "USB not connected" << endl;
         }
     }
+    return 0;
 }
 ```
 
