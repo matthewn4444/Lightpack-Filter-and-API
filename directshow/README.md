@@ -24,7 +24,7 @@ Choose either installation or unzip the package anywhere on your computer
 This is compatible with [Media Player Classic (MPC)](http://mpc-hc.org/).
 You will need to add the filter (lightpack.ax) to the player.
 
-For more instructions, view [here](s).
+For more instructions, view [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Setup-with-Media-Player-Classic).
 
 ## Performance and Support
 Using MPC, adding the Lightpack filter increases the CPU overhead about **1-3%**.
@@ -37,7 +37,7 @@ The filter supports all forms of video (that I can tell) and other filters inclu
 - [LAV Filters](https://code.google.com/p/lavfilters/)
 
 ## Building the source code
-View [here](s) for more information to build the source.
+View [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building-the-Source) for more information to build the source.
 
 ## 3rd Party Libraries
 - [Lightpack](http://lightpack.tv)
