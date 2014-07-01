@@ -20,12 +20,12 @@ Choose either installation or unzip the package anywhere on your computer
 - [Installer (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/setup.exe)
 - [Zip (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/lightpack-filter.zip)
 
-Go [here](d) for more information on setup and usage.
+Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Installation) for more information on setup and usage.
 
 ###Source Code
 - [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.5.0b.zip)
 
-Go [here](d) for compile and building instructions.
+Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building-the-Source) for compile and building instructions.
 
 ## What is this?
 
