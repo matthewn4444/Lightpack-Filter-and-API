@@ -188,6 +188,9 @@ $(".restore-button").on("click", function() {
 
 $("#page-light-settings .restore-button").click(function() {
     setBrightnessSlider(DEFAULTS.brightness);
+    setLPBrightness(DEFAULTS.brightness);
     setSmoothSlider(DEFAULTS.smooth);
+    setLPSmooth(DEFAULTS.smooth);
     setGammaSlider(DEFAULTS.gamma);
+    setLPGamma(DEFAULTS.gamma);
 });
