@@ -17,12 +17,12 @@ rem Create the single executable and put it in release & debug
 copy /b %NW_BIN%\nw.exe+app.nw %RELEASE%\nw.exe
 copy "%RELEASE%\nw.exe" "%DEBUG%\nw.exe"
 
-rem Copy the nw.pak and icudtl.dat file to those folders
+rem Copy the nw.pak and icudt.dll file to those folders
 copy src\images\icon.ico %RELEASE%\icon.ico
 copy %NW_BIN%\nw.pak %RELEASE%\nw.pak
 copy %NW_BIN%\nw.pak %DEBUG%\nw.pak
-copy %NW_BIN%\icudtl.dat %RELEASE%\icudtl.dat
-copy %NW_BIN%\icudtl.dat %DEBUG%\icudtl.dat
+copy %NW_BIN%\icudt.dll %RELEASE%\icudt.dll
+copy %NW_BIN%\icudt.dll %DEBUG%\icudt.dll
 xcopy /s /y %SETUP%\files %RELEASE%\
 copy ..\..\LICENSE.txt %RELEASE%\LICENSE.txt
 
