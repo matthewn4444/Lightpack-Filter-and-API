@@ -47,7 +47,8 @@ using v8::Local;
 typedef std::map<unsigned int, std::pair<std::string, HANDLE>> MutexEntry;
 class AppMutexes {
 public:
-    AppMutexes() {
+    AppMutexes()
+        :mNum(1) {
     }
     ~AppMutexes() {
         // Remove all the other handlers
@@ -63,7 +64,7 @@ public:
         HANDLE mutex = CreateMutex(NULL, FALSE, name.c_str());
         if (mutex == NULL || GetLastError() != ERROR_SUCCESS) {
             // This mutex name already exists
-            return 0;  
+            return 0;
         }
         else {
             // Made a new mutex
@@ -92,7 +93,7 @@ public:
 
 private:
     MutexEntry mAppMutexes;
-    int mNum = 1;
+    int mNum;
 };
 
 // ===========================================================================================

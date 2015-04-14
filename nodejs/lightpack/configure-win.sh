@@ -3,15 +3,15 @@
 
 nw-gyp configure --target=0.9.2 --target_arch=ia32
 
-# Move the files to the vs13 folder
-mv build/config.gypi vs13/config.gypi
-mv build/lightpack.vcxproj vs13/lightpack.vcxproj
+# Move the files to the vs12 folder
+mv build/config.gypi vs12/config.gypi
+mv build/lightpack.vcxproj vs12/lightpack.vcxproj
 
 # Remove the db file
-rm vs13/lightpack.sdf
+rm vs12/lightpack.sdf
 
 # Insert the Extra Lightpack properties into the project
-file='vs13/lightpack.vcxproj'
+file='vs12/lightpack.vcxproj'
 
 sed -i '29a\
   <ImportGroup Label="PropertySheets" Condition="'"'"'$(Configuration)|$(Platform)'"'"'=='"'"'Release|Win32'"'"'">\n    <Import Project="Additional_libs.props" />\n  </ImportGroup>' $file

@@ -18,7 +18,9 @@
 class Socket {
 public:
     Socket()
-        : mRecvTimeout(0)
+        : mRecvTimeout(0),
+        mConnectSocket(INVALID_SOCKET),
+        mPort(0)
     {
         InitSocket();
     }
@@ -57,7 +59,6 @@ public:
 
         // Attempt to connect to an address until one succeeds
         for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-
             // Create a SOCKET for connecting to server
             mConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
                 ptr->ai_protocol);
@@ -101,10 +102,10 @@ public:
 
         if (send(mConnectSocket, message, length, 0) == SOCKET_ERROR
             && shutdown(mConnectSocket, SD_SEND) == SOCKET_ERROR) {
-            printf("send failed with error: %d\n", WSAGetLastError());
-            Close();
-            WSACleanup();
-            return false;
+                printf("send failed with error: %d\n", WSAGetLastError());
+                Close();
+                WSACleanup();
+                return false;
         }
         return true;
     }
@@ -168,11 +169,9 @@ private:
     }
 
     // Variables
-    SOCKET mConnectSocket = INVALID_SOCKET;
+    SOCKET mConnectSocket;
     int mRecvTimeout;
-    unsigned int mPort = 0;
+    unsigned int mPort;
 };
-
-
 
 #endif // __SOCKET_HPP__

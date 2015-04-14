@@ -19,34 +19,34 @@ const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
 bool CLightpack::sAlreadyRunning = false;
 
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
-: CTransInPlaceFilter(FILTER_NAME, pUnk, CLSID_Lightpack, phr)
-, mDevice(NULL)
-, mIsFirstInstance(false)
-, mWidth(0)
-, mHeight(0)
-, mFrameBuffer(0)
-, mhLightThread(INVALID_HANDLE_VALUE)
-, mLightThreadId(0)
-, mLightThreadStopRequested(false)
-, mhCommThread(INVALID_HANDLE_VALUE)
-, mCommThreadId(0)
-, mCommThreadStopRequested(false)
-, mStride(0)
-, mLastDeviceCheck(GetTickCount())
-, mLightThreadCleanUpRequested(false)
-, mShouldSendPlayEvent(false)
-, mShouldSendPauseEvent(false)
-, mIsRunning(false)
-, mIsConnectedToPrismatik(false)
-, mPropGamma{Lightpack::DefaultGamma}
-, mPropSmooth{DEFAULT_SMOOTH}
-, mPropBrightness{Lightpack::DefaultBrightness}
-, mPropPort(DEFAULT_GUI_PORT)
-, mHasReadSettings(false)
+    : CTransInPlaceFilter(FILTER_NAME, pUnk, CLSID_Lightpack, phr)
+    , mDevice(NULL)
+    , mIsFirstInstance(false)
+    , mWidth(0)
+    , mHeight(0)
+    , mFrameBuffer(0)
+    , mhLightThread(INVALID_HANDLE_VALUE)
+    , mLightThreadId(0)
+    , mLightThreadStopRequested(false)
+    , mhCommThread(INVALID_HANDLE_VALUE)
+    , mCommThreadId(0)
+    , mCommThreadStopRequested(false)
+    , mStride(0)
+    , mLastDeviceCheck(GetTickCount())
+    , mLightThreadCleanUpRequested(false)
+    , mShouldSendPlayEvent(false)
+    , mShouldSendPauseEvent(false)
+    , mIsRunning(false)
+    , mIsConnectedToPrismatik(false)
+    , mPropGamma(Lightpack::DefaultGamma)
+    , mPropSmooth(DEFAULT_SMOOTH)
+    , mPropBrightness(Lightpack::DefaultBrightness)
+    , mPropPort(DEFAULT_GUI_PORT)
+    , mHasReadSettings(false)
 {
     if (!sAlreadyRunning) {
 #ifdef _DEBUG
-    mLog = new Log("log.txt");
+        mLog = new Log("log.txt");
 #endif
         mIsFirstInstance = true;
         InitializeCriticalSection(&mQueueLock);
@@ -166,7 +166,7 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
             }
 
             // Default position for 10 LEDs
-            const std::vector<std::vector<double>> defaultPositions = {
+            static const double defaultPositions[][4] = {
                 { 85, 72.78, 15, 20.76 },
                 { 85, 39.58, 15, 20.76 },
                 { 85, 6.39, 15, 20.76 },
@@ -178,7 +178,7 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
                 { 0, 41.67, 15, 16.6 },
                 { 0, 66.53, 15, 33.19 }
             };
-            for (size_t i = 0; i < defaultPositions.size(); i++) {
+            for (size_t i = 0; i < Lightpack::LedDevice::LedsPerDevice; i++) {
                 Lightpack::Rect rect;
                 percentageRectToVideoRect(defaultPositions[i][0], defaultPositions[i][1],
                     defaultPositions[i][2], defaultPositions[i][3], &rect);
@@ -267,13 +267,13 @@ bool CLightpack::connectDevice()
             if (!((Lightpack::LedDevice*)mDevice)->open()) {
                 delete mDevice;
                 mDevice = 0;
-                log("Device not connected")
+                log("Device not connected");
                 LeaveCriticalSection(&mDeviceLock);
                 return false;
             }
             else {
                 postConnection();
-                log("Device connected")
+                log("Device connected");
                 startLightThread();
                 mIsConnectedToPrismatik = false;
             }
@@ -290,13 +290,14 @@ bool CLightpack::connectPrismatik()
         if (mDevice == NULL) {
             log("Try to connect to Prismatik");
             mDevice = new Lightpack::PrismatikClient();
-            if (((Lightpack::PrismatikClient*)mDevice)->connect(DEFAULT_HOST, DEFAULT_PORT, {}, DEFAULT_APIKEY) != Lightpack::RESULT::OK
+            const std::vector<int> blankLedMap;
+            if (((Lightpack::PrismatikClient*)mDevice)->connect(DEFAULT_HOST, DEFAULT_PORT, blankLedMap, DEFAULT_APIKEY) != Lightpack::RESULT::OK
                 || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
-                log("Failed to also connect to Prismatik.");
-                delete mDevice;
-                mDevice = NULL;
-                LeaveCriticalSection(&mDeviceLock);
-                return false;
+                    log("Failed to also connect to Prismatik.");
+                    delete mDevice;
+                    mDevice = NULL;
+                    LeaveCriticalSection(&mDeviceLock);
+                    return false;
             }
             else {
                 postConnection();
@@ -529,7 +530,6 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
     EnterCriticalSection(&mScaledRectLock);
     Lightpack::RGBCOLOR* colors = new Lightpack::RGBCOLOR[mScaledRects.size()];
     for (size_t i = 0; i < mScaledRects.size(); i++) {
-
         switch (mVideoType) {
         case RGB32:
             colors[i] = meanColorFromRGB32(mScaledRects[i]);
