@@ -15,6 +15,3 @@ cd %RELEASE% && %SETUP%\tools\zip -r lightpack-filter icon.ico icudt.dll lightpa
 del post-unpack.bat
 
 cd %OLD_DIR%
-
-
-pause
