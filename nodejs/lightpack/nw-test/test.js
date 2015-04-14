@@ -23,6 +23,7 @@ var connected = lightpack.open();
 if (!connected) {
     log("Failed: Please connect the lightpack usb device.");
 } else {
+    try {
     assert.ok(lightpack.setSmooth(0));
     assert.ok(lightpack.setColorToAll(0));
     
@@ -62,5 +63,9 @@ if (!connected) {
             }, 1000);
         }, 500);
     }, 1000);
+    } catch (e) {
+        alert(e);
+        log("Failed tests");
+    }
 }
 

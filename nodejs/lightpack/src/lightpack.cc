@@ -20,18 +20,14 @@ using v8::Local;
 #define ARG2DOUBLE(i) \
     (double)Local<v8::Number>::Cast(args[i])->Value()
 
-// Function helpers
 // TODO make this work with node-gyp as well
-#define __ret               void
-#define PASS_ARGS           const v8::FunctionCallbackInfo<Value>&
-#define GET_SCOPE(s)        v8::Isolate* isolate = v8::Isolate::GetCurrent(); v8::HandleScope s(isolate);
-#define RETURN(a, x)        a.GetReturnValue().Set(x)
 
 // Lazy way to create Node extension functions
-#define LAZY_DECLARE(name, arguments) __ret name(PASS_ARGS arguments) { GET_SCOPE(scope);
-#define LAZY_RETURN(arguments, value) RETURN(arguments, value); }
-#define LAZY_RETURN_BOOL(arguments, value) RETURN(arguments, value ? v8::True() : v8::False()); }
-#define LAZY_RETURN_UNDEFINED(arguments) RETURN(arguments, v8::Undefined()); }
+#define LAZY_DECLARE(name, arguments) v8::Handle<Value> name(const v8::Arguments& arguments) { \
+    v8::Isolate* isolate = v8::Isolate::GetCurrent(); v8::HandleScope s(isolate);
+#define LAZY_RETURN(value) return value; }
+#define LAZY_RETURN_BOOL(value) return value ? v8::True() : v8::False(); }
+#define LAZY_RETURN_UNDEFINED() return v8::Undefined(); }
 
 // ===========================================================================================
 //      Lightpack device
@@ -41,11 +37,11 @@ using v8::Local;
 static Lightpack::LedDevice sDevice;
 
 LAZY_DECLARE(Open, args) {
-    LAZY_RETURN_BOOL(args, sDevice.open());
+    LAZY_RETURN_BOOL(sDevice.open());
 }
 
 LAZY_DECLARE(TryToReopenDevice, args) {
-    LAZY_RETURN_BOOL(args, sDevice.tryToReopenDevice());
+    LAZY_RETURN_BOOL(sDevice.tryToReopenDevice());
 }
 
 LAZY_DECLARE(CloseDevices, args) {
@@ -63,7 +59,7 @@ LAZY_DECLARE(SetColor, args) {
         Lightpack::RESULT result = sDevice.setColor(ARG2INT(0), ARG2INT(1));
         success = result == Lightpack::RESULT::OK;
     }
-    LAZY_RETURN_BOOL(args, success);
+    LAZY_RETURN_BOOL(success);
 }
 
 LAZY_DECLARE(SetColors, args) {
@@ -94,7 +90,7 @@ LAZY_DECLARE(SetColors, args) {
         delete[] pColors;
         success = result == Lightpack::RESULT::OK;
     }
-    LAZY_RETURN_BOOL(args, success);
+    LAZY_RETURN_BOOL(success);
 }
 
 LAZY_DECLARE(SetColorToAll, args) {
@@ -107,7 +103,7 @@ LAZY_DECLARE(SetColorToAll, args) {
         Lightpack::RESULT result = sDevice.setColorToAll(ARG2INT(0));
         success = result == Lightpack::RESULT::OK;
     }
-    LAZY_RETURN_BOOL(args, success);
+    LAZY_RETURN_BOOL(success);
 }
 
 LAZY_DECLARE(SetSmooth, args) {
@@ -115,7 +111,7 @@ LAZY_DECLARE(SetSmooth, args) {
     if (args.Length() > 0 && args[0]->IsNumber()) {
         success = sDevice.setSmooth(ARG2INT(0)) == Lightpack::RESULT::OK;
     }
-    LAZY_RETURN_BOOL(args, success);
+    LAZY_RETURN_BOOL(success);
 }
 
 LAZY_DECLARE(SetGamma, args) {
@@ -123,7 +119,7 @@ LAZY_DECLARE(SetGamma, args) {
     if (args.Length() > 0 && args[0]->IsNumber()) {
         success = sDevice.setGamma(ARG2DOUBLE(0)) == Lightpack::RESULT::OK;
     }
-    LAZY_RETURN_BOOL(args, success);
+    LAZY_RETURN_BOOL(success);
 }
 
 LAZY_DECLARE(SetBrightness, args) {
@@ -131,7 +127,7 @@ LAZY_DECLARE(SetBrightness, args) {
     if (args.Length() > 0 && args[0]->IsNumber()) {
         success = sDevice.setBrightness(ARG2INT(0)) == Lightpack::RESULT::OK;
     }
-    LAZY_RETURN_BOOL(args, success);
+    LAZY_RETURN_BOOL(success);
 }
 
 LAZY_DECLARE(SetColorDepth, args) {
@@ -139,7 +135,7 @@ LAZY_DECLARE(SetColorDepth, args) {
     if (args.Length() > 0 && args[0]->IsNumber()) {
         success = sDevice.setColorDepth(ARG2INT(0));
     }
-    LAZY_RETURN_BOOL(args, success);
+    LAZY_RETURN_BOOL(success);
 }
 
 LAZY_DECLARE(SetRefreshDelay, args) {
@@ -147,19 +143,19 @@ LAZY_DECLARE(SetRefreshDelay, args) {
     if (args.Length() > 0 && args[0]->IsNumber()) {
         success = sDevice.setRefreshDelay(ARG2INT(0));
     }
-    LAZY_RETURN_BOOL(args, success);
+    LAZY_RETURN_BOOL(success);
 }
 
 LAZY_DECLARE(GetCountLeds, args) {
-    LAZY_RETURN(args, v8::Number::New(sDevice.getCountLeds()));
+    LAZY_RETURN(v8::Number::New(sDevice.getCountLeds()));
 }
 
 LAZY_DECLARE(TurnOff, args) {
-    LAZY_RETURN_BOOL(args, sDevice.turnOff() == Lightpack::RESULT::OK);
+    LAZY_RETURN_BOOL(sDevice.turnOff() == Lightpack::RESULT::OK);
 }
 
 LAZY_DECLARE(TurnOn, args) {
-    LAZY_RETURN_BOOL(args, sDevice.turnOn() == Lightpack::RESULT::OK);
+    LAZY_RETURN_BOOL(sDevice.turnOn() == Lightpack::RESULT::OK);
 }
 
 // ===========================================================================================

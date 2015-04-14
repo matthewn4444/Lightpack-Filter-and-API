@@ -1,5 +1,6 @@
 var assert = require('assert');
 var mutex = require('./app-mutex');
+var passed = true;
 
 function log(/*...*/) {
     var div = document.createElement("div");
@@ -33,6 +34,8 @@ var guid = (function() {
 var name1 = guid();
 log("Starting the test with guid", name1);
 
+try {
+
 // Test create()
 var id1 = mutex.create(name1);
 assert.equal(id1, 1, "Creation: could not create a unique global mutex");
@@ -61,4 +64,9 @@ assert.equal(mutex.getName(id2), null, "getName() failed after destroying an exi
 // Test that create() increments the id even if previous was destroyed
 assert.equal(mutex.create(guid()), id2 + 1, "create() did not increment the ids.");
 
-log("All tests passed");
+}catch(e) {
+    alert(e);
+    passed = false;
+}
+
+log(passed ? "All tests passed" : "Tests Failed");

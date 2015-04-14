@@ -28,18 +28,14 @@ using v8::Local;
 #define ARG2DOUBLE(i) \
     (double)Local<v8::Number>::Cast(args[i])->Value()
 
-// Function helpers
 // TODO make this work with node-gyp as well
-#define __ret               void
-#define PASS_ARGS           const v8::FunctionCallbackInfo<Value>&
-#define GET_SCOPE(s)        v8::Isolate* isolate = v8::Isolate::GetCurrent(); v8::HandleScope s(isolate);
-#define RETURN(a, x)        a.GetReturnValue().Set(x)
 
 // Lazy way to create Node extension functions
-#define LAZY_DECLARE(name, arguments) __ret name(PASS_ARGS arguments) { GET_SCOPE(scope);
-#define LAZY_RETURN(arguments, value) RETURN(arguments, value); }
-#define LAZY_RETURN_BOOL(arguments, value) RETURN(arguments, value ? v8::True() : v8::False()); }
-#define LAZY_RETURN_UNDEFINED(arguments) RETURN(arguments, v8::Undefined()); }
+#define LAZY_DECLARE(name, arguments) v8::Handle<Value> name(const v8::Arguments& arguments) { \
+    v8::Isolate* isolate = v8::Isolate::GetCurrent(); v8::HandleScope s(isolate);
+#define LAZY_RETURN(value) return value; }
+#define LAZY_RETURN_BOOL(value) return value ? v8::True() : v8::False(); }
+#define LAZY_RETURN_UNDEFINED() return v8::Undefined(); }
 
 // ===========================================================================================
 //      AppMutexes
@@ -110,7 +106,7 @@ LAZY_DECLARE(create, args) {
         // See if this mutex exists already or not
         retNum = sMutexes.create(mutexName);
     }
-    LAZY_RETURN(args, retNum);
+    LAZY_RETURN(v8::Number::New(retNum));
 }
 
 LAZY_DECLARE(destroy, args) {
@@ -130,7 +126,7 @@ LAZY_DECLARE(getName, args) {
             ret = v8::String::New(name->c_str());
         }
     }
-    LAZY_RETURN(args, ret);
+    LAZY_RETURN(ret);
 }
 
 // ===========================================================================================

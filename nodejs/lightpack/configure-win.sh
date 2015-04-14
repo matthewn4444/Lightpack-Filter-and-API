@@ -1,7 +1,7 @@
 #!/bin/sh
 # Use Git/Cygwin bash on Windows
 
-nw-gyp configure --target=0.9.2 --target_arch=ia32
+nw-gyp configure --target=0.8.6
 
 # Move the files to the vs12 folder
 mv build/config.gypi vs12/config.gypi
