@@ -1,11 +1,21 @@
+var gui = require('nw.gui'),
+    win = gui.Window.get();
+
+// Debugging purposes, use -d to pull up the dev tools
+for (var i = 0; i < gui.App.argv.length; i++) {
+    var cmd = gui.App.argv[i];
+    if (cmd == "-d") {
+        win.showDevTools();
+        break;
+    }
+}
+
 var lightpack = require("lightpack"),
     mutex = require("lightpack/app-mutex"),
-    gui = require('nw.gui'),
     Updater = require("updater"),
     pkg = require("./../package.json"),
     updater = new Updater(pkg),
     lightApi = null,
-    win = gui.Window.get(),
     tray = new gui.Tray({ icon: "/src/images/icon.png" }),
     wasInstalled = lightpack.getSettingsFolder().indexOf("\\Program Files") != -1,
 
