@@ -1,3 +1,4 @@
+@echo off
 rem File paths
 set SETUP=setup-files
 set NW_BIN=..\..\nodejs\nw-binaries
@@ -10,18 +11,18 @@ del %RELEASE%\setup.exe
 del %RELEASE%\setup.iss
 copy %RELEASE%\lightpack.node node_modules\lightpack\lightpack.node
 copy %RELEASE%\app-mutex.node node_modules\lightpack\app-mutex.node
-zip -r app.nw package.json node_modules\* src\*
+%SETUP%\tools\zip -r app.nw package.json node_modules\* src\*
 
 rem Create the single executable and put it in release & debug
 copy /b %NW_BIN%\nw.exe+app.nw %RELEASE%\nw.exe
 copy "%RELEASE%\nw.exe" "%DEBUG%\nw.exe"
 
-rem Copy the nw.pak and icudt.dll file to those folders
+rem Copy the nw.pak and icudtl.dat file to those folders
 copy src\images\icon.ico %RELEASE%\icon.ico
 copy %NW_BIN%\nw.pak %RELEASE%\nw.pak
 copy %NW_BIN%\nw.pak %DEBUG%\nw.pak
-copy %NW_BIN%\icudt.dll %RELEASE%\icudt.dll
-copy %NW_BIN%\icudt.dll %DEBUG%\icudt.dll
+copy %NW_BIN%\icudtl.dat %RELEASE%\icudtl.dat
+copy %NW_BIN%\icudtl.dat %DEBUG%\icudtl.dat
 xcopy /s /y %SETUP%\files %RELEASE%\
 copy ..\..\LICENSE.txt %RELEASE%\LICENSE.txt
 
