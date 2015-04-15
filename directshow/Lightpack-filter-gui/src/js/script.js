@@ -212,8 +212,12 @@ lightpack.init(function(api){
         log("Lights have connected");
         numLeds = lightApi.getCountLeds();
         log("Got", numLeds, "Leds");
-        Ledmap.setGroups(numLeds / 10);
+        var numModules = numLeds / 10;
+        Ledmap.setGroups(numModules);
         isConnected = true;
+
+        // Handle UI multiple Lightpack modules
+        setNumberOfLightpackModules(numModules);
 
         // Set the colors if on the adjustment page
         if ($("#page-adjust-position.open").length) {
@@ -356,4 +360,25 @@ win.on("enter-fullscreen", function() {
 });
 win.on("leave-fullscreen", function() {
     Ledmap.updateMetrics();
+});
+
+//  ============================================
+//  Handle Sorting Lightpack Modules
+//  ============================================
+$("#modules-list").on("sortupdate", function(e, ui) {
+    var numModules = numLeds / 10;
+    if (numModules > 1 && numModules == $(this).children().length) {
+        var newPositions = [];
+        var positions = Ledmap.getPositions();
+        $(this).children().each(function(j) {
+            // Copy sets of 10 positions to the new positions
+            var n = parseInt($(this).attr("value"), 10);
+            for (var i = 0; i < 10; i++) {
+                newPositions.push(positions[n * 10 + i]);
+            }
+            $(this).attr("value", j);
+        });
+        Ledmap.setPositions(newPositions);
+        lightpack.sendPositions(newPositions);
+    }
 });

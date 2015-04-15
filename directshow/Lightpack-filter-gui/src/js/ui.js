@@ -78,6 +78,18 @@ function setVerticalDepthSlider(v) {
     $("#vertical-height-slider").slider("value", 50 - v);
 }
 
+// Init sortable
+$("#modules-list").sortable().disableSelection();
+
+function setNumberOfLightpackModules(n) {
+    $("body").toggleClass("has-multiple", n > 1);
+    $("#modules-list").empty();
+    for (var i = 0; i < n; i++) {
+        $("#modules-list").append($("<li>").attr("value", i)
+            .text("Lightpack Module " + (i + 1)));
+    }
+}
+
 // Apply Defaults
 setBrightnessSlider(DEFAULTS.brightness);
 setGammaSlider(DEFAULTS.gamma);

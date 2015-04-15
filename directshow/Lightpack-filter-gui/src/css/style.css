@@ -26,6 +26,15 @@ body {
     background: #ffd794;
 }
 
+/* Multiple Lightpacks */
+.multiple-lightpack-modules {
+    display: none;
+}
+
+body.has-multiple.connected .multiple-lightpack-modules {
+    display: block;
+}
+
 /* Navigation */
 nav {
     position:absolute;
@@ -718,4 +727,34 @@ body.overlay #overlay {
 }
 .ui-progressbar.ui-corner-all, .ui-progressbar .ui-corner-all {
     border-radius: 12px;
+}
+
+/* Sortable */
+.sortable.ui-sortable {
+    padding: 15px 10px;
+    padding-bottom: 0px;
+    background: #fa726c;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5) inset;
+    border-radius: 15px;
+}
+
+.sortable.ui-sortable li {
+    background: #17c18e;
+    height: 32px;
+    padding: 6px 20px;
+    color: white;
+    margin-bottom: 15px;
+    border-radius: 15px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.7);
+    cursor: default;
+    transition: background-color 0.1s ease-in;
+}
+
+.sortable.ui-sortable li:hover {
+    background: #03d798;
+}
+
+#modules-list {
+    width: 250px;
 }

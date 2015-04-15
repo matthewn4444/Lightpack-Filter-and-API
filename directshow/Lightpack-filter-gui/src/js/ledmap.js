@@ -318,6 +318,10 @@ function setLedPositions(positions) {
     if (!Array.isArray(positions)) {
         throw new Error("Did not set the led positions correctly with an array.");
     }
+
+    // Ensure we have the correct number of leds to display from input
+    var numOfGroups = positions.length / 10;
+    setDefaultGroups(numOfGroups);
     for (var i = 0; i < positions.length; i++) {
         var side = positions[i].side,
             percent = positions[i].percent,
