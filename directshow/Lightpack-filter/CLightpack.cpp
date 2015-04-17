@@ -36,6 +36,8 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mLightThreadCleanUpRequested(false)
     , mShouldSendPlayEvent(false)
     , mShouldSendPauseEvent(false)
+    , mShouldSendConnectEvent(false)
+    , mShouldSendDisconnectEvent(false)
     , mIsRunning(false)
     , mIsConnectedToPrismatik(false)
     , mPropGamma(Lightpack::DefaultGamma)
@@ -44,6 +46,8 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mPropPort(DEFAULT_GUI_PORT)
     , mHasReadSettings(false)
 {
+    mCurrentDirectoryCache[0] = '\0';
+
     if (!sAlreadyRunning) {
 #ifdef _DEBUG
         mLog = new Log("log.txt");
@@ -393,6 +397,7 @@ void CLightpack::loadSettingsFile()
         // Prepare the path to the settings file
         char path[MAX_PATH];
         wcstombs(path, getCurrentDirectory(), wcslen(getCurrentDirectory()));
+        path[wcslen(getCurrentDirectory())] = '\0';
         strcat(path, "\\"SETTINGS_FILE);
 
         INIReader reader(path);
@@ -540,7 +545,7 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
         default:
             colors[i] = 0;
         }
-        //logf("Pixel: %d [%d, %d, %d]", i, RED(colors[i]), GREEN(colors[i]), BLUE(colors[i]));
+        logf("Pixel: %d [%d, %d, %d]", i, GET_RED(colors[i]), GET_GREEN(colors[i]), GET_BLUE(colors[i]));
     }
     LeaveCriticalSection(&mScaledRectLock);
 
