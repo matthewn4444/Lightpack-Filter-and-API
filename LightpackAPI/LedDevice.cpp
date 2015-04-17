@@ -9,7 +9,7 @@
 #define WRITE_BUFFER_INDEX_DATA_START   2
 
 namespace Lightpack {
-    LedDevice::LedDevice() 
+    LedDevice::LedDevice()
         : mGamma(DefaultGamma)
         , mBrightness(DefaultBrightness)
         , mLedsOn(true)
@@ -41,6 +41,7 @@ namespace Lightpack {
             hid_close(mDevices[i]);
         }
         mDevices.clear();
+        mCurrentColors.clear();
     }
 
     RESULT LedDevice::setColor(int led, RGBCOLOR color) {
@@ -180,7 +181,6 @@ namespace Lightpack {
                 handle = hid_open_path(path_to_open);
 
                 if (handle != NULL) {
-
                     // Immediately return from hid_read() if no data available
                     hid_set_nonblocking(handle, 1);
                     if (cur_dev->serial_number != NULL && wcslen(cur_dev->serial_number) > 0) {
