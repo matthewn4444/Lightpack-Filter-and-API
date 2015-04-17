@@ -82,6 +82,7 @@ function setVerticalDepthSlider(v) {
 $("#modules-list").sortable().disableSelection();
 
 function setNumberOfLightpackModules(n) {
+    document.title = "Lightpack Filter (" + (n>0?n*10:"no") + " leds)";
     $("body").toggleClass("has-multiple", n > 1);
     $("#modules-list").empty();
     for (var i = 0; i < n; i++) {
