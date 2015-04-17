@@ -227,6 +227,7 @@ lightpack.init(function(api){
         // Set the colors if on the adjustment page
         if ($("#page-adjust-position.open").length) {
             displayLedMapColors();
+            maybeShowLedChangeWarning();
         }
         $(document.body).addClass("connected");
     }).on("disconnect", function(n){
@@ -369,6 +370,20 @@ win.on("enter-fullscreen", function() {
 });
 win.on("leave-fullscreen", function() {
     Ledmap.updateMetrics();
+});
+
+function maybeShowLedChangeWarning() {
+    if (!maybeShowLedChangeWarning.shown) {
+        var numSavedPos = lightpack.getSavedPositions().length;
+        if (numLeds > 0 && numSavedPos > 0 && numSavedPos != numLeds) {
+            alert("Your last saved position had " + numSavedPos + " leds and now only " + numLeds + " leds are connected. If you modify the positions now, it will modified your saved positions.");
+            maybeShowLedChangeWarning.shown = true;
+        }
+    }
+}
+
+$("nav ul").on("click", "#nav-adjust-position:not(.selected)", function() {
+    maybeShowLedChangeWarning();
 });
 
 //  ============================================
