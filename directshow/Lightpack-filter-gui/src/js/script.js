@@ -208,10 +208,9 @@ lightpack.init(function(api){
         lightpack.sendPositions(Ledmap.getPositions());
     }
 
-    lightApi.on("connect", function(){
-        log("Lights have connected");
-        numLeds = lightApi.getCountLeds();
-        log("Got", numLeds, "Leds");
+    lightApi.on("connect", function(n){
+        log("Lights have connected with " + n + " leds");
+        numLeds = n;
         var numModules = numLeds / 10;
         Ledmap.setGroups(numModules);
         isConnected = true;
@@ -224,10 +223,14 @@ lightpack.init(function(api){
             displayLedMapColors();
         }
         $(document.body).addClass("connected");
-    }).on("disconnect", function(){
-        isConnected = false;
-        log("Lights have disconnected");
-        $(document.body).removeClass("connected");
+    }).on("disconnect", function(n){
+        log("Lights have disconnected with " + n + " leds left");
+        numLeds = n;
+        setNumberOfLightpackModules(numLeds / 10);
+        if (numLeds == 0) {
+            isConnected = false;
+            $(document.body).removeClass("connected");
+        }
     }).on("play", function(){
         log("Filter is playing");
         isPlaying = true;
