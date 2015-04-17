@@ -93,7 +93,7 @@ CLightpack::~CLightpack(void)
             CloseHandle(mAppMutex);
         }
     }
-#ifdef LOG_ENABLED
+#ifdef _DEBUG
     if (mLog) {
         delete mLog;
         mLog = NULL;
