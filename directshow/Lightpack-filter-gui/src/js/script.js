@@ -218,6 +218,12 @@ lightpack.init(function(api){
         // Handle UI multiple Lightpack modules
         setNumberOfLightpackModules(numModules);
 
+        // If you connect the same number of leds as saved, then load those positions
+        var savedPos = lightpack.getSavedPositions();
+        if (savedPos.length == n) {
+            Ledmap.setPositions(pos);
+        }
+
         // Set the colors if on the adjustment page
         if ($("#page-adjust-position.open").length) {
             displayLedMapColors();
