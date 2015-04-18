@@ -445,13 +445,13 @@ void CLightpack::readSettingsFile(INIReader& reader)
 
 bool CLightpack::parseLedRectLine(const char* line, Lightpack::Rect* outRect)
 {
-    ASSERT(mWidth > 0);
-    ASSERT(mHeight > 0);
-    if (strlen(line) > 0) {
-        double x, y, w, h;
-        if (sscanf(line, "%*c%*lf:%lf,%lf,%lf,%lf", &x, &y, &w, &h) != EOF) {
-            percentageRectToVideoRect(x, y, w, h, outRect);
-            return true;
+    if (mWidth != 0 && mHeight != 0) {
+        if (strlen(line) > 0) {
+            double x, y, w, h;
+            if (sscanf(line, "%*c%*lf:%lf,%lf,%lf,%lf", &x, &y, &w, &h) != EOF) {
+                percentageRectToVideoRect(x, y, w, h, outRect);
+                return true;
+            }
         }
     }
     return false;
