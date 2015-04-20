@@ -619,7 +619,12 @@ DWORD CLightpack::lightThreadStart()
         LeaveCriticalSection(&mQueueLock);
 
         ASSERT(colors != NULL);
-        ASSERT(!mAdviseQueue.empty());
+
+        // Was not able to get a scheduled time, skip this color
+        if (mAdviseQueue.empty()) {
+            delete[] colors;
+            continue;
+        }
 
         displayLight(colors);
         delete[] colors;
