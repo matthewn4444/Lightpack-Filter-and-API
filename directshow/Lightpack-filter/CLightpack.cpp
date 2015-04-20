@@ -39,6 +39,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mShouldSendConnectEvent(false)
     , mShouldSendDisconnectEvent(false)
     , mIsRunning(false)
+    , mSampleUpsideDown(false)
     , mIsConnectedToPrismatik(false)
     , mPropGamma(Lightpack::DefaultGamma)
     , mPropSmooth(DEFAULT_SMOOTH)
@@ -701,14 +702,18 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
     if (SUCCEEDED(pSample->GetMediaType(&pType))) {
         if (pType) {
             log(pType);
-            // Get the newest stride
+            // Set the properties for this frame
             if (pType->formattype == FORMAT_VideoInfo && pType->cbFormat >= sizeof(VIDEOINFOHEADER)) {
                 VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pType->pbFormat);
-                mStride = pVih->bmiHeader.biWidth;
+                const BITMAPINFOHEADER& header = pVih->bmiHeader;
+                mStride = header.biWidth;
+                mSampleUpsideDown = mVideoType != NV12 && header.biHeight > 0;
             }
             else if (pType->formattype == FORMAT_VideoInfo2 && pType->cbFormat >= sizeof(VIDEOINFOHEADER2)) {
                 VIDEOINFOHEADER2 *pVih = reinterpret_cast<VIDEOINFOHEADER2*>(pType->pbFormat);
-                mStride = pVih->bmiHeader.biWidth;
+                const BITMAPINFOHEADER& header = pVih->bmiHeader;
+                mStride = header.biWidth;
+                mSampleUpsideDown = mVideoType != NV12 && header.biHeight > 0;
             }
             DeleteMediaType(pType);
         }

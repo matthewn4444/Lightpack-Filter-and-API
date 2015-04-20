@@ -3,10 +3,12 @@
 Lightpack::RGBCOLOR CLightpack::meanColorFromRGB32(Lightpack::Rect& rect) {
     ASSERT(mStride >= mWidth);
     const unsigned int totalPixels = rect.area();
+    const int yOffset = mSampleUpsideDown ? 1 - mHeight : 0;
+    const int yMakePositive = mSampleUpsideDown ? -1 : 1;
 
     unsigned int totalR = 0, totalG = 0, totalB = 0;
     for (int r = 0; r < rect.height; r++) {
-        int y = rect.y + r;
+        int y = (rect.y + r + yOffset) * yMakePositive;
 
         BYTE* pixel = mFrameBuffer + (rect.x + y * mStride) * 4;      // 4 bytes per pixel
         for (int c = 0; c < rect.width; c++) {

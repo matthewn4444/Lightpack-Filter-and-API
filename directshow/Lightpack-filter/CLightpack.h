@@ -176,6 +176,7 @@ private:
     int mWidth;
     int mHeight;
     bool mIsRunning;
+    bool mSampleUpsideDown;
 
     // Miscellaneous
     long getStreamTime() {
