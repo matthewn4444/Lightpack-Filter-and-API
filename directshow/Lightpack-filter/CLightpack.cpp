@@ -159,16 +159,6 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
         // Scale all the rects to the size of the video
         if (mScaledRects.empty() && mWidth > 0 && mHeight > 0) {
-            if (MEDIASUBTYPE_RGB32 == pmt->subtype) {
-                mVideoType = VideoFormat::RGB32;
-            }
-            else if (MEDIASUBTYPE_NV12 == pmt->subtype) {
-                mVideoType = VideoFormat::NV12;
-            }
-            else {
-                mVideoType = VideoFormat::OTHER;
-            }
-
             // Default position for 10 LEDs
             static const double defaultPositions[][4] = {
                 { 85, 72.78, 15, 20.76 },
@@ -196,6 +186,20 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
                 mFrameBuffer = new BYTE[mWidth * mHeight * 4];
                 std::fill(mFrameBuffer, mFrameBuffer + sizeof(mFrameBuffer), 0);
             }
+        }
+
+        // Set the media type
+        if (MEDIASUBTYPE_RGB32 == pmt->subtype) {
+            log("Going to render RGB32 images");
+            mVideoType = VideoFormat::RGB32;
+        }
+        else if (MEDIASUBTYPE_NV12 == pmt->subtype) {
+            log("Going to render NV12 images");
+            mVideoType = VideoFormat::NV12;
+        }
+        else {
+            log("Going to render other images");
+            mVideoType = VideoFormat::OTHER;
         }
     }
     return S_OK;
