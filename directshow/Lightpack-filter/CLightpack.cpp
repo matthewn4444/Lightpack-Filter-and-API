@@ -728,8 +728,6 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
         }
     } else {
         if (!mPropColors.empty() && mVideoType != VideoFormat::OTHER) {
-            ASSERT(mStride >= mWidth);
-
             REFERENCE_TIME startTime, endTime;
             pSample->GetTime(&startTime, &endTime);
 
