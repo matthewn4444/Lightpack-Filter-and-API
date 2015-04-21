@@ -119,6 +119,9 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
                     LeaveCriticalSection(&mDeviceLock);
                     sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                 }
+            } else {
+                // Consume the event and do nothing
+                result = 0;
             }
             break;
         // Format: <2><n>,<r>,<g>,<b>
@@ -136,15 +139,18 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
                 if (!colors.empty()) {
                     EnterCriticalSection(&mDeviceLock);
                     *deviceConnected = result = mDevice->setColors(colors) == Lightpack::RESULT::OK;
-                    for (size_t i = 0; i < mDevice->getCountLeds(); i++) {
+                    for (size_t i = 0; i < min(mDevice->getCountLeds(), colors.size()); i++) {
                         if (i < 0) {
                             continue;
                         }
                         mPropColors[i] = colors[i];
                     }
                     LeaveCriticalSection(&mDeviceLock);
-                    sprintf(buffer, "%d1", COMM_SEND_RETURN, result);
+                    sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                 }
+            } else {
+                // Consume the event and do nothing
+                result = 0;
             }
             break;
         // Format: <3><r>,<g>,<b>
@@ -158,6 +164,9 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
                     LeaveCriticalSection(&mDeviceLock);
                     sprintf(buffer, "%d%d", COMM_SEND_RETURN, result);
                 }
+            } else {
+                // Consume the event and do nothing
+                result = 0;
             }
             break;
         // Format: <4>...
@@ -338,6 +347,7 @@ void CLightpack::handleMessages(Socket& socket)
             if (strlen(buffer) > 0) {
                 int messageType = buffer[0] - 'a';
                 bool parsingError = true;
+
                 // Format: <12>
                 if (messageType == COMM_REC_IS_RUNNING) {
                     parsingError = false;
