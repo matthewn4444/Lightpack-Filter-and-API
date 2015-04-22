@@ -122,6 +122,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             } else {
                 // Consume the event and do nothing
                 result = 0;
+                sprintf(buffer, "%d1", COMM_SEND_RETURN);
             }
             break;
         // Format: <2><n>,<r>,<g>,<b>
@@ -151,6 +152,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             } else {
                 // Consume the event and do nothing
                 result = 0;
+                sprintf(buffer, "%d1", COMM_SEND_RETURN);
             }
             break;
         // Format: <3><r>,<g>,<b>
@@ -167,6 +169,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             } else {
                 // Consume the event and do nothing
                 result = 0;
+                sprintf(buffer, "%d1", COMM_SEND_RETURN);
             }
             break;
         // Format: <4>...
