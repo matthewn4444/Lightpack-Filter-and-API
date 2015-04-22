@@ -4,6 +4,7 @@
 // Connection to GUI
 #define DEFAULT_GUI_HOST "127.0.0.1"
 
+#define SOCKET_BUFFER_SIZE 1024
 #define RECV_TIMEOUT 200
 #define GUI_MUTEX_NAME L"LightpackFilterGUIMutex"
 
@@ -264,7 +265,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
 void CLightpack::handleMessages(Socket& socket)
 {
     log("Connected to gui")
-    char buffer[512] = { 0 };
+    char buffer[SOCKET_BUFFER_SIZE] = { 0 };
     unsigned int currentPort = socket.getPort();
     mShouldSendPlayEvent = false;
     mShouldSendPauseEvent = false;
@@ -346,7 +347,7 @@ void CLightpack::handleMessages(Socket& socket)
         buffer[0] = '\0';
 
         // Handle Receiving events
-        if (socket.Receive(buffer, RECV_TIMEOUT) > 0) {
+        if (socket.Receive(buffer, SOCKET_BUFFER_SIZE, RECV_TIMEOUT) > 0) {
             if (strlen(buffer) > 0) {
                 int messageType = buffer[0] - 'a';
                 bool parsingError = true;

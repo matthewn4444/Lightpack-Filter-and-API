@@ -160,26 +160,6 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
         // Scale all the rects to the size of the video
         if (mScaledRects.empty() && mWidth > 0 && mHeight > 0) {
-            // Default position for 10 LEDs
-            static const double defaultPositions[][4] = {
-                { 85, 72.78, 15, 20.76 },
-                { 85, 39.58, 15, 20.76 },
-                { 85, 6.39, 15, 20.76 },
-                { 81.68, 0, 11.68, 20 },
-                { 39.92, 80, 11.68, 20 },
-                { 0, 25.07, 15, 16.6 },
-                { 6.6, 0, 11.68, 20 },
-                { 0, 8.47, 15, 16.6 },
-                { 0, 41.67, 15, 16.6 },
-                { 0, 66.53, 15, 33.19 }
-            };
-            for (size_t i = 0; i < Lightpack::LedDevice::LedsPerDevice; i++) {
-                Lightpack::Rect rect;
-                percentageRectToVideoRect(defaultPositions[i][0], defaultPositions[i][1],
-                    defaultPositions[i][2], defaultPositions[i][3], &rect);
-                mScaledRects.push_back(rect);
-            }
-
             // Load the settings file
             loadSettingsFile();
 
@@ -473,15 +453,15 @@ void CLightpack::percentageRectToVideoRect(double x, double y, double w, double 
 void CLightpack::updateScaledRects(std::vector<Lightpack::Rect>& rects)
 {
     EnterCriticalSection(&mScaledRectLock);
+    // Adjust size of rects from inputted rects
+    size_t newSize = rects.size();
+    if (mScaledRects.size() != newSize) {
+        mScaledRects.resize(newSize);
+    }
     size_t i = 0;
-    for (; i < min(mScaledRects.size(), rects.size()); i++) {
+    for (; i < newSize; i++) {
         if (rects[i].width > 0 && rects[i].height > 0) {
             mScaledRects[i] = rects[i];
-        }
-    }
-    for (; i < rects.size(); i++) {
-        if (rects[i].width > 0 && rects[i].height > 0) {
-            mScaledRects.push_back(rects[i]);
         }
     }
     LeaveCriticalSection(&mScaledRectLock);

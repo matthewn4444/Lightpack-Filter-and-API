@@ -13,8 +13,6 @@
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
-#define DEFAULT_BUFLEN 512
-
 class Socket {
 public:
     Socket()
@@ -111,7 +109,7 @@ public:
     }
 
     // Not safe for large character buffers
-    int Receive(char* buffer, int timeout = 0) {
+    int Receive(char* buffer, size_t size, int timeout = 0) {
         if (mConnectSocket == INVALID_SOCKET) {
             return -1;
         }
@@ -121,13 +119,10 @@ public:
             mRecvTimeout = timeout;
             setsockopt(mConnectSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(int));
         }
-        int iResult;
-        int length = sizeof(buffer) > DEFAULT_BUFLEN ? sizeof(buffer) : DEFAULT_BUFLEN;
-
-        iResult = recv(mConnectSocket, buffer, length, 0);
+        int iResult = recv(mConnectSocket, buffer, size, 0);
         if (iResult > 0) {
             int n = -1;
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < size; i++) {
                 if (buffer[i] == '\n') {
                     n = i;
                     break;
@@ -140,6 +135,7 @@ public:
                 }
                 buffer[n] = '\0';
             }
+            buffer[size - 1] = '\0';
         }
         else if (iResult == 0) {
             buffer = '\0';

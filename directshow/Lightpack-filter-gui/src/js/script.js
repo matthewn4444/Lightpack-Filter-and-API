@@ -204,8 +204,6 @@ lightpack.init(function(api){
     var pos = lightpack.getSavedPositions();
     if (pos.length) {
         Ledmap.setPositions(pos);
-    } else {
-        lightpack.sendPositions(Ledmap.getPositions());
     }
 
     lightApi.on("connect", function(n){
@@ -222,6 +220,11 @@ lightpack.init(function(api){
         var savedPos = lightpack.getSavedPositions();
         if (savedPos.length == n) {
             Ledmap.setPositions(pos);
+        }
+
+        // First run after setting default positions with correct number of leds
+        if (lightpack.getSavedPositions().length == 0) {
+            lightpack.sendPositions(Ledmap.getPositions());
         }
 
         // Set the colors if on the adjustment page
