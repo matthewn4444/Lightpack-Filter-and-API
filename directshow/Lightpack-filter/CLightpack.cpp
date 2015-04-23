@@ -549,11 +549,12 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
 
 void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 {
-    ASSERT(mScaledRects.size() && mScaledRects.size() <= mPropColors.size());
-    if (mDevice) {
+    ASSERT(mScaledRects.size());
+    size_t len = min(mScaledRects.size(), mPropColors.size());
+    if (mDevice && len) {
         EnterCriticalSection(&mDeviceLock);
         if (mDevice) {
-            if (mDevice->setColors(colors, mScaledRects.size()) != Lightpack::RESULT::OK) {
+            if (mDevice->setColors(colors, len) != Lightpack::RESULT::OK) {
                 // Device is/was disconnected
                 LeaveCriticalSection(&mDeviceLock);
                 mLightThreadCleanUpRequested = true;
