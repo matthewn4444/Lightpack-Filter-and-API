@@ -549,10 +549,11 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
 
 void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 {
+    ASSERT(mScaledRects.size() && mScaledRects.size() <= mPropColors.size());
     if (mDevice) {
         EnterCriticalSection(&mDeviceLock);
         if (mDevice) {
-            if (mDevice->setColors(colors, mPropColors.size()) != Lightpack::RESULT::OK) {
+            if (mDevice->setColors(colors, mScaledRects.size()) != Lightpack::RESULT::OK) {
                 // Device is/was disconnected
                 LeaveCriticalSection(&mDeviceLock);
                 mLightThreadCleanUpRequested = true;
@@ -712,7 +713,7 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
             mLastDeviceCheck = now;
         }
     } else {
-        if (!mPropColors.empty() && mVideoType != VideoFormat::OTHER) {
+        if (!mScaledRects.empty() && !mPropColors.empty() && mVideoType != VideoFormat::OTHER) {
             REFERENCE_TIME startTime, endTime;
             pSample->GetTime(&startTime, &endTime);
 
