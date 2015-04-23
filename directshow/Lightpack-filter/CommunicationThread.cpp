@@ -99,16 +99,8 @@ void CLightpack::destroyCommThread()
 
 bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* deviceConnected) {
     // Parse each message
-    int leds, n, r, g, b, result = EOF;
+    int n, r, g, b, result = EOF;
     switch (messageType) {
-        // Format: <0>
-        case COMM_REC_COUNT_LEDS:
-            result = 0;
-            EnterCriticalSection(&mDeviceLock);
-            leds = mDevice->getCountLeds();
-            LeaveCriticalSection(&mDeviceLock);
-            sprintf(buffer, "%d%d", COMM_SEND_RETURN, leds);
-            break;
         // Format: <1><n>,<r>,<g>,<b>
         case COMM_REC_SET_COLOR:
             if (!mIsRunning) {
@@ -356,6 +348,14 @@ void CLightpack::handleMessages(Socket& socket)
                 if (messageType == COMM_REC_IS_RUNNING) {
                     parsingError = false;
                     sprintf(buffer, "%d%d", COMM_SEND_RETURN, mIsRunning ? 1 : 0);
+                }
+                // Format: <0>
+                else if (messageType == COMM_REC_COUNT_LEDS) {
+                    EnterCriticalSection(&mDeviceLock);
+                    int leds = mDevice != NULL ? mDevice->getCountLeds() : 0;
+                    LeaveCriticalSection(&mDeviceLock);
+                    sprintf(buffer, "%d%d", COMM_SEND_RETURN, leds);
+                    parsingError = false;
                 }
                 else if (mDevice != NULL) {
                     // Parse the message: you can never get a parsing error and a disconnect, they are mutually exclusive!

@@ -351,7 +351,7 @@ void CLightpack::CancelNotification()
     // Clear all advise times from clock
     if (!mAdviseQueue.empty()) {
         EnterCriticalSection(&mAdviseLock);
-        if (!mAdviseQueue.empty()) {
+        if (!mAdviseQueue.empty() && m_pClock) {
             m_pClock->Unadvise(mAdviseQueue.front());
             mAdviseQueue.pop();
         }
