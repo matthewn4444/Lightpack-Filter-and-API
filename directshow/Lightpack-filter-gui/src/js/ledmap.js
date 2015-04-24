@@ -441,6 +441,7 @@ function setDefaultGroups(numOfGroups) {
 }
 
 function arrangeLed($holder, side, percentValue) {
+    if (!$holder.length) return;
     $holder.parent().attr("data-direction", "up");
     var verticalPos = Math.round(screenHeight * percentValue / 100.0) - smallSide / 2,
         horizontalPos = Math.round(screenWidth * percentValue / 100.0) - smallSide / 2,
