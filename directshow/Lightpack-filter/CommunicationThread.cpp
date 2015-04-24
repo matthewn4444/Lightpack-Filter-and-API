@@ -281,13 +281,8 @@ void CLightpack::handleMessages(Socket& socket)
                 // Reconnect device if fails
                 if (mDevice == NULL) {
                     if (connectDevice()) {
-                        if (!justDisconnected) {
-                            mShouldSendConnectEvent = true;
-                            mShouldSendDisconnectEvent = false;
-                        }
-                        else {
-                            mShouldSendConnectEvent = mShouldSendDisconnectEvent = false;
-                        }
+                        // False because the filter will autoconnect and we dont need extra events
+                        mShouldSendConnectEvent = mShouldSendDisconnectEvent = false;
                     }
                     else if (justDisconnected) {
                         mShouldSendConnectEvent = false;
