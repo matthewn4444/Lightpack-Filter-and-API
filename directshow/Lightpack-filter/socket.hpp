@@ -122,7 +122,7 @@ public:
         int iResult = recv(mConnectSocket, buffer, size, 0);
         if (iResult > 0) {
             int n = -1;
-            for (int i = 0; i < size; i++) {
+            for (size_t i = 0; i < size; i++) {
                 if (buffer[i] == '\n') {
                     n = i;
                     break;
