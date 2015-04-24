@@ -376,7 +376,7 @@ win.on("leave-fullscreen", function() {
 });
 
 function maybeShowLedChangeWarning() {
-    if (!maybeShowLedChangeWarning.shown) {
+    if (!maybeShowLedChangeWarning.shown && isShowing) {
         var numSavedPos = lightpack.getSavedPositions().length;
         if (numLeds > 0 && numSavedPos > 0 && numSavedPos != numLeds) {
             alert("Your last saved position had " + numSavedPos + " leds and now only " + numLeds + " leds are connected. If you modify the positions now, it will modified your saved positions.");
