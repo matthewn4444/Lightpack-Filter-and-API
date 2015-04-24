@@ -62,7 +62,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
 
         // Try to connect to the lights directly,
         // if fails the try to connect to Prismatik in the thread
-        connectDevice();
+        reconnectDevice();
 
         startLightThread();
 
@@ -247,9 +247,9 @@ STDMETHODIMP CLightpack::Pause()
     return NOERROR;
 }
 
-bool CLightpack::connectDevice()
+bool CLightpack::reconnectDevice()
 {
-    if (!mDevice) {
+    if (!mIsConnectedToPrismatik) {
         EnterCriticalSection(&mDeviceLock);
         if (!mDevice) {
             mDevice = new Lightpack::LedDevice();
@@ -265,6 +265,17 @@ bool CLightpack::connectDevice()
                 log("Device connected");
                 startLightThread();
                 mIsConnectedToPrismatik = false;
+            }
+        } else {
+            // Ocasionally reopen to see if more modules connect
+            if (!((Lightpack::LedDevice*)mDevice)->tryToReopenDevice()) {
+                delete mDevice;
+                mDevice = 0;
+                log("Device not connected");
+                LeaveCriticalSection(&mDeviceLock);
+                return false;
+            } else if (mDevice->getCountLeds() != mPropColors.size()) {
+                postConnection();
             }
         }
         LeaveCriticalSection(&mDeviceLock);
@@ -706,14 +717,14 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
         }
     }
 
-    if (mDevice == NULL) {
-        // Reconnect device every 1 seconds if not connected
-        DWORD now = GetTickCount();
-        if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
-            connectDevice();
-            mLastDeviceCheck = now;
-        }
-    } else {
+    // Reconnect device every 1 seconds if not connected
+    DWORD now = GetTickCount();
+    if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
+        reconnectDevice();
+        mLastDeviceCheck = now;
+    }
+
+    if (mDevice != NULL) {
         if (!mScaledRects.empty() && !mPropColors.empty() && mVideoType != VideoFormat::OTHER) {
             REFERENCE_TIME startTime, endTime;
             pSample->GetTime(&startTime, &endTime);

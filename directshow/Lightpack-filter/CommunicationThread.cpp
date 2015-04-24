@@ -280,7 +280,7 @@ void CLightpack::handleMessages(Socket& socket)
 
                 // Reconnect device if fails
                 if (mDevice == NULL) {
-                    if (connectDevice()) {
+                    if (reconnectDevice()) {
                         // False because the filter will autoconnect and we dont need extra events
                         mShouldSendConnectEvent = mShouldSendDisconnectEvent = false;
                     }
@@ -364,7 +364,7 @@ void CLightpack::handleMessages(Socket& socket)
 
                         if (wasConnectedToPrismatik) {
                             // Prismatik is not available and disconnected, try to connect to the device and try parsing again
-                            if (connectDevice()) {
+                            if (reconnectDevice()) {
                                 mShouldSendConnectEvent = false;
                                 parseReceivedMessages(messageType, buffer, &isDeviceConnected);
                             }
@@ -381,7 +381,7 @@ void CLightpack::handleMessages(Socket& socket)
                     parsingError = false;
                     if (mDevice == NULL) {
                         // Try directly again
-                        if (!connectDevice()) {
+                        if (!reconnectDevice()) {
                             sprintf(buffer, "%d0", COMM_SEND_RETURN);
                         }
                         else {

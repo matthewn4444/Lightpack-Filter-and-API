@@ -146,7 +146,7 @@ private:
     bool mIsConnectedToPrismatik;
     DWORD mLastDeviceCheck;
 
-    bool connectDevice();
+    bool reconnectDevice();
     bool connectPrismatik();
     void disconnectAllDevices();
     void postConnection();
