@@ -93,6 +93,12 @@ CLightpack::~CLightpack(void)
 
     // Once the first instance is deallocated, we should allow usage of this filter again
     if (mIsFirstInstance) {
+        DeleteCriticalSection(&mQueueLock);
+        DeleteCriticalSection(&mAdviseLock);
+        DeleteCriticalSection(&mDeviceLock);
+        DeleteCriticalSection(&mCommSendLock);
+        DeleteCriticalSection(&mScaledRectLock);
+
         sAlreadyRunning = false;
         if (mAppMutex) {
             CloseHandle(mAppMutex);
