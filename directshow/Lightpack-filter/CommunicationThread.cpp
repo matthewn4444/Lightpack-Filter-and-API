@@ -269,25 +269,8 @@ void CLightpack::handleMessages(Socket& socket)
             DWORD now = GetTickCount();
             if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
                 EnterCriticalSection(&mDeviceLock);
-                bool justDisconnected = false;
-                if (mDevice != NULL) {
-                    // To ping, set the brightness, if fail then we should try to reconnect device
-                    if (mDevice->setBrightness(mPropBrightness) != Lightpack::RESULT::OK) {
-                        justDisconnected = true;
-                        disconnectAllDevices();     // Disconnect devices because it has failed
-                    }
-                }
-
-                // Reconnect device if fails
-                if (mDevice == NULL) {
-                    if (reconnectDevice()) {
-                        // False because the filter will autoconnect and we dont need extra events
-                        mShouldSendConnectEvent = mShouldSendDisconnectEvent = false;
-                    }
-                    else if (justDisconnected) {
-                        mShouldSendConnectEvent = false;
-                        mShouldSendDisconnectEvent = true;
-                    }
+                if (!reconnectDevice()) {
+                    mShouldSendDisconnectEvent = true;
                 }
                 LeaveCriticalSection(&mDeviceLock);
                 mLastDeviceCheck = now;
