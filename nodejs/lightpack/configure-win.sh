@@ -3,15 +3,15 @@
 
 nw-gyp configure --target=0.8.6
 
-# Move the files to the vs12 folder
-mv build/config.gypi vs12/config.gypi
-mv build/lightpack.vcxproj vs12/lightpack.vcxproj
+# Move the files to the vs folder
+mv build/config.gypi vs/config.gypi
+mv build/lightpack.vcxproj vs/lightpack.vcxproj
 
 # Remove the db file
-rm vs12/lightpack.sdf
+rm vs/lightpack.sdf
 
 # Insert the Extra Lightpack properties into the project
-file='vs12/lightpack.vcxproj'
+file='vs/lightpack.vcxproj'
 
 sed -i '29a\
   <ImportGroup Label="PropertySheets" Condition="'"'"'$(Configuration)|$(Platform)'"'"'=='"'"'Release|Win32'"'"'">\n    <Import Project="Additional_libs.props" />\n  </ImportGroup>' $file
