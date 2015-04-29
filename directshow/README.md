@@ -14,11 +14,11 @@ Choose either installation or unzip the package anywhere on your computer
 
 ###Binaries (Windows 32bit)
 
-- [Installer (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/setup.exe)
-- [Zip (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/lightpack-filter.zip)
+- [Installer (0.6.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.0/setup.exe)
+- [Zip (0.6.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.0/lightpack-filter.zip)
 
 ###Source Code
-- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.5.0b.zip)
+- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.0.zip)
 
 ## Setup
 This is compatible with [Media Player Classic (MPC)](http://mpc-hc.org/).
@@ -27,7 +27,7 @@ You will need to add the filter (lightpack.ax) to the player.
 For more instructions, view [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Setup-with-Media-Player-Classic).
 
 ## Performance and Support
-Using MPC, adding the Lightpack filter increases the CPU overhead about **1-3%**.
+Using MPC, adding the Lightpack filter increases the CPU overhead about **3-8%**.
 
 The filter supports all forms of video (that I can tell) and other filters including
 
@@ -47,5 +47,5 @@ View [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Buildi
 - [Inno Setup](http://www.jrsoftware.org/isinfo.php)
 - [node-webkit updater](https://github.com/edjafarov/node-webkit-updater)
 - [hidapi](http://www.signal11.us/oss/hidapi/)
-
+- [dlib](http://dlib.net/)
 

@@ -20,13 +20,13 @@ for each platform. Generally you need Python, Git/Cywgin bash and Visual Studio 
 
 2. Run **configure-win.sh** to configure the solution before compiling
 
-3. Open **vs13/lightpack.sln** and **set to Release build** and run it, it will compile to the Release folder
+3. Open **vs/lightpack.sln** and **set to Release build** and run it, it will compile to the Release folder
 
 
 **Linix/Mac**
 
-2. You need config.gypi. In this directory, run the configuration (Node webkit 0.9.2 was used)
-`$ nw-gyp configure --target=0.9.2`
+2. You need config.gypi. In this directory, run the configuration (Node webkit 0.8.6 was used)
+`$ nw-gyp configure --target=0.8.6`
 
 3. TODO
 

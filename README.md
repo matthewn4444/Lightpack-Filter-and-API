@@ -2,40 +2,45 @@
 
 **_Author_**: Matthew Ng (matthewn4444@gmail.com)
 
+Add Lights to the back of your TV! Use the **Lightpack filter** to have videos
+render color to the back of your TV in ***realtime***!
+
+Or you can program your own projects with your Lightpack device with the API!
+
 This includes two projects:
 
-1. [Directshow Filter](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/directshow)
-2. [Lightpack API (unofficial)](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/LightpackAPI)
+1. [Lightpack Filter](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Usage) for [MPC-HC](https://mpc-hc.org/)
+2. [Lightpack C++ API (unofficial)](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Lightpack-API
 
 ![Lightpack](http://i.imgur.com/Kym2v0c.jpg)
 
 _Image from Lightpack's website_
 
-## Installation
+## Lightpack Filter Installation
 
-Choose either installation or unzip the package anywhere on your computer
+Choose either setup installation or unzip the package anywhere on your computer
 
-###Binaries (Windows 32bit)
+###Binaries (Windows x86)
 
-- [Installer (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/setup.exe)
-- [Zip (0.5.0b)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.5.0b/lightpack-filter.zip)
+- [Installer (0.6.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.0/setup.exe)
+- [Zip (0.6.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.0/lightpack-filter.zip)
 
 Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Installation) for more information on setup and usage.
 
 ###Source Code
-- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.5.0b.zip)
+- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.0.zip)
 
 Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building-the-Source) for compile and building instructions.
 
 ## What is this?
 
-### Lightpack
+### Lightpack Concept/Device
 [Lightpack](http://lightpack.tv/) was a kickstarted project and the APIs were openned
 source. Users put lights on the back of their televisions and the computer can send
 colors to the lights, extending the picture's/video's experience. I have taken 
 the open source software and created a C++ and Node.js API.
 
-### Filter
+### Lightpack Filter
 
 The filter allows you to play a video with lightpack shown in realtime without any
 lag. You can play a video with [Media player classic (MPC)](http://mpc-hc.org/) and 
@@ -43,12 +48,12 @@ lightpack will update the colors of what is shown on the screen.
 
 For more information, go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/directshow).
 
-**This only works on Windows.**
+**This filter only works on Windows.**
 
-### API
+### C++ API
 
 I have created a single API for C++ and Node.js to interface to the device and
-Prismatik. These APIs are cross-platform and should work on Windows, Mac and Linux.
+Prismatik. These APIs are **cross-platform** and should work on Windows, Mac and Linux.
 
 For more information, go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/LightpackAPI).
 
