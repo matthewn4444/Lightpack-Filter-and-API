@@ -7,14 +7,14 @@ render color to the back of your TV in ***realtime***!
 
 Or you can program your own projects with your Lightpack device with the API!
 
-This includes two projects:
-
-1. [Lightpack Filter](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Usage) for [MPC-HC](https://mpc-hc.org/)
-2. [Lightpack C++ API (unofficial)](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Lightpack-API
-
 ![Lightpack](http://i.imgur.com/Kym2v0c.jpg)
 
 _Image from Lightpack's website_
+
+This includes two projects:
+
+1. [Lightpack Filter](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Usage) for [MPC-HC](https://mpc-hc.org/)
+2. [Lightpack C++ API (unofficial)](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Lightpack-API)
 
 ## Lightpack Filter Installation
 
