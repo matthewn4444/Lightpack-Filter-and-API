@@ -49,8 +49,7 @@ if (shouldShowWindow) {
     showWindow();
 }
 
-// Change the window's title with the version number in it
-document.title += " v" + pkg.version;
+$("#version").text(pkg.version);
 
 function log(/*...*/) {
     var div = document.createElement("div");

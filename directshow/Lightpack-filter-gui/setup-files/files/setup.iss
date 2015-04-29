@@ -1,5 +1,5 @@
 #define MyAppName "Lightpack Filter"
-#define MyAppVersion "0.5"
+#define MyAppVersion "0.6.0"
 #define MyAppPublisher "Matthew Ng"
 #define MyAppURL "https://github.com/matthewn4444/Lightpack-Filter-and-API/"
 #define LaunchProgram "Edit Lightpack settings"
