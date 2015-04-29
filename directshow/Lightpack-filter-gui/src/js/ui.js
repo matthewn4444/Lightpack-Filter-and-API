@@ -3,10 +3,10 @@ setInterval(function(){}, 100);
 // Default values
 var DEFAULTS = {
     brightness: 100,
-    smooth: 20,
+    smooth: 8,
     gamma: 67,
-    horizontalDepth: 20,
-    verticalDepth: 15,
+    horizontalDepth: 15,
+    verticalDepth: 10,
     port: 6000
 };
 
