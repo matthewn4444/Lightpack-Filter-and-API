@@ -1,4 +1,4 @@
-LIBRARY "Lightpack"
+LIBRARY "Lightpack.ax"
 EXPORTS
 	DllMain                 PRIVATE
 	DllGetClassObject		PRIVATE

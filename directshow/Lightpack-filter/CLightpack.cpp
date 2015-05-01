@@ -50,7 +50,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     mCurrentDirectoryCache[0] = '\0';
 
     if (!sAlreadyRunning) {
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(_PERF)
         mLog = new Log("log.txt");
 #endif
         mIsFirstInstance = true;
@@ -104,7 +104,7 @@ CLightpack::~CLightpack(void)
             CloseHandle(mAppMutex);
         }
     }
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(_PERF)
     if (mLog) {
         delete mLog;
         mLog = NULL;
@@ -177,15 +177,15 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
         // Set the media type
         if (MEDIASUBTYPE_RGB32 == pmt->subtype) {
-            log("Going to render RGB32 images");
+            _log("Going to render RGB32 images");
             mVideoType = VideoFormat::RGB32;
         }
         else if (MEDIASUBTYPE_NV12 == pmt->subtype) {
-            log("Going to render NV12 images");
+            _log("Going to render NV12 images");
             mVideoType = VideoFormat::NV12;
         }
         else {
-            log("Going to render other images");
+            _log("Going to render other images");
             mVideoType = VideoFormat::OTHER;
         }
     }
@@ -194,14 +194,14 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
 STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
 {
-    logf("Run: %ld %lu %lu", getStreamTimeMilliSec(), ((CRefTime)StartTime).Millisecs(), ((CRefTime)m_tStart).Millisecs());
+    _logf("Run: %ld %lu %lu", getStreamTimeMilliSec(), ((CRefTime)StartTime).Millisecs(), ((CRefTime)m_tStart).Millisecs());
     if (m_State == State_Running) {
         return NOERROR;
     }
 
     HRESULT hr = CTransInPlaceFilter::Run(StartTime);
     if (FAILED(hr)) {
-        log("Run failed");
+        _log("Run failed");
         return hr;
     }
 
@@ -228,7 +228,7 @@ STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
 
 STDMETHODIMP CLightpack::Stop()
 {
-    logf("Stop %ld", getStreamTimeMilliSec());
+    _logf("Stop %ld", getStreamTimeMilliSec());
     CTransInPlaceFilter::Stop();
     CancelNotification();
     return NOERROR;
@@ -236,11 +236,11 @@ STDMETHODIMP CLightpack::Stop()
 
 STDMETHODIMP CLightpack::Pause()
 {
-    logf("Pause %ld", getStreamTimeMilliSec());
+    _logf("Pause %ld", getStreamTimeMilliSec());
 
     HRESULT hr = CTransInPlaceFilter::Pause();
     if (FAILED(hr)) {
-        log("Failed to pause");
+        _log("Failed to pause");
         return hr;
     }
     destroyLightThread();
@@ -262,25 +262,27 @@ bool CLightpack::reconnectDevice()
             if (!((Lightpack::LedDevice*)mDevice)->open()) {
                 delete mDevice;
                 mDevice = 0;
-                log("Device not connected");
+                _log("Device not connected");
                 LeaveCriticalSection(&mDeviceLock);
                 return false;
             }
             else {
                 postConnection();
-                log("Device connected");
+                _log("Device connected");
                 startLightThread();
                 mIsConnectedToPrismatik = false;
             }
-        } else {
+        }
+        else {
             // Ocasionally reopen to see if more modules connect
             if (!((Lightpack::LedDevice*)mDevice)->tryToReopenDevice()) {
                 delete mDevice;
                 mDevice = 0;
-                log("Device not connected");
+                _log("Device not connected");
                 LeaveCriticalSection(&mDeviceLock);
                 return false;
-            } else if (mDevice->getCountLeds() != mPropColors.size()) {
+            }
+            else if (mDevice->getCountLeds() != mPropColors.size()) {
                 postConnection();
             }
         }
@@ -294,20 +296,20 @@ bool CLightpack::connectPrismatik()
     if (mDevice == NULL) {
         EnterCriticalSection(&mDeviceLock);
         if (mDevice == NULL) {
-            log("Try to connect to Prismatik");
+            _log("Try to connect to Prismatik");
             mDevice = new Lightpack::PrismatikClient();
             const std::vector<int> blankLedMap;
             if (((Lightpack::PrismatikClient*)mDevice)->connect(DEFAULT_HOST, DEFAULT_PORT, blankLedMap, DEFAULT_APIKEY) != Lightpack::RESULT::OK
                 || ((Lightpack::PrismatikClient*)mDevice)->lock() != Lightpack::RESULT::OK) {
-                    log("Failed to also connect to Prismatik.");
-                    delete mDevice;
-                    mDevice = NULL;
-                    LeaveCriticalSection(&mDeviceLock);
-                    return false;
+                _log("Failed to also connect to Prismatik.");
+                delete mDevice;
+                mDevice = NULL;
+                LeaveCriticalSection(&mDeviceLock);
+                return false;
             }
             else {
                 postConnection();
-                log("Connected to Prismatik.");
+                _log("Connected to Prismatik.");
                 mIsConnectedToPrismatik = true;
             }
         }
@@ -323,7 +325,7 @@ void CLightpack::disconnectAllDevices()
         if (mDevice) {
             delete mDevice;
             mDevice = NULL;
-            log("Disconnected device");
+            _log("Disconnected device");
             mShouldSendDisconnectEvent = true;
             mIsConnectedToPrismatik = false;
             // DO NOT REMOVE THREAD HERE, there will be a deadlock
@@ -439,7 +441,7 @@ void CLightpack::readSettingsFile(INIReader& reader)
     Lightpack::Rect rect;
     while (parseLedRectLine(reader.Get("Positions", key, "").c_str(), &rect)) {
         rects.push_back(rect);
-        logf("Got led %d: %d, %d, %d, %d", i, rect.x, rect.y, rect.width, rect.height);
+        _logf("Got led %d: %d, %d, %d, %d", i, rect.x, rect.y, rect.width, rect.height);
         sprintf(key, "led%d", ++i);
     }
     updateScaledRects(rects);
@@ -499,7 +501,7 @@ void CLightpack::startLightThread()
 
     ASSERT(mhLightThread);
     if (mhLightThread == NULL) {
-        log("Failed to create thread");
+        _log("Failed to create thread");
     }
 }
 
@@ -547,7 +549,7 @@ void CLightpack::queueLight(REFERENCE_TIME startTime)
         default:
             colors[i] = 0;
         }
-        logf("Pixel: %d [%d, %d, %d]", i, GET_RED(colors[i]), GET_GREEN(colors[i]), GET_BLUE(colors[i]));
+        _logf("Pixel: %d [%d, %d, %d]", i, GET_RED(colors[i]), GET_GREEN(colors[i]), GET_BLUE(colors[i]));
     }
     LeaveCriticalSection(&mScaledRectLock);
 
@@ -591,7 +593,7 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 
 DWORD CLightpack::lightThreadStart()
 {
-    bool isConnected  = connectPrismatik();
+    bool isConnected = connectPrismatik();
 
     // Start the communication thread guarenteed after device is connected or not
     startCommThread();
@@ -689,7 +691,7 @@ bool CLightpack::ScheduleNextDisplay()
     if (SUCCEEDED(hr)) {
         return true;
     }
-    log("Failed to advise time");
+    _log("Failed to advise time");
     return false;
 }
 
@@ -705,7 +707,7 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
     AM_MEDIA_TYPE* pType;
     if (SUCCEEDED(pSample->GetMediaType(&pType))) {
         if (pType) {
-            log(pType);
+            _log(pType);
             // Set the properties for this frame
             if (pType->formattype == FORMAT_VideoInfo && pType->cbFormat >= sizeof(VIDEOINFOHEADER)) {
                 VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pType->pbFormat);

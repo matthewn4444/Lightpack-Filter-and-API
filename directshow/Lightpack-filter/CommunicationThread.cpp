@@ -73,7 +73,7 @@ void CLightpack::startCommThread()
 
     ASSERT(mhCommThread);
     if (mhCommThread == NULL) {
-        log("Failed to create communication thread");
+        _log("Failed to create communication thread");
     }
 }
 
@@ -256,7 +256,7 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
 
 void CLightpack::handleMessages(Socket& socket)
 {
-    log("Connected to gui")
+    _log("Connected to gui");
     char buffer[SOCKET_BUFFER_SIZE] = { 0 };
     unsigned int currentPort = socket.getPort();
     mShouldSendPlayEvent = false;
@@ -398,7 +398,7 @@ void CLightpack::handleMessages(Socket& socket)
         }
         else {
             // Received a socket error
-            log("Socket left");
+            _log("Socket left");
             socket.Close();
             break;
         }
@@ -414,7 +414,7 @@ void CLightpack::handleMessages(Socket& socket)
 
 DWORD CLightpack::commThreadStart()
 {
-    log("Running communication thread");
+    _log("Running communication thread");
     Socket socket;
 
     // Check if GUI is already openned, if not then open it
@@ -433,7 +433,7 @@ DWORD CLightpack::commThreadStart()
             handleMessages(socket);
         }
         else {
-            log("Failed to connect to gui");
+            _log("Failed to connect to gui");
             Sleep(500);
         }
     }

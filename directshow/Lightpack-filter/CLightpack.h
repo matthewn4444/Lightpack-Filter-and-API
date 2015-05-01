@@ -16,16 +16,17 @@
 #include "../../LightpackAPI/inih/cpp/INIReader.h"
 
 // Log out the settings on debug
-#if defined(_DEBUG) || defined(_PERF)
+#if defined(_DEBUG)
 #include "log.h"
-#define logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
-#define log(x) if (mLog != 0) { mLog->log(x); }
+#define _logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
+#define _log(x) if (mLog != 0) { mLog->log(x); }
 #else
-#define logf(...)
-#define log(x)
+#define _logf(...)
+#define _log(x)
 #endif
 
 #ifdef _PERF
+#include "log.h"
 // Usage
 //      Prints the elapsed time between the start and print macros
 //
@@ -34,7 +35,7 @@
 //      TIME_PRINT
 #define TIME_START UINT64 start = getTime();
 #define TIME_PRINT \
-    logf("Elapsed: %I64d milliseconds", (getTime()-start)/10000);
+    mLog->logf("Elapsed: %I64d milliseconds", (getTime()-start)/10000);
 
 static UINT64 getTime()
 {
@@ -190,7 +191,7 @@ private:
         return getStreamTime() / (UNITS / MILLISECONDS);
     }
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || defined(_PERF)
     Log* mLog;
 #endif
 };
