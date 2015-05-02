@@ -179,6 +179,16 @@ private:
     bool mIsRunning;
     bool mSampleUpsideDown;
 
+    // Frame rate/skip properties
+    bool mUseFrameSkip;
+    size_t mIterationsPerSec;
+    size_t mFrameSkipCount;
+    DWORD mLastFrameRateCheck;
+    static const size_t sMinIterationPerSec;
+    static const size_t sMaxIterationPerSec;
+
+    bool shouldSkipTransform();
+
     // Miscellaneous
     long getStreamTime() {
         if (!m_tStart) return 0;

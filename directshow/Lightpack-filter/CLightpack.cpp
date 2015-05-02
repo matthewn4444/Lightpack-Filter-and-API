@@ -16,6 +16,8 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define PROJECT_NAME "lightpack-filter"
 
 const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
+const size_t CLightpack::sMinIterationPerSec = 20;
+const size_t CLightpack::sMaxIterationPerSec = 35;
 bool CLightpack::sAlreadyRunning = false;
 
 CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
@@ -40,6 +42,10 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mShouldSendDisconnectEvent(false)
     , mIsRunning(false)
     , mSampleUpsideDown(false)
+    , mUseFrameSkip(true)
+    , mIterationsPerSec(0)
+    , mFrameSkipCount(0)
+    , mLastFrameRateCheck(0)
     , mIsConnectedToPrismatik(false)
     , mPropGamma(Lightpack::DefaultGamma)
     , mPropSmooth(DEFAULT_SMOOTH)
@@ -695,6 +701,37 @@ bool CLightpack::ScheduleNextDisplay()
     return false;
 }
 
+bool CLightpack::shouldSkipTransform()
+{
+    if (!mUseFrameSkip) {
+        return false;
+    }
+
+    // Calculate the frame rate from iterations and frameskip so framerate is between 20-35
+    DWORD now = GetTickCount();
+    if ((now - mLastFrameRateCheck) > 1000) {
+        // Above the allowed framerate or below the framerate but already skipping; force adjustments
+        if (mIterationsPerSec >= sMinIterationPerSec * 2 || mIterationsPerSec < sMaxIterationPerSec && mFrameSkipCount > 0) {
+            size_t skipCount = mFrameSkipCount;
+            while (sMaxIterationPerSec < (mIterationsPerSec / (skipCount + 1))) {
+                skipCount++;
+            }
+            if (skipCount > 0 && (mIterationsPerSec / (skipCount + 1)) < sMinIterationPerSec) {
+                skipCount--;
+            }
+            // Change in frames to skip
+            if (skipCount != mFrameSkipCount) {
+                mFrameSkipCount = skipCount;
+                CancelNotification();
+            }
+        }
+        mIterationsPerSec = 0;
+        mLastFrameRateCheck = now;
+    }
+    mIterationsPerSec++;
+    return mFrameSkipCount && mIterationsPerSec % (mFrameSkipCount + 1) != 0;
+}
+
 HRESULT CLightpack::Transform(IMediaSample *pSample)
 {
     // See if the thread needs to be destroyed requested from the thread
@@ -730,6 +767,11 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
     if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
         reconnectDevice();
         mLastDeviceCheck = now;
+    }
+
+    // Applies frame skipping to 20-35 iterations/sec to process to reduce cpu load
+    if (shouldSkipTransform()) {
+        return S_OK;
     }
 
     if (mDevice != NULL) {
