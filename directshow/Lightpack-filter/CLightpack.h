@@ -57,6 +57,9 @@ static UINT64 getTime()
 
 #define FILTER_NAME L"Lightpack"
 
+#define DEFAULT_SMOOTH 30
+#define DEFAULT_GUI_PORT 6000
+
 // {188fb505-04ff-4257-9bdb-3ff431852f99}
 static const GUID CLSID_Lightpack =
 { 0x188fb505, 0x04ff, 0x4257, { 0x9b, 0xdb, 0x3f, 0xf4, 0x31, 0x85, 0x2f, 0x99 } };
@@ -93,6 +96,7 @@ private:
     // Threading Variables and Methods
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
     static DWORD WINAPI CommunicationThread(LPVOID lpvThreadParm);
+    static DWORD WINAPI IOThread(LPVOID lpvThreadParm);
 
     HANDLE mhLightThread;
     DWORD mLightThreadId;
@@ -123,6 +127,14 @@ private:
     void handleMessages(Socket& socket);
     bool parseReceivedMessages(int messageType, char* buffer, bool* deviceConnected);
 
+    // IO Thread Variables and Methods
+    HANDLE mhLoadSettingsThread;
+    DWORD mLoadSettingsThreadId;
+
+    void startLoadSettingsThread();
+    void destroyLoadSettingsThread();
+    DWORD loadSettingsThreadStart();
+
     // Mutexes and only allowing one of these filters per graph
     HANDLE mAppMutex;
     static bool sAlreadyRunning;
@@ -132,7 +144,6 @@ private:
     bool mHasReadSettings;
     wchar_t mCurrentDirectoryCache[MAX_PATH];
 
-    void loadSettingsFile();
     void readSettingsFile(INIReader& reader);
     bool parseLedRectLine(const char* line, Lightpack::Rect* outRect);
     wchar_t* getCurrentDirectory();
