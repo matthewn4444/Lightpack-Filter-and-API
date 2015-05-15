@@ -3,12 +3,24 @@
 extern "C" BOOL WINAPI DllEntryPoint(HINSTANCE, ULONG, LPVOID);
 
 // Media Types
-const AMOVIESETUP_MEDIATYPE sudPinTypes[] =
+const AMOVIESETUP_MEDIATYPE sudPinTypesIn[] =
 {
-    {
-        &MEDIATYPE_Video,
-        &MEDIASUBTYPE_NULL
-    }
+    { &MEDIATYPE_NULL, &MEDIASUBTYPE_NULL },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_NV12 },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_RGB32 },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_RGB565 },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_RGB555 },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_RGB24 },
+};
+
+const AMOVIESETUP_MEDIATYPE sudPinTypesOut[] =
+{
+    { &MEDIATYPE_NULL, &MEDIASUBTYPE_NULL },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_NV12 },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_RGB32 },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_RGB565 },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_RGB555 },
+    { &MEDIATYPE_Video, &MEDIASUBTYPE_RGB24 },
 };
 
 // Pins
@@ -22,8 +34,8 @@ const AMOVIESETUP_PIN psudPins[] =
         FALSE,
         &CLSID_NULL,
         NULL,
-        1,
-        &sudPinTypes[0]
+        _countof(sudPinTypesIn),
+        sudPinTypesIn
     },
     {
         L"Output",
@@ -33,8 +45,8 @@ const AMOVIESETUP_PIN psudPins[] =
         FALSE,
         &CLSID_NULL,
         NULL,
-        1,
-        &sudPinTypes[0]
+        _countof(sudPinTypesOut),
+        sudPinTypesOut
     }
 };
 
@@ -49,8 +61,8 @@ const AMOVIESETUP_FILTER sudAudioVolume =
 {
     &CLSID_Lightpack,
     FILTER_NAME,
-    MERIT_UNLIKELY,
-    2,
+    MERIT_PREFERRED,
+    _countof(psudPins),
     psudPins
 };
 
