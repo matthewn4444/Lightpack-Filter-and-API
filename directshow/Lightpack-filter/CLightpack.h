@@ -11,7 +11,6 @@
 #include <vector>
 #include <queue>
 
-#include "gpu_memcpy_sse4.h"
 #include "Converters.h"
 #include "../../LightpackAPI/inih/cpp/INIReader.h"
 
@@ -26,6 +25,7 @@
 #endif
 
 #ifdef _PERF
+#include <chrono>
 #include "log.h"
 // Usage
 //      Prints the elapsed time between the start and print macros
@@ -33,9 +33,9 @@
 //      TIME_START
 //          <CODE....>
 //      TIME_PRINT
-#define TIME_START UINT64 start = getTime();
+#define TIME_START auto begin = chrono::high_resolution_clock::now();
 #define TIME_PRINT \
-    mLog->logf("Elapsed: %I64d milliseconds", (getTime()-start)/10000);
+mLog->logf("Elapsed: %f milliseconds", chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now() - begin).count() / 1000.0f);
 
 static UINT64 getTime()
 {
@@ -86,8 +86,9 @@ private:
     static const DWORD sDeviceCheckElapseTime;      // Check every 2 seconds
 
     // Video Conversion Methods
-    Lightpack::RGBCOLOR meanColorFromRGB32(Lightpack::Rect& rect);
-    Lightpack::RGBCOLOR meanColorFromNV12(Lightpack::Rect& rect);
+    Lightpack::RGBCOLOR meanColorFromRGB32(BYTE* src, Lightpack::Rect& rect);
+    Lightpack::RGBCOLOR meanColorFromNV12(BYTE* src, Lightpack::Rect& rect);
+    Lightpack::RGBCOLOR meanColorFromNV12SSE(BYTE* src, Lightpack::Rect& rect);
 
     // Threading Variables and Methods
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
@@ -160,7 +161,7 @@ private:
     void clearQueue();
     void CancelNotification();
     bool ScheduleNextDisplay();
-    void queueLight(REFERENCE_TIME startTime);
+    void queueLight(REFERENCE_TIME startTime, BYTE* src);
     void displayLight(Lightpack::RGBCOLOR* colors);
 
     // Lightpack properties
@@ -172,7 +173,6 @@ private:
 
     // Video Properties
     VideoFormat mVideoType;
-    BYTE* mFrameBuffer;
     int mStride;
     int mWidth;
     int mHeight;

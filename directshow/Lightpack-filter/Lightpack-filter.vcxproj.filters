@@ -38,6 +38,9 @@
     <ClCompile Include="Conversion.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="nv12_convert_sse.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CLightpack.h">
@@ -45,9 +48,6 @@
     </ClInclude>
     <ClInclude Include="log.h">
       <Filter>log</Filter>
-    </ClInclude>
-    <ClInclude Include="gpu_memcpy_sse4.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Converters.h">
       <Filter>Header Files</Filter>

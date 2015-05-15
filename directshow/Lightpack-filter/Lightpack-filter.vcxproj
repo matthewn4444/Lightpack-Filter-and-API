@@ -98,13 +98,13 @@
     <ClCompile Include="CLightpack.cpp" />
     <ClCompile Include="CommunicationThread.cpp" />
     <ClCompile Include="Conversion.cpp" />
+    <ClCompile Include="nv12_convert_sse.cpp" />
     <ClCompile Include="Setup.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\LightpackAPI\inih\cpp\INIReader.h" />
     <ClInclude Include="CLightpack.h" />
     <ClInclude Include="Converters.h" />
-    <ClInclude Include="gpu_memcpy_sse4.h" />
     <ClInclude Include="log.h" />
     <ClInclude Include="socket.hpp" />
   </ItemGroup>

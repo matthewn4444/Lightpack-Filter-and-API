@@ -15,6 +15,8 @@ EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define SETTINGS_FILE "settings.ini"
 #define PROJECT_NAME "lightpack-filter"
 
+static const BOOL sse2supported = ::IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE);
+
 const DWORD CLightpack::sDeviceCheckElapseTime = 1000;
 const size_t CLightpack::sMinIterationPerSec = 20;
 const size_t CLightpack::sMaxIterationPerSec = 35;
@@ -26,7 +28,6 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mIsFirstInstance(false)
     , mWidth(0)
     , mHeight(0)
-    , mFrameBuffer(0)
     , mhLightThread(INVALID_HANDLE_VALUE)
     , mLightThreadId(0)
     , mLightThreadStopRequested(false)
@@ -91,8 +92,6 @@ CLightpack::~CLightpack(void)
     ASSERT(mCommThreadId == NULL);
     ASSERT(mhCommThread == INVALID_HANDLE_VALUE);
     ASSERT(mCommThreadStopRequested == false);
-
-    delete[] mFrameBuffer;
 
     disconnectAllDevices();
     ASSERT(mDevice == NULL);
@@ -174,11 +173,6 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
         if (mScaledRects.empty() && mWidth > 0 && mHeight > 0) {
             // Load the settings file
             loadSettingsFile();
-
-            if (!mFrameBuffer) {
-                mFrameBuffer = new BYTE[mWidth * mHeight * 4];
-                std::fill(mFrameBuffer, mFrameBuffer + sizeof(mFrameBuffer), 0);
-            }
         }
 
         // Set the media type
@@ -538,25 +532,35 @@ void CLightpack::destroyLightThread()
     CancelNotification();
 }
 
-void CLightpack::queueLight(REFERENCE_TIME startTime)
+void CLightpack::queueLight(REFERENCE_TIME startTime, BYTE* src)
 {
     CAutoLock lock(m_pLock);
 
     EnterCriticalSection(&mScaledRectLock);
     Lightpack::RGBCOLOR* colors = new Lightpack::RGBCOLOR[mScaledRects.size()];
-    for (size_t i = 0; i < mScaledRects.size(); i++) {
-        switch (mVideoType) {
-        case RGB32:
-            colors[i] = meanColorFromRGB32(mScaledRects[i]);
-            break;
-        case NV12:
-            colors[i] = meanColorFromNV12(mScaledRects[i]);
-            break;
-        default:
-            colors[i] = 0;
+
+    switch (mVideoType) {
+    case RGB32:
+        for (size_t i = 0; i < mScaledRects.size(); i++) {
+            colors[i] = meanColorFromRGB32(src, mScaledRects[i]);
         }
-        _logf("Pixel: %d [%d, %d, %d]", i, GET_RED(colors[i]), GET_GREEN(colors[i]), GET_BLUE(colors[i]));
+        break;
+    case NV12:
+        if (sse2supported) {
+            for (size_t i = 0; i < mScaledRects.size(); i++) {
+                colors[i] = meanColorFromNV12SSE(src, mScaledRects[i]);
+            }
+        }
+        else {
+            for (size_t i = 0; i < mScaledRects.size(); i++) {
+                colors[i] = meanColorFromNV12(src, mScaledRects[i]);
+            }
+        }
+        break;
+    default:
+        std::fill(colors, colors + mScaledRects.size(), 0);
     }
+
     LeaveCriticalSection(&mScaledRectLock);
 
     EnterCriticalSection(&mQueueLock);
@@ -785,8 +789,7 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
                 BYTE* pData = NULL;
                 pSample->GetPointer(&pData);
                 if (pData != NULL) {
-                    gpu_memcpy(mFrameBuffer, pData, pSample->GetSize());
-                    queueLight(startTime);
+                    queueLight(startTime, pData);
 
                     // Schedule if the start time is defined, otherwise it is still buffering
                     if (streamTime) {

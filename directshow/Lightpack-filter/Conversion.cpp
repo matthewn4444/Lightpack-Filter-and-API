@@ -1,6 +1,6 @@
 #include "CLightpack.h"
 
-Lightpack::RGBCOLOR CLightpack::meanColorFromRGB32(Lightpack::Rect& rect) {
+Lightpack::RGBCOLOR CLightpack::meanColorFromRGB32(BYTE* src, Lightpack::Rect& rect) {
     ASSERT(mStride >= mWidth || mStride == 0);
     const unsigned int sampleWidth = mStride == 0 ? mWidth : mStride;
     const unsigned int totalPixels = rect.area();
@@ -11,7 +11,7 @@ Lightpack::RGBCOLOR CLightpack::meanColorFromRGB32(Lightpack::Rect& rect) {
     for (int r = 0; r < rect.height; r++) {
         int y = (rect.y + r + yOffset) * yMakePositive;
 
-        BYTE* pixel = mFrameBuffer + (rect.x + y * sampleWidth) * 4;      // 4 bytes per pixel
+        BYTE* pixel = src + (rect.x + y * sampleWidth) * 4;      // 4 bytes per pixel
         for (int c = 0; c < rect.width; c++) {
             totalB += pixel[0];
             totalG += pixel[1];
@@ -22,14 +22,14 @@ Lightpack::RGBCOLOR CLightpack::meanColorFromRGB32(Lightpack::Rect& rect) {
     return RGB((int)floor(totalR / totalPixels), (int)floor(totalG / totalPixels), (int)floor(totalB / totalPixels));
 }
 
-Lightpack::RGBCOLOR CLightpack::meanColorFromNV12(Lightpack::Rect& rect) {
+Lightpack::RGBCOLOR CLightpack::meanColorFromNV12(BYTE* src, Lightpack::Rect& rect) {
     ASSERT(mStride >= mWidth || mStride == 0);
     const unsigned int sampleWidth = mStride == 0 ? mWidth : mStride;
     const unsigned int pixel_total = sampleWidth * mHeight;
     const unsigned int totalPixels = rect.area();
-    BYTE* Y = mFrameBuffer;
-    BYTE* U = mFrameBuffer + pixel_total;
-    BYTE* V = mFrameBuffer + pixel_total + 1;
+    BYTE* Y = src;
+    BYTE* U = src + pixel_total;
+    BYTE* V = src + pixel_total + 1;
     const int dUV = 2;
 
     BYTE* U_pos = U;
@@ -40,8 +40,8 @@ Lightpack::RGBCOLOR CLightpack::meanColorFromNV12(Lightpack::Rect& rect) {
     for (int r = 0; r < rect.height; r++) {
         int y = r + rect.y;
 
-        Y = mFrameBuffer + y * sampleWidth + rect.x;
-        U = mFrameBuffer + pixel_total + (y / 2) * sampleWidth + (rect.x & 0x1 ? rect.x - 1 : rect.x);
+        Y = src + y * sampleWidth + rect.x;
+        U = src + pixel_total + (y / 2) * sampleWidth + (rect.x & 0x1 ? rect.x - 1 : rect.x);
         V = U + 1;
 
         for (int c = 0; c < rect.width; c++) {
