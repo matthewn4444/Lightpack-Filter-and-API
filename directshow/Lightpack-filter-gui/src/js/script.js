@@ -246,11 +246,6 @@ lightpack.init(function(api){
     }).on("pause", function(){
         log("Filter was paused");
         isPlaying = false;
-
-        // Paused and showing
-        if ($("#page-adjust-position.open").length) {
-            displayLedMapColors();
-        }
     }).on("filterConnect", function() {
         isFilterConnected = true;
     }).on("filterDisconnect", function() {
@@ -261,6 +256,13 @@ lightpack.init(function(api){
             close();
         }
     }).connect();
+
+    $(window).focus(function() {
+        // Paused and showing
+        if ($("#page-adjust-position.open").length && !isPlaying) {
+            displayLedMapColors();
+        }
+    });
 });
 
 function canDisplayColors() {
