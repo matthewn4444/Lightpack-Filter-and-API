@@ -35,10 +35,10 @@ var sliderData = {
 
 $("#page-light-settings div.slider").slider(sliderData);
 
-// Adjust the slider to 0-50 and make it vertical
+// Adjust the slider to 0-30 and make it vertical
 sliderData.orientation = "vertical";
-sliderData.max = 50;
-sliderData.value = 50;
+sliderData.max = 30;
+sliderData.value = sliderData.max;
 $("#page-adjust-position div.slider").slider(sliderData);
 
 // Hack fix to make the "slider click" animations for rects to be correct
@@ -70,12 +70,12 @@ function setPortInput(port) {
 
 function setHorizontalDepthSlider(v) {
     Ledmap.setHorizontalDepth(v);
-    $("#horizontal-height-slider").slider("value", 50 - v);
+    $("#horizontal-height-slider").slider("value", sliderData.max - v);
 }
 
 function setVerticalDepthSlider(v) {
     Ledmap.setVerticalDepth(v);
-    $("#vertical-height-slider").slider("value", 50 - v);
+    $("#vertical-height-slider").slider("value", sliderData.max - v);
 }
 
 // Init sortable
