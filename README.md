@@ -22,13 +22,13 @@ Choose either setup installation or unzip the package anywhere on your computer
 
 ###Binaries (Windows x86)
 
-- [Installer (0.6.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.0/setup.exe)
-- [Zip (0.6.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.0/lightpack-filter.zip)
+- [Installer (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/setup.exe)
+- [Zip (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/lightpack-filter.zip)
 
 Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Installation) for more information on setup and usage.
 
 ###Source Code
-- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.0.zip)
+- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.1.zip)
 
 Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building-the-Source) for compile and building instructions.
 

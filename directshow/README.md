@@ -14,11 +14,11 @@ Choose either installation or unzip the package anywhere on your computer
 
 ###Binaries (Windows 32bit)
 
-- [Installer (0.6.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.0/setup.exe)
-- [Zip (0.6.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.0/lightpack-filter.zip)
+- [Installer (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/setup.exe)
+- [Zip (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/lightpack-filter.zip)
 
 ###Source Code
-- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.0.zip)
+- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.1.zip)
 
 ## Setup
 This is compatible with [Media Player Classic (MPC)](http://mpc-hc.org/).
