@@ -126,6 +126,19 @@ $("#turn-off-on").switchButton({
     }
 });
 
+// Show popup
+function showPopup(title, message) {
+    $(document.body).addClass("overlay");
+    $("#common-overlay .title").text(title);
+    $("#common-overlay .message").text(message);
+}
+function hidePopup() {
+    $("#common-overlay").fadeOut(250, function() {
+        $(document.body).removeClass("overlay");
+    });
+}
+$("#common-overlay .close").on("click", hidePopup);
+
 /* Add tooltip to the sliders */
 function buildTooltip(text) {
     return $("<div>").addClass("tooltip").append(

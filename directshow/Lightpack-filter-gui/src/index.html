@@ -79,7 +79,14 @@
                 </fieldset>
                 <div id='output' style='display:none;width:100%; overflow-y:auto; border: 1px solid black;height:250px;padding:30px;box-sizing:border-box;'></div>
             </div>
-            <div id='overlay'>
+            <div id='common-overlay' class='overlay'>
+                <div class='overlay-inner'>
+                    <span class='title'>Placeholder</span>
+                    <span class='detail message'>Placeholder</span>
+                    <span class='close'>&#10006;</span>
+                </div>
+            </div>
+            <div id='overlay' class='overlay'>
                 <div class='overlay-inner'>
                     <span class='title'>Downloading Update</span>
                     <span class='detail message'>This application and any openned video players will automatically close after download is complete.</span>

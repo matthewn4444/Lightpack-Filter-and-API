@@ -172,7 +172,7 @@ updater.checkNewVersion(function(err, manifest){
         }).on("response", function(res){
             totalSize = parseInt(res.headers['content-length'], 10);
            updateProgress();
-            $(document.body).addClass("overlay");
+            $(document.body).addClass("download");
         }).on("data", function(chunk) {
             receivedSize += chunk.length;
         });
@@ -378,7 +378,7 @@ function maybeShowLedChangeWarning() {
     if (!maybeShowLedChangeWarning.shown && isShowing) {
         var numSavedPos = lightpack.getSavedPositions().length;
         if (numLeds > 0 && numSavedPos > 0 && numSavedPos != numLeds) {
-            alert("Your last saved position had " + numSavedPos + " leds and now only " + numLeds + " leds are connected. If you modify the positions now, it will modified your saved positions.");
+            showPopup("Warning!", "Your last saved position had " + numSavedPos + " leds and now only " + numLeds + " leds are connected. If you modify the positions now, it will modified your saved positions.");
             maybeShowLedChangeWarning.shown = true;
         }
     }

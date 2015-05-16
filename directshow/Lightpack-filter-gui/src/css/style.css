@@ -653,7 +653,7 @@ body.fullscreen .watermark {
 }
 
 /* Download overlay */
-#overlay {
+#overlay, #common-overlay {
     visibility:hidden;
     opacity:0;
     background: rgba(0,0,0,0.5);
@@ -667,12 +667,35 @@ body.fullscreen .watermark {
     padding: 40px;
 }
 
-body.overlay #overlay {
+body.download #overlay, body.overlay #common-overlay {
     visibility: visible;
     opacity:1;
 }
 
-#overlay .overlay-inner {
+body.download #overlay {
+    z-index:1001;
+}
+
+.overlay .close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 20px;
+    height: 20px;
+    z-index: 100000;
+    font-size: 20px;
+    transition: color 0.1s linear 0;
+}
+
+.overlay .close:hover {
+    color:#888;
+}
+
+.overlay .close:active {
+    color:black;
+}
+
+.overlay .overlay-inner {
     border-radius: 15px;
     position: absolute;
     top: 50%;
@@ -685,18 +708,18 @@ body.overlay #overlay {
     cursor: default;
 }
 
-#overlay .overlay-inner .detail {
+.overlay .overlay-inner .detail {
     font-size: 14px;
 }
 
-#overlay .overlay-inner .title {
+.overlay .overlay-inner .title {
     display: block;
     margin-bottom: 10px;
     border-bottom: 2px solid #5f6f8c;
     padding-bottom:10px;
 }
 
-#overlay .overlay-inner .message {
+.overlay .overlay-inner .message {
     display:block;
     margin-bottom: 10px;
     font-size:13px;
@@ -705,7 +728,7 @@ body.overlay #overlay {
     padding-bottom:10px;
 }
 
-#overlay .overlay-inner .group {
+.overlay .overlay-inner .group {
     float: right;
     font-size: 14px;
 }
