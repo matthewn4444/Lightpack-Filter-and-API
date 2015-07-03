@@ -29,7 +29,7 @@ if (!connected) {
     
     // Check if closing will return true when setting colors
     lightpack.closeDevices();
-    assert.ok(!lightpack.getCountLeds() == 0);
+    assert.ok(lightpack.getCountLeds() == 0);
     assert.ok(lightpack.tryToReopenDevice());
     
     // If there is only one device
