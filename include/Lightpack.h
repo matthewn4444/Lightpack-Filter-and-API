@@ -174,8 +174,8 @@ namespace Lightpack {
         std::vector<hid_device*> mDevices;
         std::vector<RGBCOLOR> mCurrentColors;
 
-        unsigned char mReadBuffer[96];
-        unsigned char mWriteBuffer[96];
+        unsigned char mReadBuffer[65];
+        unsigned char mWriteBuffer[65];
 
         double mGamma;
         int mBrightness;
