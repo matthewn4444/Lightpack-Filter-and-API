@@ -103,11 +103,19 @@ void CLightpack::readSettingsFile(INIReader& reader)
     int x = 0, y = 0, w = 0, h = 0;
     char key[32] = "led1";
     std::vector<Lightpack::Rect> rects;
-    Lightpack::Rect rect;
-    while (parseLedRectLine(reader.Get("Positions", key, "").c_str(), &rect)) {
+    Lightpack::Rect rect = {0, 0, 16, 16};
+    bool somethingFailed = false;
+    std::string line;
+    while (!(line = reader.Get("Positions", key, "")).empty()) {
+        if (!parseLedRectLine(line.c_str(), &rect)) {
+            somethingFailed = true;
+        }
         rects.push_back(rect);
         _logf("Got led %d: %d, %d, %d, %d", i, rect.x, rect.y, rect.width, rect.height);
         sprintf(key, "led%d", ++i);
+    }
+    if (somethingFailed) {
+        MessageBox(NULL, L"Settings file is corrupted so lights will be read from the default location.\nUse the application to reconfigure the leds' locations to fix this.\nIf you receive this message even after modifying led positions, email me for more help.", L"Reading Setting Error", MB_ICONWARNING);
     }
     updateScaledRects(rects);
 }
@@ -116,10 +124,13 @@ bool CLightpack::parseLedRectLine(const char* line, Lightpack::Rect* outRect)
 {
     if (mWidth != 0 && mHeight != 0) {
         if (strlen(line) > 0) {
-            double x, y, w, h;
+            double x = -1, y = -1, w = -1, h = -1;
             if (sscanf(line, "%*c%*lf:%lf,%lf,%lf,%lf", &x, &y, &w, &h) != EOF) {
-                percentageRectToVideoRect(x, y, w, h, outRect);
-                return true;
+                // Make sure that the values are acquired correctly
+                if (x >= 0 && y >= 0 && w >= 0 && h > 0) {
+                    percentageRectToVideoRect(x, y, w, h, outRect);
+                    return true;
+                }
             }
         }
     }
