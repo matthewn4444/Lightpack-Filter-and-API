@@ -16,7 +16,7 @@ var lightpack = require("lightpack"),
     pkg = require("./../package.json"),
     updater = new Updater(pkg),
     lightApi = null,
-    tray = new gui.Tray({ icon: "/src/images/icon.png" }),
+    tray = null,
     wasInstalled = lightpack.getSettingsFolder().indexOf("\\Program Files") != -1,
 
     // Window states
@@ -87,13 +87,17 @@ function close() {
         win.close(true);
     });
 }
-tray.tooltip = "Lightpack Filter";
-var trayMenu = new gui.Menu();
-trayMenu.append(new gui.MenuItem({ label: "Edit Settings", click: showWindow }));
-trayMenu.append(new gui.MenuItem({ type: "separator" }));
-trayMenu.append(new gui.MenuItem({ label: "Close", click: close }));
-tray.menu = trayMenu;
-tray.on("click", showWindow);
+function initTray() {
+    tray = new gui.Tray({ icon: "/src/images/icon.png" });
+    tray.tooltip = "Lightpack Filter";
+
+    var trayMenu = new gui.Menu();
+    trayMenu.append(new gui.MenuItem({ label: "Edit Settings", click: showWindow }));
+    trayMenu.append(new gui.MenuItem({ type: "separator" }));
+    trayMenu.append(new gui.MenuItem({ label: "Close", click: close }));
+    tray.menu = trayMenu;
+    tray.on("click", showWindow);
+}
 win.on("minimize", function() {
     if (isFilterConnected) {
         this.hide();
@@ -111,6 +115,27 @@ win.on("close", function(){
         close();
     }
 });
+
+// Delay showing tray until we know that the filter is connected if is not showing
+// If gui is not hidden on startup, show tray and once filter is disconnected and
+// not showing, gui will close
+if (isShowing) {
+    initTray();
+}
+(function() {
+    var intervalCount = 0;
+    var counter = setInterval(function() {
+        if (!isShowing && !isFilterConnected) {
+            if (intervalCount >= 3 || tray) {
+                clearInterval(counter);
+                close();
+            }
+            intervalCount++;
+        } else if (tray == null) {
+            initTray();
+        }
+    }, 1000);
+})();
 
 //  ============================================
 //  Check for new versions
