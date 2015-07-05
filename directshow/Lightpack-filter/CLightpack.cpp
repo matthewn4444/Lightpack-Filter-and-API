@@ -64,12 +64,6 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
         InitializeCriticalSection(&mCommSendLock);
         InitializeCriticalSection(&mScaledRectLock);
 
-        // Try to connect to the lights directly,
-        // if fails the try to connect to Prismatik in the thread
-        reconnectDevice();
-
-        startLightThread();
-
         // Define the single instance mutex for uninstallation inno setup
         mAppMutex = CreateMutex(NULL, FALSE, MUTEX_NAME);
     }
@@ -173,6 +167,10 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
         // Scale all the rects to the size of the video
         if (mScaledRects.empty() && mWidth > 0 && mHeight > 0) {
+            // Try to connect to the lights directly,
+            // if fails the try to connect to Prismatik in the thread
+            reconnectDevice();
+
             // Load the settings file
             startLoadSettingsThread();
         }
