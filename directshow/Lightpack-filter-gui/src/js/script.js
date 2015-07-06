@@ -232,6 +232,13 @@ lightpack.init(function(api){
 
     lightApi.on("connect", function(n){
         log("Lights have connected with " + n + " leds");
+
+        // When connecting lights back to computer, show white
+        if (!isPlaying && isShowing && numLeds == 0 && n > 0) {
+            lightpack.setSmooth(lightpack.getSmooth());
+            lightpack.setBrightness(lightpack.getBrightness());
+            lightApi.setColorToAll(255, 255, 255);
+        }
         numLeds = n;
         var numModules = numLeds / 10;
         Ledmap.setGroups(numModules);

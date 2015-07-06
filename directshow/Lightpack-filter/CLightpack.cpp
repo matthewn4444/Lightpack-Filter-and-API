@@ -89,6 +89,11 @@ CLightpack::~CLightpack(void)
     ASSERT(mLoadSettingsThreadId == NULL);
     ASSERT(mhLoadSettingsThread == INVALID_HANDLE_VALUE);
 
+    if (mDevice) {
+        mDevice->setSmooth(50);
+        mDevice->setBrightness(0);
+    }
+
     disconnectAllDevices();
     ASSERT(mDevice == NULL);
 
