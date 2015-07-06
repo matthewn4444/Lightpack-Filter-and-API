@@ -18,6 +18,7 @@ namespace Lightpack {
 
     LedDevice::~LedDevice() {
         closeDevices();
+        mCurrentColors.clear();
     }
 
     bool LedDevice::open() {
@@ -41,7 +42,6 @@ namespace Lightpack {
             hid_close(mDevices[i]);
         }
         mDevices.clear();
-        mCurrentColors.clear();
     }
 
     RESULT LedDevice::setColor(int led, RGBCOLOR color) {
@@ -332,8 +332,10 @@ namespace Lightpack {
 
     void LedDevice::allocateColors() {
         if (!mDevices.empty()) {
-            mCurrentColors.clear();
-            mCurrentColors.assign(mDevices.size() * LedsPerDevice, 0);
+            if (mDevices.size() * LedsPerDevice != mCurrentColors.size()) {
+                mCurrentColors.clear();
+                mCurrentColors.assign(mDevices.size() * LedsPerDevice, 0);
+            }
         }
     }
 
