@@ -131,6 +131,7 @@ function showPopup(title, message) {
     $(document.body).addClass("overlay");
     $("#common-overlay .title").text(title);
     $("#common-overlay .message").text(message);
+    $("#common-overlay").show();
 }
 function hidePopup() {
     $("#common-overlay").fadeOut(250, function() {

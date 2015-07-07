@@ -409,11 +409,19 @@ win.on("leave-fullscreen", function() {
 });
 
 function maybeShowLedChangeWarning() {
-    if (!maybeShowLedChangeWarning.shown && isShowing) {
+    if (isShowing) {
         var numSavedPos = lightpack.getSavedPositions().length;
-        if (numLeds > 0 && numSavedPos > 0 && numSavedPos != numLeds) {
-            showPopup("Warning!", "Your last saved position had " + numSavedPos + " leds and now only " + numLeds + " leds are connected. If you modify the positions now, it will modified your saved positions.");
-            maybeShowLedChangeWarning.shown = true;
+        if (!maybeShowLedChangeWarning.shown) {
+            if (numLeds > 0 && numSavedPos > 0 && numSavedPos != numLeds) {
+                showPopup("Warning!", "Your last saved position had " + numSavedPos + " leds and now only " + numLeds + " leds are connected. If you modify the positions now, it will modified your saved positions.");
+                maybeShowLedChangeWarning.shown = true;
+            }
+        } else if (numSavedPos == numLeds && $("#common-overlay").is(":visible")) {
+            // If showing message, but later user plugs back the leds, so that it
+            // matches led count with saved positions, hide message
+            // Message can show again since user did not explicitly click the warning
+            hidePopup();
+            maybeShowLedChangeWarning.shown = false;
         }
     }
 }
