@@ -176,6 +176,8 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
             // if fails the try to connect to Prismatik in the thread
             reconnectDevice();
 
+            startLightThread();
+
             // Load the settings file
             startLoadSettingsThread();
         }
