@@ -1,5 +1,6 @@
 #include <sstream>
 #include "CLightpack.h"
+#include "gpu_memcpy_sse4.h"
 
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 
@@ -23,6 +24,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mIsFirstInstance(false)
     , mWidth(0)
     , mHeight(0)
+    , mFrameBuffer(0)
     , mhLightThread(INVALID_HANDLE_VALUE)
     , mLightThreadId(0)
     , mLightThreadStopRequested(false)
@@ -38,6 +40,9 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mShouldSendDisconnectEvent(false)
     , mhLoadSettingsThread(INVALID_HANDLE_VALUE)
     , mLoadSettingsThreadId(0)
+    , mhColorParsingThread(INVALID_HANDLE_VALUE)
+    , mColorParsingThreadId(0)
+    , mColorParsingRequested(false)
     , mIsRunning(false)
     , mSampleUpsideDown(false)
     , mUseFrameSkip(true)
@@ -93,6 +98,8 @@ CLightpack::~CLightpack(void)
         mDevice->setSmooth(50);
         mDevice->setBrightness(0);
     }
+
+    delete[] mFrameBuffer;
 
     disconnectAllDevices();
     ASSERT(mDevice == NULL);
@@ -180,6 +187,11 @@ HRESULT CLightpack::SetMediaType(PIN_DIRECTION direction, const CMediaType *pmt)
 
             // Load the settings file
             startLoadSettingsThread();
+
+            if (!mFrameBuffer) {
+                mFrameBuffer = new BYTE[mWidth * mHeight * 4];
+                std::fill(mFrameBuffer, mFrameBuffer + sizeof(mFrameBuffer), 0);
+            }
         }
 
         // Set the media type
@@ -385,6 +397,7 @@ void CLightpack::CancelNotification()
     }
 
     mDisplayLightEvent.Reset();
+    mParseColorsEvent.Reset();
 }
 
 wchar_t* CLightpack::getCurrentDirectory()
@@ -434,6 +447,8 @@ void CLightpack::startLightThread()
     if (mhLightThread == NULL) {
         _log("Failed to create thread");
     }
+
+    startColorParsingThread();
 }
 
 void CLightpack::destroyLightThread()
@@ -443,12 +458,15 @@ void CLightpack::destroyLightThread()
     }
 
     CAutoLock lock(m_pLock);
+
     ASSERT(mLightThreadId != NULL);
     ASSERT(mhLightThread != INVALID_HANDLE_VALUE);
 
     EnterCriticalSection(&mQueueLock);
     mLightThreadStopRequested = true;
     LeaveCriticalSection(&mQueueLock);
+
+    destroyColorParsingThread();
 
     mDisplayLightEvent.Set();
 
@@ -461,50 +479,6 @@ void CLightpack::destroyLightThread()
     mLightThreadStopRequested = false;
     mLightThreadCleanUpRequested = false;
     CancelNotification();
-}
-
-void CLightpack::queueLight(REFERENCE_TIME startTime, BYTE* src)
-{
-    CAutoLock lock(m_pLock);
-
-    EnterCriticalSection(&mScaledRectLock);
-    Lightpack::RGBCOLOR* colors = new Lightpack::RGBCOLOR[mScaledRects.size()];
-
-    switch (mVideoType) {
-    case RGB32:
-        for (size_t i = 0; i < mScaledRects.size(); i++) {
-            colors[i] = meanColorFromRGB32(src, mScaledRects[i]);
-        }
-        break;
-    case NV12:
-        if (sse2supported) {
-            for (size_t i = 0; i < mScaledRects.size(); i++) {
-                colors[i] = meanColorFromNV12SSE(src, mScaledRects[i]);
-            }
-        }
-        else {
-            for (size_t i = 0; i < mScaledRects.size(); i++) {
-                colors[i] = meanColorFromNV12(src, mScaledRects[i]);
-            }
-        }
-        break;
-    default:
-        std::fill(colors, colors + mScaledRects.size(), 0);
-    }
-
-    LeaveCriticalSection(&mScaledRectLock);
-
-    EnterCriticalSection(&mQueueLock);
-    // Render the first frame on startup while renderer buffers; happens only once
-    if (m_tStart == 0 && startTime == 0 && mColorQueue.empty()) {
-        LeaveCriticalSection(&mQueueLock);
-        displayLight(colors);
-        delete[] colors;
-    }
-    else {
-        mColorQueue.push(std::make_pair(startTime, colors));
-        LeaveCriticalSection(&mQueueLock);
-    }
 }
 
 void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
@@ -603,39 +577,6 @@ void CLightpack::clearQueue()
     ASSERT(mColorQueue.empty());
 }
 
-bool CLightpack::ScheduleNextDisplay()
-{
-    EnterCriticalSection(&mQueueLock);
-    REFERENCE_TIME sampleTime = -1;
-    if (!mColorQueue.empty()) {
-        LightEntry& pair = mColorQueue.front();
-        sampleTime = pair.first;
-    }
-    LeaveCriticalSection(&mQueueLock);
-    if (sampleTime == -1) {
-        return false;
-    }
-
-    // Schedule next light
-    EnterCriticalSection(&mAdviseLock);
-    DWORD_PTR pAdvise;
-    HRESULT hr = m_pClock->AdviseTime(
-        m_tStart,
-        sampleTime,
-        (HEVENT)(HANDLE)mDisplayLightEvent,
-        &pAdvise);
-    mAdviseQueue.push(pAdvise);
-    LeaveCriticalSection(&mAdviseLock);
-
-    ASSERT(!mAdviseQueue.empty());
-
-    if (SUCCEEDED(hr)) {
-        return true;
-    }
-    _log("Failed to advise time");
-    return false;
-}
-
 bool CLightpack::shouldSkipTransform()
 {
     if (!mUseFrameSkip) {
@@ -711,20 +652,22 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
 
     if (mDevice != NULL) {
         if (!mScaledRects.empty() && !mPropColors.empty() && mVideoType != VideoFormat::OTHER) {
-            REFERENCE_TIME startTime, endTime;
-            pSample->GetTime(&startTime, &endTime);
+            REFERENCE_TIME endTime;
+            pSample->GetTime(&mColorParsingTime, &endTime);
 
             // Do not render old frames, they are discarded anyways
             REFERENCE_TIME streamTime = getStreamTime();
-            if (!streamTime || startTime > streamTime) {
+            if (!streamTime || mColorParsingTime > streamTime) {
                 BYTE* pData = NULL;
                 pSample->GetPointer(&pData);
                 if (pData != NULL) {
-                    queueLight(startTime, pData);
-
-                    // Schedule if the start time is defined, otherwise it is still buffering
                     if (streamTime) {
-                        ScheduleNextDisplay();
+                        gpu_memcpy(mFrameBuffer, pData, pSample->GetSize());
+                        mColorParsingRequested = true;
+                        mParseColorsEvent.Set();
+                    }
+                    else {
+                        queueLight(mColorParsingTime, pData);
                     }
                 }
             }

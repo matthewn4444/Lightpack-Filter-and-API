@@ -97,6 +97,7 @@ private:
     static DWORD WINAPI ParsingThread(LPVOID lpvThreadParm);
     static DWORD WINAPI CommunicationThread(LPVOID lpvThreadParm);
     static DWORD WINAPI IOThread(LPVOID lpvThreadParm);
+    static DWORD WINAPI ColorParsingThread(LPVOID lpvThreadParm);
 
     HANDLE mhLightThread;
     DWORD mLightThreadId;
@@ -135,6 +136,16 @@ private:
     void destroyLoadSettingsThread();
     DWORD loadSettingsThreadStart();
 
+    // Color Parsing Thread Variables and Methods
+    HANDLE mhColorParsingThread;
+    DWORD mColorParsingThreadId;
+    bool mColorParsingRequested;
+    REFERENCE_TIME mColorParsingTime;
+
+    void startColorParsingThread();
+    void destroyColorParsingThread();
+    DWORD colorParsingThreadStart();
+
     // Mutexes and only allowing one of these filters per graph
     HANDLE mAppMutex;
     static bool sAlreadyRunning;
@@ -166,6 +177,7 @@ private:
 
     // Lightpack Display Methods and Properties
     CAMEvent mDisplayLightEvent;
+    CAMEvent mParseColorsEvent;
     std::queue<LightEntry> mColorQueue;
     std::queue<DWORD_PTR> mAdviseQueue;
 
@@ -184,6 +196,7 @@ private:
 
     // Video Properties
     VideoFormat mVideoType;
+    BYTE* mFrameBuffer;
     int mStride;
     int mWidth;
     int mHeight;

@@ -44,6 +44,9 @@
     <ClCompile Include="SettingsLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ParsingThreads.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CLightpack.h">
@@ -60,6 +63,9 @@
     </ClInclude>
     <ClInclude Include="..\..\LightpackAPI\inih\cpp\INIReader.h">
       <Filter>inih</Filter>
+    </ClInclude>
+    <ClInclude Include="gpu_memcpy_sse4.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
