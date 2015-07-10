@@ -21,8 +21,7 @@
         "show": false
     },
     "dependencies": {
-        "ncp": "^0.5.1",
-        "request": "^2.36.0"
+        "ncp": "^0.5.1"
     },
     "maintainers": [ {
         "name": "Matthew Ng",
