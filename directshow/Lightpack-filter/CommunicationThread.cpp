@@ -34,14 +34,14 @@
 
 // Find the current window's handle
 static HWND __sFoundHandle = NULL;
-static BOOL CALLBACK EnumWindowsProc(HWND h, long processId) {
+static BOOL CALLBACK EnumWindowsProc(HWND h, LPARAM processId) {
     if (IsWindow(h) && IsWindowVisible(h)) {
         __sFoundHandle = NULL;
         DWORD handleProcessId;
         GetWindowThreadProcessId(h, &handleProcessId);
 
         // Found the correct window
-        if (processId == handleProcessId) {
+        if ((long)processId == handleProcessId) {
             __sFoundHandle = h;
             return FALSE;
         }
@@ -51,7 +51,7 @@ static BOOL CALLBACK EnumWindowsProc(HWND h, long processId) {
 static HWND getWindowHandle()
 {
     DWORD processId = GetCurrentProcessId();
-    EnumWindows(&EnumWindowsProc, processId);
+    EnumWindows(&EnumWindowsProc, (LPARAM)processId);
     if (__sFoundHandle != NULL) {
         HWND ret = __sFoundHandle;
         __sFoundHandle = NULL;
@@ -330,7 +330,7 @@ void CLightpack::handleMessages(Socket& socket)
                 // Format: <0>
                 else if (messageType == COMM_REC_COUNT_LEDS) {
                     EnterCriticalSection(&mDeviceLock);
-                    int leds = mDevice != NULL ? mDevice->getCountLeds() : 0;
+                    size_t leds = mDevice != NULL ? mDevice->getCountLeds() : 0;
                     LeaveCriticalSection(&mDeviceLock);
                     sprintf(buffer, "%d%d", COMM_SEND_RETURN, leds);
                     parsingError = false;

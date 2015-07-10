@@ -374,7 +374,7 @@ void CLightpack::postConnection()
     }
 
     // Update the size of the color array
-    int numLeds = mDevice->getCountLeds();
+    size_t numLeds = mDevice->getCountLeds();
     if (mPropColors.size() != numLeds) {
         mPropColors.resize(numLeds);
     }

@@ -21,6 +21,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Filter64.def">
+      <Filter>Source Files</Filter>
+    </None>
     <None Include="Filter.def">
       <Filter>Source Files</Filter>
     </None>

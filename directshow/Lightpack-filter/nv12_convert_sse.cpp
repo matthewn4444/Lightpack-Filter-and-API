@@ -177,7 +177,7 @@ Lightpack::RGBCOLOR CLightpack::meanColorFromNV12SSE(BYTE* src, Lightpack::Rect&
     bool isAligned = (((size_t)ySrc) & 0xF) == 0;
     if (!isAligned) {
         size_t alignedPos = ((size_t)ySrc / 16) * 16;
-        xOffset = (size_t)ySrc - alignedPos;
+        xOffset = (int)((size_t)ySrc - alignedPos);
 
         // Check to see if we can go left of the image
         ASSERT(rect.x - xOffset >= 0);          // If this fails, then the width is not 16bit aligned and this will need to be handled
@@ -191,7 +191,7 @@ Lightpack::RGBCOLOR CLightpack::meanColorFromNV12SSE(BYTE* src, Lightpack::Rect&
     const size_t optimalHeight = isHeightOdd ? rect.height - 1 : rect.height;
 
     size_t optimalWidth = ((rect.width + xOffset) / 16) * 16;
-    int remainingWidth = (rect.width + xOffset) - optimalWidth;
+    int remainingWidth = (rect.width + xOffset) - (int)optimalWidth;
 
     // Get the mask to remove bytes off the non-aligned 16 pixels
     if (remainingWidth > 0) {

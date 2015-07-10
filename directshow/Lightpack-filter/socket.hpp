@@ -93,12 +93,12 @@ public:
     }
 
     bool Send(char* message) {
-        int length = strlen(message);
+        size_t length = strlen(message);
         if (mConnectSocket == INVALID_SOCKET || length == 0) {
             return false;
         }
 
-        if (send(mConnectSocket, message, length, 0) == SOCKET_ERROR
+        if (send(mConnectSocket, message, (int)length, 0) == SOCKET_ERROR
             && shutdown(mConnectSocket, SD_SEND) == SOCKET_ERROR) {
                 printf("send failed with error: %d\n", WSAGetLastError());
                 Close();
@@ -109,7 +109,7 @@ public:
     }
 
     // Not safe for large character buffers
-    int Receive(char* buffer, size_t size, int timeout = 0) {
+    int Receive(char* buffer, int size, int timeout = 0) {
         if (mConnectSocket == INVALID_SOCKET) {
             return -1;
         }
@@ -122,7 +122,7 @@ public:
         int iResult = recv(mConnectSocket, buffer, size, 0);
         if (iResult > 0) {
             int n = -1;
-            for (size_t i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++) {
                 if (buffer[i] == '\n') {
                     n = i;
                     break;

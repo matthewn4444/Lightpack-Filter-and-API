@@ -12,7 +12,7 @@ but you do not need to run SVP to use this.
 
 Choose either installation or unzip the package anywhere on your computer
 
-###Binaries (Windows 32bit)
+###Binaries (Windows 32/64bit)
 
 - [Installer (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/setup.exe)
 - [Zip (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/lightpack-filter.zip)
@@ -22,7 +22,7 @@ Choose either installation or unzip the package anywhere on your computer
 
 ## Setup
 This is compatible with [Media Player Classic (MPC)](http://mpc-hc.org/).
-You will need to add the filter (lightpack.ax) to the player.
+You will need to add the filter (lightpack.ax/lightpack64.ax) to the player.
 
 For more instructions, view [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Setup-with-Media-Player-Classic).
 
