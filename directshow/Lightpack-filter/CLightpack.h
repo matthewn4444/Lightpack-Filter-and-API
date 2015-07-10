@@ -12,7 +12,7 @@
 #include <queue>
 
 #include "Converters.h"
-#include "../../LightpackAPI/inih/cpp/INIReader.h"
+#include "../../LightpackAPI/thirdparty/inih/cpp/INIReader.h"
 
 // Log out the settings on debug
 #if defined(_DEBUG)

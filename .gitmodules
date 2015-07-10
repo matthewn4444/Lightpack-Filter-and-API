@@ -1,0 +1,3 @@
+[submodule "LightpackAPI/thirdparty/dlib"]
+	path = LightpackAPI/thirdparty/dlib
+	url = https://github.com/davisking/dlib.git

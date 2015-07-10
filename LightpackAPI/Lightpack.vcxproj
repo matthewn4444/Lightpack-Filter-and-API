@@ -55,41 +55,37 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="dlib.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="dlib.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="dlib.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="dlib.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>thirdparty\dlib;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <OutDir>..\lib\</OutDir>
     <TargetName>lightpackd</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>lightpackd</TargetName>
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>thirdparty\dlib;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
     <OutDir>..\lib\$(Platform)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>thirdparty\dlib;$(IncludePath)</IncludePath>
     <OutDir>..\lib\</OutDir>
     <TargetName>lightpack</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TargetName>lightpack</TargetName>
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>thirdparty\dlib;$(IncludePath)</IncludePath>
     <OutDir>..\lib\$(Platform)</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -159,18 +155,18 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="hidapi\hid.c" />
-    <ClCompile Include="inih\cpp\INIReader.cpp" />
-    <ClCompile Include="inih\ini.c" />
     <ClCompile Include="LedDevice.cpp" />
     <ClCompile Include="PrismatikClient.cpp" />
     <ClCompile Include="source.cpp" />
+    <ClCompile Include="thirdparty\hidapi\hid.c" />
+    <ClCompile Include="thirdparty\inih\cpp\INIReader.cpp" />
+    <ClCompile Include="thirdparty\inih\ini.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Lightpack.h" />
-    <ClInclude Include="hidapi\hidapi.h" />
-    <ClInclude Include="inih\cpp\INIReader.h" />
-    <ClInclude Include="inih\ini.h" />
+    <ClInclude Include="thirdparty\hidapi\hidapi.h" />
+    <ClInclude Include="thirdparty\inih\cpp\INIReader.h" />
+    <ClInclude Include="thirdparty\inih\ini.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,6 +1,6 @@
 #include <algorithm>
 #include "../include/Lightpack.h"
-#include "hidapi\hidapi.h"
+#include "thirdparty\hidapi\hidapi.h"
 #include "device\commands.h"
 #include "device\USB_ID.h"
 

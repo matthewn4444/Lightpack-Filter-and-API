@@ -17,7 +17,7 @@
       <UniqueIdentifier>{f4722e40-e3e6-4af0-b9b2-ceabf882ea4b}</UniqueIdentifier>
     </Filter>
     <Filter Include="inih">
-      <UniqueIdentifier>{2de8d713-d7c7-4606-9274-56dfc14a35b0}</UniqueIdentifier>
+      <UniqueIdentifier>{1126a0e6-610e-474c-b8f8-e331e3b040fb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -27,31 +27,31 @@
     <ClCompile Include="LedDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="hidapi\hid.c">
-      <Filter>device</Filter>
-    </ClCompile>
-    <ClCompile Include="inih\ini.c">
-      <Filter>inih</Filter>
-    </ClCompile>
-    <ClCompile Include="inih\cpp\INIReader.cpp">
-      <Filter>inih</Filter>
-    </ClCompile>
     <ClCompile Include="source.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\inih\ini.c">
+      <Filter>inih</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\inih\cpp\INIReader.cpp">
+      <Filter>inih</Filter>
+    </ClCompile>
+    <ClCompile Include="thirdparty\hidapi\hid.c">
+      <Filter>device</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Lightpack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="hidapi\hidapi.h">
+    <ClInclude Include="thirdparty\inih\ini.h">
+      <Filter>inih</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\inih\cpp\INIReader.h">
+      <Filter>inih</Filter>
+    </ClInclude>
+    <ClInclude Include="thirdparty\hidapi\hidapi.h">
       <Filter>device</Filter>
-    </ClInclude>
-    <ClInclude Include="inih\ini.h">
-      <Filter>inih</Filter>
-    </ClInclude>
-    <ClInclude Include="inih\cpp\INIReader.h">
-      <Filter>inih</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -90,14 +90,14 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>lightpack</TargetName>
     <TargetExt>.ax</TargetExt>
-    <IncludePath>../../include;C:\Programming\libs\dlib-18.7;$(IncludePath)</IncludePath>
+    <IncludePath>../../include;$(IncludePath)</IncludePath>
     <LibraryPath>../../lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>lightpack64</TargetName>
     <TargetExt>.ax</TargetExt>
-    <IncludePath>../../include;C:\Programming\libs\dlib-18.7;$(IncludePath)</IncludePath>
+    <IncludePath>../../include;$(IncludePath)</IncludePath>
     <LibraryPath>../../lib/x64;$(LibraryPath)</LibraryPath>
     <OutDir>..\..\$(Configuration)\</OutDir>
   </PropertyGroup>

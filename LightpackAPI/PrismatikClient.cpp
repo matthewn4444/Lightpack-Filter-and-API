@@ -1,5 +1,5 @@
 #include "../include/Lightpack.h"
-#include "inih\cpp\INIReader.h"
+#include "thirdparty\inih\cpp\INIReader.h"
 #include <dlib/iosockstream.h>
 
 #ifdef _WIN32
@@ -32,7 +32,6 @@
 #define MAXPATHLENGTH 1024
 
 namespace Lightpack {
-
     // PIMPL Implementation to avoid dlib compile dependency
     class PrismatikClient::socket_impl {
     private:
