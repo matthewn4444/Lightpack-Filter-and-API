@@ -22,15 +22,15 @@ OutputBaseFilename=setup
 AppMutex=LightpackFilterMutex,Global/LightpackFilterMutex,LightpackFilterGUIMutex,Global/LightpackFilterGUIMutex
 
 [Files]
+Source: "app\*"; DestDir: "{app}\app"; Flags: ignoreversion recursesubdirs
 Source: "*"; Excludes: ".git,*.zip,setup.iss,*.lnk,*.exp,settings.ini,Test.*,*.pdb,*.node,*.lib" ; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
-Source: "icon.ico"; DestDir: "{app}"; DestName: "icon.ico"; Flags: ignoreversion
 
 [Tasks]
 Name: "desktopicon"; Description: "{#CreateDesktopIcon}"
 
 [Icons]
-Name: "{group}\Lightpack Filter"; Filename: "{app}\nw.exe"; WorkingDir: "{app}"; IconFilename: "{app}/icon.ico"
-Name: "{userdesktop}\Lightpack Filter"; Filename: "{app}\nw.exe"; WorkingDir: "{app}"; IconFilename: "{app}/icon.ico"; Tasks: desktopicon
+Name: "{group}\Lightpack Filter"; Filename: "{app}\nw.exe"; WorkingDir: "{app}"; IconFilename: "{app}/app/src/images/icon.ico"
+Name: "{userdesktop}\Lightpack Filter"; Filename: "{app}\nw.exe"; WorkingDir: "{app}"; IconFilename: "{app}/app/src/images/icon.ico"; Tasks: desktopicon
      
 [Run]
 Filename: "{app}\installFilter.bat"; Flags: skipifdoesntexist

@@ -1,6 +1,6 @@
 {
     "name" : "lightpack-filter",
-    "main" : "src/index.html",
+    "main" : "/app/src/index.html",
     "author": "Matthew Ng",
     "version" : "0.6.1",
     "keywords": ["node-webkit", "lightpack", "mpc", "directshow", "filter"],
@@ -17,7 +17,7 @@
         "width": 650,
         "min_height": 380,
         "resizable": false,
-        "icon": "/src/images/icon.png",
+        "icon": "/app/src/images/icon.png",
         "show": false
     },
     "dependencies": {

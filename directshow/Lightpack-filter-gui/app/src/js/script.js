@@ -10,10 +10,10 @@ for (var i = 0; i < gui.App.argv.length; i++) {
     }
 }
 
-var lightpack = require("lightpack"),
-    mutex = require("lightpack/app-mutex"),
-    Updater = require("updater"),
-    pkg = require("./../package.json"),
+var lightpack = require("./../node_modules/lightpack/lightpack-api"),
+    mutex = require("./../node_modules/lightpack/app-mutex"),
+    Updater = require("./../node_modules/updater"),
+    pkg = require("./../../package.json"),
     updater = new Updater(pkg),
     lightApi = null,
     tray = null,
@@ -88,7 +88,7 @@ function close() {
     });
 }
 function initTray() {
-    tray = new gui.Tray({ icon: "/src/images/icon.png" });
+    tray = new gui.Tray({ icon: "/app/src/images/icon.png" });
     tray.tooltip = "Lightpack Filter";
 
     var trayMenu = new gui.Menu();

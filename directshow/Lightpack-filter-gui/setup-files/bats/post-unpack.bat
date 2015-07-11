@@ -11,6 +11,9 @@ rem Windows 7
 rem Windows XP
 if errorlevel 1 ping 192.0.2.2 -n 1 -w %1000 > nul
 
+rem Delete the app folder if it exists on the old directory
+@RD /S /Q %3\app
+
 rem Copy new files
 xcopy /s /y %2 %3
 
