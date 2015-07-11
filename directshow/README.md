@@ -14,11 +14,11 @@ Choose either installation or unzip the package anywhere on your computer
 
 ###Binaries (Windows 32/64bit)
 
-- [Installer (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/setup.exe)
-- [Zip (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/lightpack-filter.zip)
+- [Installer (0.6.2)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.2/setup.exe)
+- [Zip (0.6.2)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.2/lightpack-filter.zip)
 
 ###Source Code
-- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.1.zip)
+- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.2.zip)
 
 ## Setup
 This is compatible with [Media Player Classic (MPC)](http://mpc-hc.org/).
@@ -27,7 +27,7 @@ You will need to add the filter (lightpack.ax/lightpack64.ax) to the player.
 For more instructions, view [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Setup-with-Media-Player-Classic).
 
 ## Performance and Support
-Using MPC, adding the Lightpack filter increases the CPU overhead about **3-8%**.
+Using MPC, adding the Lightpack filter increases the CPU overhead about **2-6%**.
 
 The filter supports all forms of video (that I can tell) and other filters including
 

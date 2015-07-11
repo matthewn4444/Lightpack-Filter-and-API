@@ -20,15 +20,15 @@ This includes two projects:
 
 Choose either setup installation or unzip the package anywhere on your computer
 
-###Binaries (Windows x86)
+###Binaries (Windows x86/x64)
 
-- [Installer (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/setup.exe)
-- [Zip (0.6.1)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.1/lightpack-filter.zip)
+- [Installer (0.6.2)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.2/setup.exe)
+- [Zip (0.6.2)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.2/lightpack-filter.zip)
 
 Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Installation) for more information on setup and usage.
 
 ###Source Code
-- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.1.zip)
+- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.2.zip)
 
 Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building-the-Source) for compile and building instructions.
 
@@ -37,18 +37,23 @@ Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building
 ### Lightpack Concept/Device
 [Lightpack](http://lightpack.tv/) was a kickstarted project and the APIs were openned
 source. Users put lights on the back of their televisions and the computer can send
-colors to the lights, extending the picture's/video's experience. I have taken 
+colors to the lights, extending the picture's/video's experience. I have taken
 the open source software and created a C++ and Node.js API.
 
 ### Lightpack Filter
 
 The filter allows you to play a video with lightpack shown in realtime without any
-lag. You can play a video with [Media player classic (MPC)](http://mpc-hc.org/) and 
+lag. You can play a video with [Media player classic (MPC)](http://mpc-hc.org/) and
 lightpack will update the colors of what is shown on the screen.
 
 For more information, go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/tree/master/directshow).
 
 **This filter only works on Windows.**
+
+### More Device Support
+I do not have any other devices besides Lightpack. If you want support for another
+device, you can email me if you can help me build it (I would mainly give you builds
+to test on your device).
 
 ### C++ API
 
