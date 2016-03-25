@@ -13,15 +13,11 @@ del %RELEASE%\setup.iss
 copy %RELEASE%\lightpack.node app\node_modules\lightpack\lightpack.node
 copy %RELEASE%\app-mutex.node app\node_modules\lightpack\app-mutex.node
 
-rem Copy the nw.exe, nw.pak, app folder and icudt.dll file to those folders
+rem Copy all files from nw binaries and app folder to those folders
 copy package.json %RELEASE%\package.json
 copy package.json %DEBUG%\package.json
-copy %NW_BIN%\nw.exe %RELEASE%\nw.exe
-copy %NW_BIN%\nw.exe %DEBUG%\nw.exe
-copy %NW_BIN%\nw.pak %RELEASE%\nw.pak
-copy %NW_BIN%\nw.pak %DEBUG%\nw.pak
-copy %NW_BIN%\icudt.dll %RELEASE%\icudt.dll
-copy %NW_BIN%\icudt.dll %DEBUG%\icudt.dll
+xcopy /s /y %NW_BIN% %RELEASE%\
+xcopy /s /y %NW_BIN% %DEBUG%\
 xcopy /s /y %SETUP%\files %RELEASE%\
 xcopy /s /y app %RELEASE%\app\
 xcopy /s /y app %DEBUG%\app\

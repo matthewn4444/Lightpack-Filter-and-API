@@ -11,7 +11,11 @@ call "compile.bat"
 
 rem Create the zip file
 copy setup-files\bats\post-unpack.bat %RELEASE%\post-unpack.bat
-cd %RELEASE% && "%CD%\%SETUP%\tools\zip" -r lightpack-filter icudt.dll app package.json lightpack.ax lightpack64.ax nw.exe nw.pak installFilter.bat uninstallFilter.bat post-unpack.bat LICENSE.txt
+cd %RELEASE% && "%CD%\%SETUP%\tools\zip" -r lightpack-filter icudt.dll app locales package.json lightpack.ax^
+                                             lightpack64.ax nw.exe installFilter.bat uninstallFilter.bat post-unpack.bat LICENSE.txt^
+                                             ffmpeg.dll icudtl.dat natives_blob.bin node.dll nw.dll nw_100_percent.pak nw_200_percent.pak^
+                                             nw_elf.dll resources.pak
+
 del post-unpack.bat
 
 rem Create setup file

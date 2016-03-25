@@ -1,33 +1,5 @@
-#include <node.h>
-#include <v8.h>
+#include <node_extension.h>
 #include <Lightpack.h>
-
-using v8::Handle;
-using v8::Array;
-using v8::Value;
-using v8::Local;
-
-// ===========================================================================================
-//      Macros to simplify programming
-// ===========================================================================================
-
-#define NODE_SET_NUMBER(expName, number) \
-    exports->Set(v8::String::NewSymbol(#expName), v8::Number::New(number));
-
-#define ARG2INT(i) \
-    (int)v8::Local<v8::Integer>::Cast(args[i])->Int32Value()
-
-#define ARG2DOUBLE(i) \
-    (double)Local<v8::Number>::Cast(args[i])->Value()
-
-// TODO make this work with node-gyp as well
-
-// Lazy way to create Node extension functions
-#define LAZY_DECLARE(name, arguments) v8::Handle<Value> name(const v8::Arguments& arguments) { \
-    v8::Isolate* isolate = v8::Isolate::GetCurrent(); v8::HandleScope s(isolate);
-#define LAZY_RETURN(value) return value; }
-#define LAZY_RETURN_BOOL(value) return value ? v8::True() : v8::False(); }
-#define LAZY_RETURN_UNDEFINED() return v8::Undefined(); }
 
 // ===========================================================================================
 //      Lightpack device
@@ -46,7 +18,7 @@ LAZY_DECLARE(TryToReopenDevice, args) {
 
 LAZY_DECLARE(CloseDevices, args) {
     sDevice.closeDevices();
-    LAZY_RETURN_UNDEFINED(args);
+    LAZY_END();
 }
 
 LAZY_DECLARE(SetColor, args) {
@@ -147,7 +119,7 @@ LAZY_DECLARE(SetRefreshDelay, args) {
 }
 
 LAZY_DECLARE(GetCountLeds, args) {
-    LAZY_RETURN(v8::Number::New(sDevice.getCountLeds()));
+    LAZY_RETURN_NUMBER(sDevice.getCountLeds());
 }
 
 LAZY_DECLARE(TurnOff, args) {
@@ -161,6 +133,11 @@ LAZY_DECLARE(TurnOn, args) {
 // ===========================================================================================
 //      Initialization
 // ===========================================================================================
+
+const static unsigned int LedsPerDevice = Lightpack::LedDevice::LedsPerDevice;
+const static unsigned int DefaultBrightness = Lightpack::DefaultBrightness;
+const static double DefaultGamma = Lightpack::DefaultGamma;
+const static unsigned int DefaultSmooth = Lightpack::DefaultSmooth;
 
 void init(Handle<v8::Object> exports) {
     NODE_SET_METHOD(exports, "open", Open);
@@ -182,10 +159,10 @@ void init(Handle<v8::Object> exports) {
     NODE_SET_METHOD(exports, "turnOff", TurnOff);
     NODE_SET_METHOD(exports, "turnOn", TurnOn);
 
-    NODE_SET_NUMBER(LedsPerDevice, Lightpack::LedDevice::LedsPerDevice);
-    NODE_SET_NUMBER(DefaultBrightness, Lightpack::DefaultBrightness);
-    NODE_SET_NUMBER(DefaultGamma, Lightpack::DefaultGamma);
-    NODE_SET_NUMBER(DefaultSmooth, Lightpack::DefaultSmooth);
+    NODE_DEFINE_CONSTANT(exports, LedsPerDevice);
+    NODE_DEFINE_CONSTANT(exports, DefaultBrightness);
+    NODE_DEFINE_CONSTANT(exports, DefaultGamma);
+    NODE_DEFINE_CONSTANT(exports, DefaultSmooth);
 }
 
 NODE_MODULE(lightpack, init)

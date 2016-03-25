@@ -1,8 +1,10 @@
 # For the NW-GYP
 *.vcxproj
+*.vcproj
 config.gypi
 *.node
 *.nw
+*.pyc
 
 # Node-Webkit Binaries
 nw-binaries

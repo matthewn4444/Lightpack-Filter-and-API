@@ -23,7 +23,7 @@ AppMutex=LightpackFilterMutex,Global/LightpackFilterMutex,LightpackFilterGUIMute
 
 [Files]
 Source: "app\*"; DestDir: "{app}\app"; Flags: ignoreversion recursesubdirs
-Source: "*"; Excludes: ".git,*.zip,setup.iss,*.lnk,*.exp,settings.ini,Test.*,*.pdb,*.node,*.lib" ; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "*"; Excludes: ".git,*.zip,setup.iss,*.lnk,*.exp,settings.ini,Test.*,*.pdb,*.node,*.lib,*.log,*.iobj,*.ipdb,*.map,*.nexe,*.html,d3dcompiler_47.dll,dbghelp.dll,libEGL.dll,libGLESv2.dll,snapshot_blob.bin"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Tasks]
 Name: "desktopicon"; Description: "{#CreateDesktopIcon}"

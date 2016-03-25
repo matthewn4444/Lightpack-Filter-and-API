@@ -57,7 +57,7 @@ DWORD CLightpack::loadSettingsThreadStart()
             char path[MAX_PATH];
             wcstombs(path, getCurrentDirectory(), wcslen(getCurrentDirectory()));
             path[wcslen(getCurrentDirectory())] = '\0';
-            strcat(path, "\\"SETTINGS_FILE);
+            strcat(path, "\\" SETTINGS_FILE);
 
             INIReader reader(path);
             if (!reader.ParseError()) {
@@ -69,7 +69,7 @@ DWORD CLightpack::loadSettingsThreadStart()
                 if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, buffer))) {
                     wcstombs(path, buffer, wcslen(buffer));
                     path[wcslen(buffer)] = '\0';
-                    strcat(path, "\\"PROJECT_NAME"\\"SETTINGS_FILE);
+                    strcat(path, "\\" PROJECT_NAME "\\" SETTINGS_FILE);
 
                     // Try again
                     reader = INIReader(path);

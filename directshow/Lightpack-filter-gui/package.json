@@ -15,13 +15,12 @@
         "title": "Lightpack Filter",
         "toolbar": false,
         "width": 650,
-        "min_height": 380,
+        "min_height": 450,
         "resizable": false,
         "icon": "/app/src/images/icon.png",
         "show": false
     },
     "dependencies": {
-        "ncp": "^0.5.1"
     },
     "maintainers": [ {
         "name": "Matthew Ng",
