@@ -50,6 +50,10 @@ $("#page-adjust-position").on("slidestart", ".slider", function() {
 $(".progressbar").progressbar();
 
 // Input functions
+function setPowerButton(isOn) {
+    $("#turn-off-on").switchButton("checked", isOn);
+}
+
 function setBrightnessSlider(val) {
     $("#brightness-slider").slider("value", val);
 }

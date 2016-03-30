@@ -147,7 +147,7 @@ namespace Lightpack {
         bool setRefreshDelay(int value);
 
         inline size_t getCountLeds() {
-            return mCurrentColors.size();
+            return mDevices.empty() ? 0 : mCurrentColors.size();
         }
 
         RESULT turnOff();

@@ -227,6 +227,7 @@ lightpack.init(function(api){
 
     lightApi.on("connect", function(n){
         log("Lights have connected with " + n + " leds");
+        setPowerButton(lightpack.isOn());
 
         // When connecting lights back to computer, show white
         if (!isPlaying && isShowing && numLeds == 0 && n > 0) {

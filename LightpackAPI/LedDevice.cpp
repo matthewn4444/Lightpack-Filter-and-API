@@ -42,7 +42,6 @@ namespace Lightpack {
             hid_close(mDevices[i]);
         }
         mDevices.clear();
-        mCurrentColors.clear();
     }
 
     RESULT LedDevice::setColor(int led, RGBCOLOR color) {
