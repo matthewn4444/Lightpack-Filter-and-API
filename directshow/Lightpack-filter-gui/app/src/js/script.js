@@ -399,7 +399,7 @@ $("#fullscreen").click(function(){
 win.on("enter-fullscreen", function() {
     Ledmap.updateMetrics();
 });
-win.on("leave-fullscreen", function() {
+win.on("restore", function() {
     Ledmap.updateMetrics();
 });
 
