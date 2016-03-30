@@ -1,20 +1,9 @@
 var gui = require('nw.gui'),
     win = gui.Window.get();
 
-// Debugging purposes, use -d to pull up the dev tools
-for (var i = 0; i < gui.App.argv.length; i++) {
-    var cmd = gui.App.argv[i];
-    if (cmd == "-d") {
-        win.showDevTools();
-        break;
-    }
-}
-
 var lightpack = require("./../node_modules/lightpack/lightpack-api"),
     mutex = require("./../node_modules/lightpack/app-mutex"),
-    Updater = require("./../node_modules/updater"),
     pkg = require("./../../package.json"),
-    updater = new Updater(pkg),
     lightApi = null,
     tray = null,
     wasInstalled = lightpack.getSettingsFolder().indexOf("\\Program Files") != -1,
@@ -30,11 +19,6 @@ function showWindow() {
 }
 
 //  ============================================
-//  Set a Windows mutex for Inno setup files
-//  ============================================
-mutex.create("LightpackFilterGUIMutex");
-
-//  ============================================
 //  Command Line
 //  ============================================
 var shouldShowWindow = true;
@@ -48,6 +32,11 @@ for (var i = 0; i < gui.App.argv.length; i++) {
 if (shouldShowWindow) {
     showWindow();
 }
+
+//  ============================================
+//  Set a Windows mutex for Inno setup files
+//  ============================================
+mutex.create("LightpackFilterGUIMutex");
 
 $("#version").text(pkg.version);
 
@@ -120,7 +109,7 @@ win.on("close", function(){
 // If gui is not hidden on startup, show tray and once filter is disconnected and
 // not showing, gui will close
 if (isShowing) {
-    initTray();
+    setTimeout(initTray, 200);
 }
 (function() {
     var intervalCount = 0;
@@ -140,69 +129,75 @@ if (isShowing) {
 //  ============================================
 //  Check for new versions
 //  ============================================
-updater.checkNewVersion(function(err, manifest){
-    if (err) {
-        return log(err);
-    }
-    var newVersion = manifest.version;
-    if (confirm("Version " + newVersion + " is available, would you like to update?")) {
-        showWindow();
-        // Start file download
-        var downloadFn = (wasInstalled ? updater.downloadInstaller : updater.download).bind(updater);
-        var totalSize = 1, receivedSize = 0;
 
-        function updateProgress(percent) {
-            var percent = Math.floor(receivedSize * 100 / totalSize);
-            $("#download-done").text(Math.round(receivedSize / 1024));
-            $("#download-percent").text(percent + "%");
-            $("#download-total").text(Math.round(totalSize / 1024));
-            $("#download-progress").progressbar("option", "value", percent);
+// Delay version check so that the ui can load
+setTimeout(function() {
+    var Updater = require("./../node_modules/updater");
+    var updater = new Updater(pkg);
+    updater.checkNewVersion(function(err, manifest){
+        if (err) {
+            return log(err);
         }
+        var newVersion = manifest.version;
+        if (confirm("Version " + newVersion + " is available, would you like to update?")) {
+            showWindow();
+            // Start file download
+            var downloadFn = (wasInstalled ? updater.downloadInstaller : updater.download).bind(updater);
+            var totalSize = 1, receivedSize = 0;
 
-        // Update the progress bar in intervals to avoid CPU hogging
-        var timer = setInterval(function(){
-            updateProgress();
-        }, 100);
-
-        downloadFn(function(err, path) {
-            clearInterval(timer);
-            updateProgress();
-            if (err) {
-                alert("There was an error retrieving the download.");
-                $(document.body).removeClass("overlay");
-                return log(err);
+            function updateProgress(percent) {
+                var percent = Math.floor(receivedSize * 100 / totalSize);
+                $("#download-done").text(Math.round(receivedSize / 1024));
+                $("#download-percent").text(percent + "%");
+                $("#download-total").text(Math.round(totalSize / 1024));
+                $("#download-progress").progressbar("option", "value", percent);
             }
-            if (wasInstalled) {
-                // Run installer and close this application
-                // setTimeout is needed or else error
-                setTimeout(function(){
-                    updater.run(path);
-                    lightpack.closeFilterWindow(close);
-                }, 100);
-            } else {
-                // Unpack zip file
-                $("#overlay .group").fadeOut();
-                $("#download-percent").text("Unpacking...");
 
-                var exePath = process.execPath.substring(0, process.execPath.lastIndexOf("\\"));
-                updater.unpack(path, function(err, newPath) {
-                    lightpack.closeFilterWindow(function() {
-                        // Exit app and spawn the bat for final clean up
-                        require('child_process').spawn(require("path").join(newPath, "post-unpack.bat"),
-                            [2, newPath, exePath], {detached: true});
-                        close();
+            // Update the progress bar in intervals to avoid CPU hogging
+            var timer = setInterval(function(){
+                updateProgress();
+            }, 100);
+
+            downloadFn(function(err, path) {
+                clearInterval(timer);
+                updateProgress();
+                if (err) {
+                    alert("There was an error retrieving the download.");
+                    $(document.body).removeClass("overlay");
+                    return log(err);
+                }
+                if (wasInstalled) {
+                    // Run installer and close this application
+                    // setTimeout is needed or else error
+                    setTimeout(function(){
+                        updater.run(path);
+                        lightpack.closeFilterWindow(close);
+                    }, 100);
+                } else {
+                    // Unpack zip file
+                    $("#overlay .group").fadeOut();
+                    $("#download-percent").text("Unpacking...");
+
+                    var exePath = process.execPath.substring(0, process.execPath.lastIndexOf("\\"));
+                    updater.unpack(path, function(err, newPath) {
+                        lightpack.closeFilterWindow(function() {
+                            // Exit app and spawn the bat for final clean up
+                            require('child_process').spawn(require("path").join(newPath, "post-unpack.bat"),
+                                [2, newPath, exePath], {detached: true});
+                            close();
+                        });
                     });
-                });
-            }
-        }).on("response", function(res){
-            totalSize = parseInt(res.headers['content-length'], 10);
-           updateProgress();
-            $(document.body).addClass("download");
-        }).on("data", function(chunk) {
-            receivedSize += chunk.length;
-        });
-    }
-});
+                }
+            }).on("response", function(res){
+                totalSize = parseInt(res.headers['content-length'], 10);
+               updateProgress();
+                $(document.body).addClass("download");
+            }).on("data", function(chunk) {
+                receivedSize += chunk.length;
+            });
+        }
+    });
+}, 200);
 
 //  ============================================
 //  Handle Lightpack
@@ -356,7 +351,6 @@ function setLPVerticalDepth(percent) {
         lightpack.setVerticalDepth(percent);
     }
 }
-
 //  ============================================
 //  Handle Ledmap
 //  ============================================

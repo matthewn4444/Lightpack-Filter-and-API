@@ -1,5 +1,3 @@
-setInterval(function(){}, 100);
-
 // Default values
 var DEFAULTS = {
     brightness: 100,
