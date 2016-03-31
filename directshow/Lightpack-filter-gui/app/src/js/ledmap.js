@@ -502,9 +502,11 @@ function getPositionAndSideOfLed(i) {
                 side = 'r', percentValue = 0,
                 verticalPercentage = (parseInt($led.css("top"), 10) + smallSide / 2) / screenHeight * 100,
                 horizontalPercentage = (parseInt($led.css("left"), 10) + smallSide / 2) / screenWidth * 100,
+                left = $rect.css("left") != "auto" ? parseInt($rect.css("left"), 10) : $rect.position().left,
+                top = $rect.css("top") != "auto" ? parseInt($rect.css("top"), 10) : $rect.position().top,
                 rect = {
-                    x: parseInt($rect.css("left"), 10) * 100 / screenWidth,
-                    y: parseInt($rect.position().top, 10) * 100 / screenHeight,
+                    x: left * 100 / screenWidth,
+                    y: top * 100 / screenHeight,
                     width: $rect.width() * 100 / screenWidth,
                     height: $rect.height() * 100 / screenHeight
                 };

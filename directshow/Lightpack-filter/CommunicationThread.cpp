@@ -424,7 +424,7 @@ DWORD CLightpack::commThreadStart()
         CloseHandle(h);
 
         // Run the application
-        ShellExecute(NULL, NULL, L"nw.exe", L"app.nw --hide", getCurrentDirectory(), SW_SHOW);
+        ShellExecute(NULL, NULL, L"nw.exe", L" --hide", getCurrentDirectory(), SW_SHOW);
     }
 
     // Trying to connect; when port changes in handleMessages, it will reconnect port
