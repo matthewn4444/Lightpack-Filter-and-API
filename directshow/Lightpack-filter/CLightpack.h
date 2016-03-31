@@ -59,6 +59,7 @@ static UINT64 getTime()
 
 #define DEFAULT_SMOOTH 30
 #define DEFAULT_GUI_PORT 6000
+#define DEFAULT_ON_WHEN_CLOSE false
 
 // {188fb505-04ff-4257-9bdb-3ff431852f99}
 static const GUID CLSID_Lightpack =
@@ -193,6 +194,7 @@ private:
     unsigned char mPropBrightness;
     unsigned char mPropSmooth;
     unsigned int mPropPort;
+    bool mPropOnWhenClose;
 
     // Video Properties
     VideoFormat mVideoType;

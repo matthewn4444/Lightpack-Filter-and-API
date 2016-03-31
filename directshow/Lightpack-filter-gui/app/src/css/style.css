@@ -121,7 +121,7 @@ section#content {
 
 fieldset {
     border:none;
-    margin-bottom:30px;
+    margin-bottom:20px;
 }
 
 /* Tooltip */
@@ -345,6 +345,10 @@ input#port-input {
 }
 
 /* Led Map Screen*/
+#page-adjust-position {
+    padding-top:30px;
+}
+
 #page-adjust-position .monitor {
     background: url("../images/screen.png");
     width: 390px;

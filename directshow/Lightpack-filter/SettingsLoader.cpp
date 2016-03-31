@@ -97,6 +97,7 @@ void CLightpack::readSettingsFile(INIReader& reader)
     mPropSmooth = (unsigned char)reader.GetInteger("State", "smooth", DEFAULT_SMOOTH);
     mPropBrightness = (unsigned char)reader.GetInteger("State", "brightness", Lightpack::DefaultBrightness);
     mPropGamma = reader.GetReal("State", "gamma", Lightpack::DefaultGamma);
+    mPropOnWhenClose = reader.GetInteger("State", "onWhenClose", DEFAULT_ON_WHEN_CLOSE ? 1 : 0) == 1;
 
     // Read positions
     int i = 1;

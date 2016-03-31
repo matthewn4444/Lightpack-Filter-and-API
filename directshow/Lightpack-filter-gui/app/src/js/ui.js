@@ -80,6 +80,10 @@ function setVerticalDepthSlider(v) {
     $("#vertical-height-slider").slider("value", sliderData.max - v);
 }
 
+function setCloseStateButton(isOn) {
+    $("#turn-off-close").switchButton("checked", isOn);
+}
+
 // Init sortable
 $("#modules-list").sortable().disableSelection();
 
@@ -125,6 +129,13 @@ $("#turn-off-on").switchButton({
     offText: "Off",
     click: function(e, ui) {
         setLPEnableLights(ui.checked);
+    }
+});
+$("#turn-off-close").switchButton({
+    onText: "On",
+    offText: "Off",
+    click: function(e, ui) {
+        setCloseState(ui.checked);
     }
 });
 

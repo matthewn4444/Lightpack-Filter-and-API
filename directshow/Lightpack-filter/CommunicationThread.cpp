@@ -23,6 +23,7 @@
 #define COMM_REC_NEW_PORT       11
 #define COMM_REC_IS_RUNNING     12
 #define COMM_REC_CLOSE_WINDOW   13
+#define COMM_REC_CLOSE_STATE    14
 
 // These messages are used to send data back to the server
 #define COMM_SEND_RETURN        0
@@ -247,6 +248,14 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
             result = sscanf(buffer + 1, "%d", &n);
             if (result != EOF) {
                 mPropPort = n;
+                sprintf(buffer, "%d1", COMM_SEND_RETURN);
+            }
+            break;
+        // Format: <14>
+        case COMM_REC_CLOSE_STATE:
+            result = sscanf(buffer + 1, "%d", &n);
+            if (result != EOF) {
+                mPropOnWhenClose = n == 1;
                 sprintf(buffer, "%d1", COMM_SEND_RETURN);
             }
             break;

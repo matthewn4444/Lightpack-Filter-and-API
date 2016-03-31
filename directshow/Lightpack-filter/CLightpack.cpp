@@ -54,6 +54,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mPropSmooth(DEFAULT_SMOOTH)
     , mPropBrightness(Lightpack::DefaultBrightness)
     , mPropPort(DEFAULT_GUI_PORT)
+    , mPropOnWhenClose(DEFAULT_ON_WHEN_CLOSE)
     , mHasReadSettings(false)
 {
     mCurrentDirectoryCache[0] = '\0';
@@ -94,7 +95,7 @@ CLightpack::~CLightpack(void)
     ASSERT(mLoadSettingsThreadId == NULL);
     ASSERT(mhLoadSettingsThread == INVALID_HANDLE_VALUE);
 
-    if (mDevice) {
+    if (mDevice && !mPropOnWhenClose) {
         mDevice->setSmooth(50);
         mDevice->setBrightness(0);
     }
