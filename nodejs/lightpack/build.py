@@ -1,35 +1,27 @@
 #!/usr/bin/env python
-
-import subprocess, configure_win, os
-
-DEVENV_LOC = "Microsoft Visual Studio 14.0\\Common7\\IDE\\devenv.exe"
+import sys
+sys.path.append("../../directshow/directshow-sdk/")
+import subprocess, configure_win, vs
 
 def main():
-    configure_win.main()
+    content = None
 
     print 'Going to build Lightpack node module'
-
-    # Check the progrom files location
-    program_files = None
-    if os.path.exists("c:\\Program Files (x86)\\"):
-        program_files = "c:\\Program Files (x86)\\"
-    elif os.path.exists("c:\\Program Files\\"):
-        program_files = "c:\\Program Files\\"
-    else:
-        raise Exception('Cannot find program files, are you running this on windows?')
+    path = vs.get_devenv_path()
+    configure_win.main()
 
     # Upgrade visual studio project
-    print "Upgrading visual studio project"
-    res = subprocess.call("\"" + program_files + DEVENV_LOC + "\" -upgrade build/lightpack.vcproj", shell=True, stdout=subprocess.PIPE)
+    print "\tUpgrading visual studio project"
+    res = vs.upgrade(path, "build/lightpack.vcproj")
     if res != 0:
-        raise Exception('Failed to upgrade visual studio project')
+        raise Exception('\tFailed to upgrade visual studio project')
 
     # Build visual studio project
-    print "Building visual studio project"
-    res = subprocess.call("\"" + program_files + DEVENV_LOC + "\" build/lightpack.vcxproj -build Release", shell=True, stdout=subprocess.PIPE)
+    print "\tBuilding visual studio project"
+    res = vs.build(path, "build/lightpack.vcxproj", True, True)
     if res != 0:
         raise Exception('Failed to build visual studio project')
-    print "Building successful"
+    print "\tBuilding successful"
 
 if __name__ == "__main__":
     main()

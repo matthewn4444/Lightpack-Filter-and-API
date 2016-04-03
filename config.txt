@@ -1,0 +1,2 @@
+# Defines version of nw.js to build with
+nw=0.13.0

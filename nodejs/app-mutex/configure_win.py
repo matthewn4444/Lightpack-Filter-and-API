@@ -2,11 +2,20 @@
 
 import subprocess
 
+def get_nw_version():
+    with open("../../config.txt", "r") as f:
+        for line in f:
+            if line.startswith("nw="):
+                return line.split("=")[1].strip()
+
 def main():
     content = None
+    version = get_nw_version()
+    if not version:
+        raise Exception("Failed to find nw.js version")
 
     # Run bash command
-    process = subprocess.call("nw-gyp configure --target=0.13.0".split(), shell=True)
+    process = subprocess.call(("nw-gyp configure --target=" + version).split(), shell=True)
 
     # Modify app-mutex.vcproj
     with open("build/app-mutex.vcproj", "r") as f:
