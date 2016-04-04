@@ -29,8 +29,8 @@ it will compile to the Release folder
 
 **Linix/Mac**
 
-2. You need config.gypi. In this directory, run the configuration (Node webkit 0.8.6 was used)
-`$ nw-gyp configure --target=0.8.6`
+2. You need config.gypi. In this directory, run the configuration (Node webkit 0.13.0 was used)
+`$ nw-gyp configure --target=0.13.0`
 
 3. TODO
 
