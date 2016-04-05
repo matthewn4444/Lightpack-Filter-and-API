@@ -1,6 +1,6 @@
 [submodule "directshow/directshow-sdk"]
 	path = directshow/directshow-sdk
-	url = git@github.com:matthewn4444/directshow-sdk.git
+	url = https://github.com/matthewn4444/directshow-sdk.git
 [submodule "LightpackAPI/thirdparty/dlib"]
 	path = LightpackAPI/thirdparty/dlib
 	url = https://github.com/davisking/dlib.git
