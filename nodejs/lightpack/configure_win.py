@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import subprocess
+import subprocess, os.path
 
 def get_nw_version():
     with open("../../config.txt", "r") as f:
@@ -18,18 +18,34 @@ def main():
     process = subprocess.call(("nw-gyp configure --target=" + version).split(), shell=True)
 
     # Modify lightpack.vcproj
-    with open("build/lightpack.vcproj", "r") as f:
+    is_upgraded = False
+    if os.path.isfile("build/lightpack.vcproj") and os.path.getsize("build/lightpack.vcproj") > 0:
+        vcproj_file = "build/lightpack.vcproj"
+    elif os.path.isfile("build/lightpack.vcxproj") and os.path.getsize("build/lightpack.vcxproj") > 0:
+        vcproj_file = "build/lightpack.vcxproj"
+        is_upgraded = True
+    else:
+        raise Exception("nw-gyp did not initialize the project collectly, did not generate a vcproj/vcxproj")
+
+    with open(vcproj_file, "r") as f:
         content = f.read()
         content = content.replace("x64", "Win32")
-        content = content.replace('RuntimeLibrary="0" RuntimeTypeInfo="false"', 'RuntimeLibrary="4" RuntimeTypeInfo="false"')
-        content = content.replace('RuntimeLibrary="1" StringPooling="true"', 'RuntimeLibrary="3" StringPooling="true"')
-        content = content.replace("TargetMachine=\"17\"", "TargetMachine=\"18\"")
         content = content.replace("$(Configuration)\\nw.lib", "ia32\\nw.lib")
         content = content.replace("$(Configuration)\\node.lib", "ia32\\node.lib")
-        content = content.replace("nw.lib", "nw.lib ..\\..\\..\\lib\\lightpack.lib")
+        content = content.replace("nw.lib&quot;", "nw.lib&quot;;&quot;..\\..\\..\\lib\\lightpack.lib&quot;")
         content = content.replace("$(SolutionDir)", "$(SolutionDir)/..\\..\\..\\")
-        content = content.replace("\\include;", "\include;..\\..\\..\\include;")
-    with open("build/lightpack.vcproj", "w") as w:
+
+        if is_upgraded == True:
+            content = content.replace('<RuntimeLibrary>MultiThreaded</RuntimeLibrary>', '<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>')
+            content = content.replace('<TargetMachine>MachineX64</TargetMachine>', '<TargetMachine>MachineX86</TargetMachine>')
+            content = content.replace("\\include;%", "\include;..\\..\\..\\include;%")
+        else:
+            content = content.replace('RuntimeLibrary="0" RuntimeTypeInfo="false"', 'RuntimeLibrary="4" RuntimeTypeInfo="false"')
+            content = content.replace('RuntimeLibrary="1" StringPooling="true"', 'RuntimeLibrary="3" StringPooling="true"')
+            content = content.replace("TargetMachine=\"17\"", "TargetMachine=\"18\"")
+            content = content.replace("\\include;", "\include;..\\..\\..\\include;")
+
+    with open(vcproj_file, "w") as w:
         w.write(content)
 
     # Modify binding.sln

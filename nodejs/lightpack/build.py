@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys
+import sys, os.path
 sys.path.append("../../directshow/directshow-sdk/")
 import subprocess, configure_win, vs
 
@@ -10,11 +10,12 @@ def main():
     path = vs.get_devenv_path()
     configure_win.main()
 
-    # Upgrade visual studio project
-    print "\tUpgrading visual studio project"
-    res = vs.upgrade(path, "build/lightpack.vcproj")
-    if res != 0:
-        raise Exception('\tFailed to upgrade visual studio project')
+    if os.path.isfile("build/lightpack.vcproj") and os.path.getsize("build/lightpack.vcproj") > 0:
+        # Upgrade visual studio project
+        print "\tUpgrading visual studio project"
+        res = vs.upgrade(path, "build/lightpack.vcproj")
+        if res != 0:
+            raise Exception('\tFailed to upgrade visual studio project')
 
     # Build visual studio project
     print "\tBuilding visual studio project"

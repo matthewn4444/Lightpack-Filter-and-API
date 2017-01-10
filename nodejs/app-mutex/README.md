@@ -22,10 +22,11 @@ for each platform. Generally you need Python, Git/Cywgin bash and Visual Studio 
 
 **For Windows**
 
-2. Run **configure-win.sh** to configure the solution before compiling
+2. Make sure you follow the [prerequisites (step 1-5)](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building-the-Source#prerequisites). You can also modify the *config.txt* to set the nw.js version to compile.
 
-3. Open **vs/app-mutex.sln**, change to **Release build** and run it, 
-it will compile to the Release folder
+3. Run **build.py** to build the project
+
+4. It will compile to the Release folder (../../Release)
 
 **Linix/Mac**
 
