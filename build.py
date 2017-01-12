@@ -32,14 +32,17 @@ def download_file(url, save_path, chunk_size=8192, report_hook=chunk_report):
                 report_hook(bytes_so_far, chunk_size, total_size)
         return bytes_so_far
 
-def build(path):
+def build(path, arg1=None):
     os.chdir(path)
-    os.system("python build.py")
+    if arg1:
+        os.system("python build.py " + arg1)
+    else:
+        os.system("python build.py")
     os.chdir(here)
 
 def main():
     print "Compiling Directshow sdk"
-    build("directshow/directshow-sdk")
+    build("directshow/directshow-sdk", "-static")
 
     print "Compile the lightpack libraries project"
     build("LightpackAPI")
@@ -48,10 +51,10 @@ def main():
     build("directshow/Lightpack-filter")
 
     print "Compile Lightpack for node"
-    build("nodejs/lightpack")
+    build("nodejs", "lightpack")
 
     print "Compile App-mutex for node"
-    build("nodejs/app-mutex")
+    build("nodejs", "app-mutex")
 
     # Download node modules and extract it
     print "Download nodewebkit binaries"
