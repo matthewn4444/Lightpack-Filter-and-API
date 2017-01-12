@@ -20,13 +20,13 @@ for each platform. Generally you need Python, Git/Cywgin bash and Visual Studio 
 
 2. Make sure you follow the [prerequisites (step 1-5)](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building-the-Source#prerequisites). You can also modify the *config.txt* to set the nw.js version to compile.
 
-3. Run **build.py** to build the project
+3. Run **build.bat** to build the project
 
 4. It will compile to the Release folder (../../Release)
 
 **Linix/Mac**
 
-2. You need config.gypi. In this directory, run the configuration (Node webkit 0.13.0 was used)
+2. You need config.gypi. In this directory, run the configuration (Node webkit 0.13.0 was used as an example)
 `$ nw-gyp configure --target=0.13.0`
 
 3. TODO
