@@ -17,6 +17,7 @@ function showWindow() {
     win.show();
     win.focus();
 }
+lightpack.debug(console);
 
 //  ============================================
 //  Command Line
@@ -39,21 +40,6 @@ if (shouldShowWindow) {
 mutex.create("LightpackFilterGUIMutex");
 
 $("#version").text(pkg.version);
-
-function log(/*...*/) {
-    var div = document.createElement("div");
-    div.style.textAlign = "right";
-    var text = "[empty string]";
-    if (arguments.length) {
-        text = typeof(arguments[0]) == "undefined" ? "undefined" : arguments[0].toString();
-        for (var i = 1; i < arguments.length; i++) {
-            text += " " + (typeof(arguments[i]) == "undefined" ? "undefined" : arguments[i]);
-        }
-    }
-    div.appendChild(document.createTextNode(text));
-    document.getElementById("output").appendChild(div);
-    $('#output').animate({scrollTop: $('#output').prop("scrollHeight")}, 500);
-}
 
 //  ============================================
 //  Set the settings path
@@ -136,7 +122,7 @@ setTimeout(function() {
     var updater = new Updater(pkg);
     updater.checkNewVersion(function(err, manifest){
         if (err) {
-            return log(err);
+            return console.error(err);
         }
         var newVersion = manifest.version;
         if (confirm("Version " + newVersion + " is available, would you like to update?")) {
@@ -164,7 +150,7 @@ setTimeout(function() {
                 if (err) {
                     alert("There was an error retrieving the download.");
                     $(document.body).removeClass("overlay");
-                    return log(err);
+                    return console.error(err);
                 }
                 if (wasInstalled) {
                     // Run installer and close this application
@@ -206,7 +192,6 @@ var numLeds = 0,
     normalSmooth = lightpack.getSmooth(),
     isConnected = false,
     isPlaying = false;
-lightpack.a(document);
 
 lightpack.init(function(api){
     lightApi = api;
@@ -230,7 +215,7 @@ lightpack.init(function(api){
     setCloseStateButton(lightpack.isOnWhenClose());
 
     lightApi.on("connect", function(n){
-        log("Lights have connected with " + n + " leds");
+        console.log("Lights have connected with " + n + " leds");
 
         // When connecting lights back to computer, show white
         if (!isPlaying && isShowing && numLeds == 0 && n > 0) {
@@ -264,7 +249,7 @@ lightpack.init(function(api){
         }
         $(document.body).addClass("connected");
     }).on("disconnect", function(n){
-        log("Lights have disconnected with " + n + " leds left");
+        console.log("Lights have disconnected with " + n + " leds left");
         numLeds = n;
         setNumberOfLightpackModules(numLeds / 10);
         if (numLeds == 0) {
@@ -272,10 +257,10 @@ lightpack.init(function(api){
             $(document.body).removeClass("connected");
         }
     }).on("play", function(){
-        log("Filter is playing");
+        console.log("Filter is playing");
         isPlaying = true;
     }).on("pause", function(){
-        log("Filter was paused");
+        console.log("Filter was paused");
         isPlaying = false;
     }).on("filterConnect", function() {
         isFilterConnected = true;
