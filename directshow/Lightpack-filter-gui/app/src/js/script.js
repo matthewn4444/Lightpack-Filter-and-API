@@ -239,17 +239,17 @@ lightpack.init(function(api){
             lightApi.setColorToAll(255, 255, 255);
         }
         numLeds = n;
-        var numModules = numLeds / 10;
-        Ledmap.setGroups(numModules);
         isConnected = true;
-
-        // Handle UI multiple Lightpack modules
-        setNumberOfLightpackModules(numModules);
 
         // If you connect the same number of leds as saved, then load those positions
         var savedPos = lightpack.getSavedPositions();
         if (savedPos.length == n) {
-            Ledmap.setPositions(pos);
+            Ledmap.setPositions(savedPos);
+            setNumberOfLightpackModules(savedPos.length / 10);
+        } else {
+            var numModules = numLeds / 10;
+            Ledmap.setGroups(numModules);
+            setNumberOfLightpackModules(numModules);
         }
 
         // First run after setting default positions with correct number of leds
