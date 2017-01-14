@@ -57,6 +57,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mPropOnWhenClose(DEFAULT_ON_WHEN_CLOSE)
     , mHasReadSettings(false)
 {
+    mSettingsPathFromGUI[0] = '\0';
     mCurrentDirectoryCache[0] = '\0';
 
     if (!sAlreadyRunning) {

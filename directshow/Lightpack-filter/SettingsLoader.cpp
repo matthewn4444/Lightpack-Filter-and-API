@@ -1,7 +1,6 @@
 #include "CLightpack.h"
 
 #define SETTINGS_FILE "settings.ini"
-#define PROJECT_NAME "lightpack-filter"
 
 DWORD WINAPI CLightpack::IOThread(LPVOID lpvThreadParm)
 {
@@ -11,7 +10,7 @@ DWORD WINAPI CLightpack::IOThread(LPVOID lpvThreadParm)
 
 void CLightpack::startLoadSettingsThread()
 {
-    if (mLoadSettingsThreadId != NULL && mhLoadSettingsThread != INVALID_HANDLE_VALUE) {
+    if (mHasReadSettings || mLoadSettingsThreadId != NULL && mhLoadSettingsThread != INVALID_HANDLE_VALUE) {
         return;
     }
 
@@ -51,32 +50,26 @@ DWORD CLightpack::loadSettingsThreadStart()
         // Read the settings
         CAutoLock cObjectLock(&settingsLock);
         if (!mHasReadSettings) {
-            mHasReadSettings = true;
-
             // Prepare the path to the settings file
-            char path[MAX_PATH];
-            wcstombs(path, getCurrentDirectory(), wcslen(getCurrentDirectory()));
-            path[wcslen(getCurrentDirectory())] = '\0';
+            char* path;
+            if (strlen(mSettingsPathFromGUI) > 0) {
+                path = mSettingsPathFromGUI;
+            }
+            else {
+                char temp_path[MAX_PATH];
+                wcstombs(temp_path, getCurrentDirectory(), wcslen(getCurrentDirectory()));
+                temp_path[wcslen(getCurrentDirectory())] = '\0';
+                path = temp_path;
+            }
             strcat(path, "\\" SETTINGS_FILE);
 
             INIReader reader(path);
             if (!reader.ParseError()) {
+                mHasReadSettings = true;
                 readSettingsFile(reader);
             }
             else {
-                // If there is no settings file there then we should try appdata file, otherwise just use defaults
-                wchar_t buffer[MAX_PATH];
-                if (SUCCEEDED(SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, 0, buffer))) {
-                    wcstombs(path, buffer, wcslen(buffer));
-                    path[wcslen(buffer)] = '\0';
-                    strcat(path, "\\" PROJECT_NAME "\\" SETTINGS_FILE);
-
-                    // Try again
-                    reader = INIReader(path);
-                    if (!reader.ParseError()) {
-                        readSettingsFile(reader);
-                    }
-                }
+                _logf("Unable to open file in path: '%s'", path);
             }
         }
 

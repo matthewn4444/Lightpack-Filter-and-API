@@ -154,6 +154,7 @@ private:
 
     // Settings and other file I/O
     bool mHasReadSettings;
+    char mSettingsPathFromGUI[MAX_PATH];
     wchar_t mCurrentDirectoryCache[MAX_PATH];
 
     void readSettingsFile(INIReader& reader);

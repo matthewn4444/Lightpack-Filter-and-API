@@ -24,6 +24,7 @@
 #define COMM_REC_IS_RUNNING     12
 #define COMM_REC_CLOSE_WINDOW   13
 #define COMM_REC_CLOSE_STATE    14
+#define COMM_REC_NEW_SAVE_PATH  15
 
 // These messages are used to send data back to the server
 #define COMM_SEND_RETURN        0
@@ -258,6 +259,13 @@ bool CLightpack::parseReceivedMessages(int messageType, char* buffer, bool* devi
                 mPropOnWhenClose = n == 1;
                 sprintf(buffer, "%d1", COMM_SEND_RETURN);
             }
+            break;
+        // Format: <15>
+        case COMM_REC_NEW_SAVE_PATH:
+            result = 0;
+            strncpy(mSettingsPathFromGUI, buffer + 1, strlen(buffer + 1));
+            startLoadSettingsThread();
+            sprintf(buffer, "%d1", COMM_SEND_RETURN);
             break;
     }
     return result != EOF;
