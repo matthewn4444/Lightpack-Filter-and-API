@@ -9,9 +9,14 @@
         <title>Lightpack Filter (no leds)</title>
         <link href='css/style.css' rel='stylesheet'/>
         <link href='css/slider.css' rel='stylesheet'/>
+        <link href='css/validationEngine.jquery.css' rel='stylesheet'/>
+        <link href='css/jquery.timepicker.min.css' rel='stylesheet'/>
         <script src='js/jquery-2.1.1.min.js'></script>
+        <script src='js/jquery.validationEngine.js'></script>
+        <script src='js/jquery.validationEngine-en.js'></script>
         <script src='js/jquery-ui-1.10.4.custom.min.js'></script>
         <script src='js/jquery-ui-touch-punch-0.2.3.min.js'></script>
+        <script src='js/jquery.timepicker.min.js'></script>
         <script src='js/switchbutton.js'></script>
         <script src='js/ledmap.js'></script>
     </head>
@@ -20,6 +25,7 @@
             <ul>
                 <li id='nav-light-settings' class='selected'>Lights</li>
                 <li id='nav-adjust-position'>Positioning</li>
+                <li id='nav-automation'>Automation</li>
                 <li id='nav-connection'>Connection</li>
             </ul>
         </nav>
@@ -65,6 +71,41 @@
                     <div id='horizontal-height-slider' class='slider reverse'></div>
                 </fieldset>
                 <button class='restore-button'>Restore Defaults</button>
+            </div>
+            <div id='page-automation' class='page'>
+                <fieldset>
+                    <label for='video-play-input-enable'>When Video Plays Run</label>
+                    <div class='combined-input' disabled='disabled'>
+                        <input id='video-play-input-url' class='url-input' placeholder='Enter a url to run during event'/>
+                        from
+                        <input class='timepicker start-time' id='video-play-input-time-start' spellcheck="false"/>
+                        to
+                        <input class='timepicker end-time' id='video-play-input-time-end' spellcheck="false"/>
+                    </div>
+                    <div id='video-play-input-enable' class='switch-button pin-right'></div>
+                </fieldset>
+                <fieldset>
+                    <label for='video-pause-input-enable'>When Video Pauses Run</label>
+                    <div class='combined-input' disabled='disabled'>
+                        <input id='video-pause-input-url' class='url-input' placeholder='Enter a url to run during event'/>
+                        from
+                        <input class='timepicker start-time' id='video-pause-input-time-start' spellcheck="false"/>
+                        to
+                        <input class='timepicker end-time' id='video-pause-input-time-end' spellcheck="false"/>
+                    </div>
+                    <div id='video-pause-input-enable' class='switch-button pin-right'></div>
+                </fieldset>
+                <fieldset>
+                    <label for='video-close-input-enable'>When Video Closes Run</label>
+                    <div class='combined-input' disabled='disabled'>
+                        <input id='video-close-input-url' class='url-input' placeholder='Enter a url to run during event'/>
+                        from
+                        <input class='timepicker start-time' id='video-close-input-time-start' spellcheck="false"/>
+                        to
+                        <input class='timepicker end-time' id='video-close-input-time-end' spellcheck="false"/>
+                    </div>
+                    <div id='video-close-input-enable' class='switch-button pin-right'></div>
+                </fieldset>
             </div>
             <div id='page-connection' class='page'>
                 <div class='connection-status'>

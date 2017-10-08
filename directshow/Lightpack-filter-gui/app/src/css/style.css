@@ -54,12 +54,12 @@ nav ul {
 }
 
 nav li {
+    box-sizing: border-box;
     height:100%;
     font-size:20px;
-    width:33%;
+    width:25%;
     display:inline-block;
     text-align:center;
-    -webkit-box-sizing: content-box;
     border-right: 1px solid #455418;
     border-left: 1px solid #ebfabc;
     line-height: 40px;
@@ -226,6 +226,7 @@ fieldset {
     cursor: default !important;
     -webkit-user-select: none;
     background: #fa726c;
+    margin-right: 30px;
 }
 
 .switch-button.checked {
@@ -271,6 +272,11 @@ fieldset {
 
 .switch-button.checked:hover {
     background: #4dbc9b;
+}
+
+.pin-right {
+    float: right;
+    margin-right: 0;
 }
 
 /* Button */
@@ -330,18 +336,64 @@ body.connected #page-connection .text.disconnected {
     display: none;
 }
 
-input {
+/* Automation Page */
+#page-automation .switch-button {
+    margin-top: 10px;
+}
+
+/* Inputs */
+input, .combined-input {
     height: 30px;
     border-radius: 15px;
     font-size: 16px;
     padding: 5px 20px;
     border: none;
     outline: none;
+    background: #FCFCFC;
     box-shadow: 0 1px 4px rgba(0,0,0,0.5) inset;
+    overflow: hidden;
+    transition: background-color 0.4s, opacity 0.4s, color 0.4s;
+}
+
+[disabled].combined-input {
+    background: rgba(255,255,255,0.6);
+    color: rgba(132, 162, 39, 0.6);
+}
+
+[disabled] input {
+    opacity: 0.6;
 }
 
 input#port-input {
     width: 250px;
+}
+
+input::placeholder {
+    color: #b7babf;
+}
+
+.combined-input {
+    color: #84a227;
+    cursor: default;
+}
+
+.combined-input input {
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    height: auto;
+    background: none;
+}
+
+.combined-input input.url-input {
+    width: 329px;
+}
+
+.combined-input .timepicker {
+    width: 65px;
+    overflow: hidden;
+    text-align: center;
+    cursor: default;
 }
 
 /* Led Map Screen*/
@@ -784,4 +836,13 @@ body.download #overlay {
 
 #modules-list {
     width: 250px;
+}
+
+/* Override validationEngine */
+.formErrorContent {
+    box-shadow: none !important;
+    border: none !important;
+    -webkit-box-shadow: none !important;
+    font-size: 14px !important;
+    padding: 7px 12px !important;
 }

@@ -1,16 +1,21 @@
 var gui = require('nw.gui'),
-    win = gui.Window.get();
+    win = gui.Window.get(),
+    path = require('path'),
+    http = require('http'),
+    https = require('https');
 
 var lightpack = require("./../node_modules/lightpack/lightpack-api"),
     mutex = require("./../node_modules/lightpack/app-mutex"),
     pkg = require("./../../package.json"),
     lightApi = null,
     tray = null,
+    videoStateSeekTimer = null,
     wasInstalled = lightpack.getSettingsFolder().indexOf("\\Program Files") != -1,
 
     // Window states
     isFilterConnected = false,
-    isShowing = false;
+    isShowing = false,
+    hasEverRanVideo = false;
 
 function showWindow() {
     isShowing = true;
@@ -59,7 +64,17 @@ function close() {
             tray.remove();
             tray = null;
         }
-        win.close(true);
+        if (videoStateSeekTimer) {
+            clearTimeout(videoStateSeekTimer);
+            videoStateSeekTimer = null;
+        }
+        if (hasEverRanVideo) {
+            runAutomatedVideoEvent("close", function() {
+                win.close(true);
+            });
+        } else {
+            win.close(true);
+        }
     });
 }
 function initTray() {
@@ -144,7 +159,7 @@ setTimeout(function() {
                 updateProgress();
             }, 100);
 
-            downloadFn(function(err, path) {
+            downloadFn(function(err, _path) {
                 clearInterval(timer);
                 updateProgress();
                 if (err) {
@@ -156,7 +171,7 @@ setTimeout(function() {
                     // Run installer and close this application
                     // setTimeout is needed or else error
                     setTimeout(function(){
-                        updater.run(path);
+                        updater.run(_path);
                         lightpack.closeFilterWindow(close);
                     }, 100);
                 } else {
@@ -165,10 +180,10 @@ setTimeout(function() {
                     $("#download-percent").text("Unpacking...");
 
                     var exePath = process.execPath.substring(0, process.execPath.lastIndexOf("\\"));
-                    updater.unpack(path, function(err, newPath) {
+                    updater.unpack(_path, function(err, newPath) {
                         lightpack.closeFilterWindow(function() {
                             // Exit app and spawn the bat for final clean up
-                            require('child_process').spawn(require("path").join(newPath, "post-unpack.bat"),
+                            require('child_process').spawn(path.join(newPath, "post-unpack.bat"),
                                 [2, newPath, exePath], {detached: true});
                             close();
                         });
@@ -214,6 +229,20 @@ lightpack.init(function(api){
     setPowerButton(lightpack.isOn());
     setCloseStateButton(lightpack.isOnWhenClose());
 
+    // Update the automation data
+    var eventData = lightpack.getVideoEventData("play");
+    if (eventData) {
+        setWhenVideoPlaysData(eventData.enabled, eventData.url, eventData.start, eventData.end);
+    }
+    eventData = lightpack.getVideoEventData("pause");
+    if (eventData) {
+        setWhenVideoPausesData(eventData.enabled, eventData.url, eventData.start, eventData.end);
+    }
+    eventData = lightpack.getVideoEventData("close");
+    if (eventData) {
+        setWhenVideoClosesData(eventData.enabled, eventData.url, eventData.start, eventData.end);
+    }
+
     lightApi.on("connect", function(n){
         console.log("Lights have connected with " + n + " leds");
 
@@ -258,10 +287,24 @@ lightpack.init(function(api){
         }
     }).on("play", function(){
         console.log("Filter is playing");
+        hasEverRanVideo = true;
         isPlaying = true;
+        if (videoStateSeekTimer) {
+            clearTimeout(videoStateSeekTimer);
+            videoStateSeekTimer = null;
+        }
+        runAutomatedVideoEvent("play");
     }).on("pause", function(){
         console.log("Filter was paused");
+        hasEverRanVideo = true;
         isPlaying = false;
+        if (videoStateSeekTimer) {
+            clearTimeout(videoStateSeekTimer);
+        }
+        videoStateSeekTimer = setTimeout(function() {
+            runAutomatedVideoEvent("pause");
+            videoStateSeekTimer = null;
+        }, 700);
     }).on("filterConnect", function() {
         isFilterConnected = true;
     }).on("filterDisconnect", function() {
@@ -344,6 +387,11 @@ function setLPVerticalDepth(percent) {
         lightpack.setVerticalDepth(percent);
     }
 }
+
+function saveVideoEventData(name, enabled, url, startTime, endTime) {
+    lightpack.saveVideoEventData(name, enabled, url, startTime, endTime);
+}
+
 //  ============================================
 //  Handle Ledmap
 //  ============================================
@@ -437,3 +485,78 @@ $("#modules-list").on("sortupdate", function(e, ui) {
         lightpack.sendPositions(newPositions);
     }
 });
+
+//  ============================================
+//  Automation Event Handling
+//  ============================================
+function timeTextToTimestamp(text) {
+    var now = new Date();
+    text = text.substring(0, text.length - 2) + " " + text.substring(text.length - 2);
+    return Date.parse((now.getMonth() + 1) + "-" + now.getDate() + "-" + now.getFullYear() + " " + text);
+}
+
+function runAutomatedVideoEvent(name, callback) {
+    // Get the automation data
+    // Run the request
+    var data = lightpack.getVideoEventData(name);
+    var timePattern = "\\b(1[0-2]|[0-9]):[0-5][0-9][ap]m";
+    if (data && data.enabled) {
+        // Check if we can run the event now based on time
+        var now = Date.now();
+        var canRun = true;
+        if (data.start != "anytime") {
+            if (!data.start.match(timePattern)) {
+                console.log("BAD: for some reason the time saved is incorrect format!");
+                if (callback) {
+                    callback();
+                }
+                return;
+            }
+            var now = Date.now();
+            var startTime = timeTextToTimestamp(data.start);
+
+            // Check if are passed the current time
+            if (startTime > now) {
+                if (callback) {
+                    callback();
+                }
+                return;         // Now is before the start time, do nothing
+            }
+
+            // In case the end time is an earlier time than start, then add a day for next day
+            var endTime = timeTextToTimestamp(data.end);
+            if (startTime > endTime) {
+                endTime += 24 * 60 * 60 * 1000;     // 1 day
+            }
+
+            // Now automate if before the end time
+            if (endTime < now) {
+                if (callback) {
+                    callback();
+                }
+                return;         // Now is after the end time, do nothing
+            }
+        }
+
+        // Now is within the start and end time, run the url
+        console.log("Run automated event", name, data);
+        var protocol = data.url.startsWith("https") ? https : http;
+        protocol.get(data.url, function(res) {
+            if (res.statusCode !== 200) {
+                console.log("Automation Error: Request failed with status code " + res.statusCode);
+            }
+            res.resume();
+            if (callback) {
+                callback();
+            }
+        }).on("error", function(e) {
+            console.log("Automation Error:", e);
+            if (callback) {
+                callback();
+            }
+        });
+    } else if (callback) {
+        console.log("Cannot run automated event because data is invalid", data);
+        callback();
+    }
+}

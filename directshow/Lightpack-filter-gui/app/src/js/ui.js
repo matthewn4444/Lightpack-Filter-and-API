@@ -84,6 +84,38 @@ function setCloseStateButton(isOn) {
     $("#turn-off-close").switchButton("checked", isOn);
 }
 
+function setWhenVideoPlaysData(enabled, url, startTime, endTime) {
+    setAutomationDataSet("play", enabled, url, startTime, endTime);
+}
+
+function setWhenVideoPausesData(enabled, url, startTime, endTime) {
+    setAutomationDataSet("pause", enabled, url, startTime, endTime);
+}
+
+function setWhenVideoClosesData(enabled, url, startTime, endTime) {
+    setAutomationDataSet("close", enabled, url, startTime, endTime);
+}
+
+function setAutomationDataSet(event, enabled, url, startTime, endTime) {
+    $("#video-" + event + "-input-enable").switchButton("checked", enabled);
+    $("#video-" + event + "-input-url").val(url);
+    $("#video-" + event + "-input-time-start").val(startTime);
+    $("#video-" + event + "-input-time-end").val(endTime);
+    $("#video-" + event + "-input-url").parent().attr("disabled", !enabled);
+}
+
+// Functions to get states
+function saveAutomationStateByElement(el) {
+    var $container = $(el).parents("fieldset");
+    var enabled = $container.find(".switch-button").switchButton("checked");
+    var urlHasError = $container.find(".formError").length;
+    var url = $container.find(".url-input").val();
+    var startTime = $container.find(".start-time").val();
+    var endTime = $container.find(".end-time").val();
+    var name = el.id.split("-")[1];
+    saveVideoEventData(name, enabled, urlHasError ? null : url, startTime, endTime);
+}
+
 // Init sortable
 $("#modules-list").sortable().disableSelection();
 
@@ -138,6 +170,82 @@ $("#turn-off-close").switchButton({
         setCloseState(ui.checked);
     }
 });
+$("#video-play-input-enable").switchButton({
+    onText: "On",
+    offText: "Off",
+    checked: false,
+    click: function(e, ui) {
+        $(this).prev().attr("disabled", !ui.checked);
+        saveAutomationStateByElement(this);
+    }
+});
+$("#video-pause-input-enable").switchButton({
+    onText: "On",
+    offText: "Off",
+    checked: false,
+    click: function(e, ui) {
+        $(this).prev().attr("disabled", !ui.checked);
+        saveAutomationStateByElement(this);
+    }
+});
+$("#video-close-input-enable").switchButton({
+    onText: "On",
+    offText: "Off",
+    checked: false,
+    click: function(e, ui) {
+        $(this).prev().attr("disabled", !ui.checked);
+        saveAutomationStateByElement(this);
+    }
+});
+
+// Init time pickers
+$("#page-automation .timepicker").timepicker({
+    'scrollDefault': 'now',
+    'disableTextInput': true,
+    'noneOption': [
+        {
+            'label': 'Anytime',
+            'value': 'anytime'
+        },
+    ],
+})
+.on("change", function(e) {
+    var $self = $(e.currentTarget);
+    var newValue = $self.val();
+    var $other = $self.hasClass("start-time") ? $self.next() : $self.prev();
+    var otherValue = $other.val();
+
+    // Make sure that anytime cannot be mixed with an actual time, only anytime, reinforce it
+    if (otherValue != newValue) {
+        if (newValue == "anytime") {
+            // Setting anytime should match the other one as well
+            $other.val("anytime");
+        } else if (otherValue == "anytime") {
+            // Other is set to anytime, set the value to current time
+            $other.val(newValue);
+        }
+    }
+
+    // Saved the changed settings
+    saveAutomationStateByElement(this);
+})
+.timepicker("setTime", "anytime");        // TODO set only if no savings
+
+// Handle automation url events
+$("#page-automation .url-input").on("keyup", function() {
+    var timeout = $(this).data("timeout");
+    if (timeout) {
+        clearTimeout(timeout);
+    }
+    timeout = setTimeout(function() {
+        if ($(this).validationEngine('validate')) {
+            saveAutomationStateByElement(this);
+        }
+    }.bind(this), 800);
+    $(this).data("timeout", timeout);
+}).attr("data-errormessage", "Please enter a valid URL.")
+.addClass("validate[required,custom[url]]")
+.validationEngine();
 
 // Show popup
 function showPopup(title, message) {
