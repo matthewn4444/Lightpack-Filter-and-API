@@ -104,6 +104,23 @@ function setAutomationDataSet(event, enabled, url, startTime, endTime) {
     $("#video-" + event + "-input-url").parent().attr("disabled", !enabled);
 }
 
+function setDelayedTimeBetweenEvents(timeMs) {
+    $("#video-event-time-delay").val(timeMs);
+}
+
+$.fn.delayInput = function(callback, ms){
+    var timer = 0;
+    var el = $(this).get(0);
+    var timeout = ms || 1000;
+    $(this).keyup(function(e){
+    clearTimeout (timer);
+    timer = setTimeout(function(){
+        callback.call(el, e);
+        }, timeout);
+    });
+    return $(this);
+};
+
 // Functions to get states
 function saveAutomationStateByElement(el) {
     var $container = $(el).parents("fieldset");
@@ -232,20 +249,26 @@ $("#page-automation .timepicker").timepicker({
 .timepicker("setTime", "anytime");        // TODO set only if no savings
 
 // Handle automation url events
-$("#page-automation .url-input").on("keyup", function() {
-    var timeout = $(this).data("timeout");
-    if (timeout) {
-        clearTimeout(timeout);
+$("#page-automation .url-input").delayInput(function() {
+    if ($(this).validationEngine('validate')) {
+        saveAutomationStateByElement(this);
     }
-    timeout = setTimeout(function() {
-        if ($(this).validationEngine('validate')) {
-            saveAutomationStateByElement(this);
-        }
-    }.bind(this), 800);
-    $(this).data("timeout", timeout);
 }).attr("data-errormessage", "Please enter a valid URL.")
 .addClass("validate[required,custom[url]]")
 .validationEngine();
+
+$("#video-event-time-delay").delayInput(function() {
+    var time = parseInt(this.value, 10);
+    saveTimeBetweenEvents(time);
+});
+
+$("input[type='number']").on("keydown", function(e) {
+    if (!((e.keyCode > 95 && e.keyCode < 106)
+        || (e.keyCode > 47 && e.keyCode < 58)
+        || e.keyCode == 8)) {
+        return false;
+    }
+});
 
 // Show popup
 function showPopup(title, message) {
@@ -292,19 +315,9 @@ $(".ui-slider-handle").on("mouseenter", function() {
 });
 
 // Port
-var inputDelay = (function(){
-    var timer = 0;
-    return function(callback, ms){
-        clearTimeout (timer);
-        timer = setTimeout(callback, ms);
-    };
-})();
-
-$("#port-input").keyup(function(){
-    inputDelay(function(){
-        var port = parseInt($(this).val(), 10);
-        setLPPort(port);
-    }.bind(this), 1000);
+$("#port-input").delayInput(function(){
+    var port = parseInt(this.value, 10);
+    setLPPort(port);
 });
 
 $("nav ul").on("click", "li", function(){

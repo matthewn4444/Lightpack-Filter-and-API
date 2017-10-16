@@ -1,15 +1,13 @@
 var gui = require('nw.gui'),
     win = gui.Window.get(),
     path = require('path'),
-    http = require('http'),
-    https = require('https');
+    automationEvents = require("./../node_modules/lightpack/automation-events");
 
 var lightpack = require("./../node_modules/lightpack/lightpack-api"),
     mutex = require("./../node_modules/lightpack/app-mutex"),
     pkg = require("./../../package.json"),
     lightApi = null,
     tray = null,
-    videoStateSeekTimer = null,
     wasInstalled = lightpack.getSettingsFolder().indexOf("\\Program Files") != -1,
 
     // Window states
@@ -22,6 +20,7 @@ function showWindow() {
     win.show();
     win.focus();
 }
+automationEvents.debug(console);
 lightpack.debug(console);
 
 //  ============================================
@@ -64,12 +63,8 @@ function close() {
             tray.remove();
             tray = null;
         }
-        if (videoStateSeekTimer) {
-            clearTimeout(videoStateSeekTimer);
-            videoStateSeekTimer = null;
-        }
         if (hasEverRanVideo) {
-            runAutomatedVideoEvent("close", function() {
+            automationEvents.fireEvent("close", function() {
                 win.close(true);
             });
         } else {
@@ -242,6 +237,7 @@ lightpack.init(function(api){
     if (eventData) {
         setWhenVideoClosesData(eventData.enabled, eventData.url, eventData.start, eventData.end);
     }
+    setDelayedTimeBetweenEvents(lightpack.getDelayedTimeBetweenEvents());
 
     lightApi.on("connect", function(n){
         console.log("Lights have connected with " + n + " leds");
@@ -289,22 +285,12 @@ lightpack.init(function(api){
         console.log("Filter is playing");
         hasEverRanVideo = true;
         isPlaying = true;
-        if (videoStateSeekTimer) {
-            clearTimeout(videoStateSeekTimer);
-            videoStateSeekTimer = null;
-        }
-        runAutomatedVideoEvent("play");
+        automationEvents.fireEvent("play");
     }).on("pause", function(){
         console.log("Filter was paused");
         hasEverRanVideo = true;
         isPlaying = false;
-        if (videoStateSeekTimer) {
-            clearTimeout(videoStateSeekTimer);
-        }
-        videoStateSeekTimer = setTimeout(function() {
-            runAutomatedVideoEvent("pause");
-            videoStateSeekTimer = null;
-        }, 700);
+        automationEvents.fireEvent("pause");
     }).on("filterConnect", function() {
         isFilterConnected = true;
     }).on("filterDisconnect", function() {
@@ -389,7 +375,11 @@ function setLPVerticalDepth(percent) {
 }
 
 function saveVideoEventData(name, enabled, url, startTime, endTime) {
-    lightpack.saveVideoEventData(name, enabled, url, startTime, endTime);
+    automationEvents.saveVideoEventData(name, enabled, url, startTime, endTime);
+}
+
+function saveTimeBetweenEvents(timeMs) {
+    automationEvents.saveTimeBetweenEvents(timeMs);
 }
 
 //  ============================================
@@ -485,78 +475,3 @@ $("#modules-list").on("sortupdate", function(e, ui) {
         lightpack.sendPositions(newPositions);
     }
 });
-
-//  ============================================
-//  Automation Event Handling
-//  ============================================
-function timeTextToTimestamp(text) {
-    var now = new Date();
-    text = text.substring(0, text.length - 2) + " " + text.substring(text.length - 2);
-    return Date.parse((now.getMonth() + 1) + "-" + now.getDate() + "-" + now.getFullYear() + " " + text);
-}
-
-function runAutomatedVideoEvent(name, callback) {
-    // Get the automation data
-    // Run the request
-    var data = lightpack.getVideoEventData(name);
-    var timePattern = "\\b(1[0-2]|[0-9]):[0-5][0-9][ap]m";
-    if (data && data.enabled) {
-        // Check if we can run the event now based on time
-        var now = Date.now();
-        var canRun = true;
-        if (data.start != "anytime") {
-            if (!data.start.match(timePattern)) {
-                console.log("BAD: for some reason the time saved is incorrect format!");
-                if (callback) {
-                    callback();
-                }
-                return;
-            }
-            var now = Date.now();
-            var startTime = timeTextToTimestamp(data.start);
-
-            // Check if are passed the current time
-            if (startTime > now) {
-                if (callback) {
-                    callback();
-                }
-                return;         // Now is before the start time, do nothing
-            }
-
-            // In case the end time is an earlier time than start, then add a day for next day
-            var endTime = timeTextToTimestamp(data.end);
-            if (startTime > endTime) {
-                endTime += 24 * 60 * 60 * 1000;     // 1 day
-            }
-
-            // Now automate if before the end time
-            if (endTime < now) {
-                if (callback) {
-                    callback();
-                }
-                return;         // Now is after the end time, do nothing
-            }
-        }
-
-        // Now is within the start and end time, run the url
-        console.log("Run automated event", name, data);
-        var protocol = data.url.startsWith("https") ? https : http;
-        protocol.get(data.url, function(res) {
-            if (res.statusCode !== 200) {
-                console.log("Automation Error: Request failed with status code " + res.statusCode);
-            }
-            res.resume();
-            if (callback) {
-                callback();
-            }
-        }).on("error", function(e) {
-            console.log("Automation Error:", e);
-            if (callback) {
-                callback();
-            }
-        });
-    } else if (callback) {
-        console.log("Cannot run automated event because data is invalid", data);
-        callback();
-    }
-}

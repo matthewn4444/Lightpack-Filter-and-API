@@ -121,7 +121,8 @@ section#content {
 
 fieldset {
     border:none;
-    margin-bottom:20px;
+    margin-bottom:18px;
+    cursor: default;
 }
 
 /* Tooltip */
@@ -353,6 +354,14 @@ input, .combined-input {
     box-shadow: 0 1px 4px rgba(0,0,0,0.5) inset;
     overflow: hidden;
     transition: background-color 0.4s, opacity 0.4s, color 0.4s;
+}
+
+input {
+    margin-right: 5px;
+}
+
+.combined-input input {
+    margin-right: 0;
 }
 
 [disabled].combined-input {
