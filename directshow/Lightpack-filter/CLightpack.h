@@ -19,40 +19,46 @@
 #include "log.h"
 #define _logf(...) if (mLog != 0) { mLog->logf(__VA_ARGS__); }
 #define _log(x) if (mLog != 0) { mLog->log(x); }
+
+#include <chrono>
+class TraceBlock {
+public:
+    TraceBlock(Log* log, const char* funcName, int n): name(funcName), mLog(log), lineNumber(n){
+        start = chrono::high_resolution_clock::now();
+        _logf("Trace block start: %s[%d]", name, lineNumber);
+    }
+    ~TraceBlock() {
+        float d = elasped();
+        if (d > 20) {
+            _logf("    Trace block end: %s[%d] Elasped %.5f ms", name, lineNumber, d);
+        }
+    }
+    void lap(int n) {
+        float d = elasped();
+        if (d > 20) {
+            _logf("    |- Trace lap: %s[%d] Elasped %.5f ms", name, n, d);
+        }
+    }
+
+    float elasped() {
+        return chrono::duration_cast<chrono::microseconds>
+            (chrono::high_resolution_clock::now() - start).count() / 1000.0f;
+    }
+
+    Log* mLog;
+    chrono::high_resolution_clock::time_point start;
+    int lineNumber;
+    const char* name;
+};
+#define trace_start() TraceBlock ___block(mLog, __func__, __LINE__);
+#define trace_lap() ___block.lap(__LINE__);
+
 #else
 #define _logf(...)
 #define _log(x)
-#endif
 
-#ifdef _PERF
-#include <chrono>
-#include "log.h"
-// Usage
-//      Prints the elapsed time between the start and print macros
-//
-//      TIME_START
-//          <CODE....>
-//      TIME_PRINT
-#define TIME_START auto begin = chrono::high_resolution_clock::now();
-#define TIME_PRINT \
-mLog->logf("Elapsed: %f milliseconds", chrono::duration_cast<chrono::microseconds>(chrono::high_resolution_clock::now() - begin).count() / 1000.0f);
-
-static UINT64 getTime()
-{
-    SYSTEMTIME st;
-    GetSystemTime(&st);
-
-    FILETIME ft;
-    SystemTimeToFileTime(&st, &ft);  // converts to file time format
-    ULARGE_INTEGER ui;
-    ui.LowPart = ft.dwLowDateTime;
-    ui.HighPart = ft.dwHighDateTime;
-
-    return ui.QuadPart;
-}
-#else
-#define TIME_START
-#define TIME_PRINT
+#define trace_start()
+#define trace_lap()
 #endif
 
 #define FILTER_NAME L"Lightpack"
@@ -99,6 +105,7 @@ private:
     static DWORD WINAPI CommunicationThread(LPVOID lpvThreadParm);
     static DWORD WINAPI IOThread(LPVOID lpvThreadParm);
     static DWORD WINAPI ColorParsingThread(LPVOID lpvThreadParm);
+    static DWORD WINAPI DeviceCheckThread(LPVOID lpvThreadParm);
 
     HANDLE mhLightThread;
     DWORD mLightThreadId;
@@ -147,6 +154,15 @@ private:
     void destroyColorParsingThread();
     DWORD colorParsingThreadStart();
 
+    // Device Check Thread Variables and Methods
+    HANDLE mhDeviceCheckThread;
+    DWORD mDeviceCheckThreadId;
+    bool mDeviceCheckThreadStopRequested;
+
+    void startDeviceCheckThread();
+    void destroyDeviceCheckThread();
+    DWORD deviceCheckStart();
+
     // Mutexes and only allowing one of these filters per graph
     HANDLE mAppMutex;
     static bool sAlreadyRunning;
@@ -170,7 +186,7 @@ private:
     // Device/Prismatik Connections
     Lightpack::LedBase* mDevice;
     bool mIsConnectedToPrismatik;
-    DWORD mLastDeviceCheck;
+    bool mIsReconnecting;
 
     bool reconnectDevice();
     bool connectPrismatik();

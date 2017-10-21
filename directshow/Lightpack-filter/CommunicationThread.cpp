@@ -281,19 +281,6 @@ void CLightpack::handleMessages(Socket& socket)
     mShouldSendConnectEvent = false;
     mShouldSendDisconnectEvent = false;
     while (!mCommThreadStopRequested) {
-        // Ping the device every 1 seconds and resolve failed connection
-        if (!mIsRunning) {
-            DWORD now = GetTickCount();
-            if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
-                EnterCriticalSection(&mDeviceLock);
-                if (!reconnectDevice()) {
-                    mShouldSendDisconnectEvent = true;
-                }
-                LeaveCriticalSection(&mDeviceLock);
-                mLastDeviceCheck = now;
-            }
-        }
-
         // Handle send events
         EnterCriticalSection(&mCommSendLock);
         if (mShouldSendPauseEvent) {

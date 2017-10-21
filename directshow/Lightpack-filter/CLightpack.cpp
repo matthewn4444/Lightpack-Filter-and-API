@@ -32,7 +32,6 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mCommThreadId(0)
     , mCommThreadStopRequested(false)
     , mStride(0)
-    , mLastDeviceCheck(GetTickCount())
     , mLightThreadCleanUpRequested(false)
     , mShouldSendPlayEvent(false)
     , mShouldSendPauseEvent(false)
@@ -43,6 +42,9 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mhColorParsingThread(INVALID_HANDLE_VALUE)
     , mColorParsingThreadId(0)
     , mColorParsingRequested(false)
+    , mhDeviceCheckThread(INVALID_HANDLE_VALUE)
+    , mDeviceCheckThreadId(0)
+    , mDeviceCheckThreadStopRequested(false)
     , mIsRunning(false)
     , mSampleUpsideDown(false)
     , mUseFrameSkip(true)
@@ -50,6 +52,7 @@ CLightpack::CLightpack(LPUNKNOWN pUnk, HRESULT *phr)
     , mFrameSkipCount(0)
     , mLastFrameRateCheck(0)
     , mIsConnectedToPrismatik(false)
+    , mIsReconnecting(false)
     , mPropGamma(Lightpack::DefaultGamma)
     , mPropSmooth(DEFAULT_SMOOTH)
     , mPropBrightness(Lightpack::DefaultBrightness)
@@ -95,6 +98,10 @@ CLightpack::~CLightpack(void)
     destroyLoadSettingsThread();
     ASSERT(mLoadSettingsThreadId == NULL);
     ASSERT(mhLoadSettingsThread == INVALID_HANDLE_VALUE);
+
+    destroyDeviceCheckThread();
+    ASSERT(mDeviceCheckThreadId == NULL);
+    ASSERT(mhDeviceCheckThread == INVALID_HANDLE_VALUE);
 
     if (mDevice && !mPropOnWhenClose) {
         mDevice->setSmooth(50);
@@ -243,6 +250,8 @@ STDMETHODIMP CLightpack::Run(REFERENCE_TIME StartTime)
     mShouldSendPlayEvent = mIsRunning == false;
     LeaveCriticalSection(&mCommSendLock);
 
+    startDeviceCheckThread();
+
     mIsRunning = true;
     return NOERROR;
 }
@@ -296,7 +305,9 @@ bool CLightpack::reconnectDevice()
         }
         else {
             // Ocasionally reopen to see if more modules connect
+            mIsReconnecting = true;
             if (!((Lightpack::LedDevice*)mDevice)->tryToReopenDevice()) {
+                mIsReconnecting = false;
                 delete mDevice;
                 mDevice = 0;
                 _log("Device not connected");
@@ -304,7 +315,11 @@ bool CLightpack::reconnectDevice()
                 return false;
             }
             else if (mDevice->getCountLeds() != mPropColors.size()) {
+                mIsReconnecting = false;
                 postConnection();
+            }
+            else {
+                mIsReconnecting = false;
             }
         }
         LeaveCriticalSection(&mDeviceLock);
@@ -487,8 +502,9 @@ void CLightpack::displayLight(Lightpack::RGBCOLOR* colors)
 {
     ASSERT(mScaledRects.size());
     size_t len = min(mScaledRects.size(), mPropColors.size());
-    if (mDevice && len) {
+    if (mDevice && len && !mIsReconnecting) {
         EnterCriticalSection(&mDeviceLock);
+        ASSERT(!mIsReconnecting);
         if (mDevice) {
             if (mDevice->setColors(colors, len) != Lightpack::RESULT::OK) {
                 // Device is/was disconnected
@@ -638,13 +654,6 @@ HRESULT CLightpack::Transform(IMediaSample *pSample)
             }
             DeleteMediaType(pType);
         }
-    }
-
-    // Reconnect device every 1 seconds if not connected
-    DWORD now = GetTickCount();
-    if ((now - mLastDeviceCheck) > sDeviceCheckElapseTime) {
-        reconnectDevice();
-        mLastDeviceCheck = now;
     }
 
     // Applies frame skipping to 20-35 iterations/sec to process to reduce cpu load

@@ -183,6 +183,7 @@
     <ClCompile Include="CLightpack.cpp" />
     <ClCompile Include="CommunicationThread.cpp" />
     <ClCompile Include="Conversion.cpp" />
+    <ClCompile Include="DeviceCheck.cpp" />
     <ClCompile Include="nv12_convert_sse.cpp" />
     <ClCompile Include="ParsingThreads.cpp" />
     <ClCompile Include="SettingsLoader.cpp" />
