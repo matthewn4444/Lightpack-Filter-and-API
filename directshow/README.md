@@ -2,10 +2,10 @@
 
 **_Author_**: Matthew Ng (matthewn4444@gmail)
 
-This is a Directshow filter for Windows that allows you to use Lightpack with 
-videos. 
+This is a Directshow filter for Windows that allows you to use Lightpack with
+videos.
 
-This is similar to [SVPLight](http://www.svp-team.com/wiki/SVPlight) 
+This is similar to [SVPLight](http://www.svp-team.com/wiki/SVPlight)
 but you do not need to run SVP to use this.
 
 ## Installation
@@ -14,8 +14,8 @@ Choose either installation or unzip the package anywhere on your computer
 
 ###Binaries (Windows 32/64bit)
 
-- [Installer (0.6.4)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.4/setup.exe)
-- [Zip (0.6.4)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.4/lightpack-filter.zip)
+- [Installer (0.7.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.7.0/setup.exe)
+- [Zip (0.7.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.7.0/lightpack-filter.zip)
 
 ###Source Code
 - [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.4.zip)

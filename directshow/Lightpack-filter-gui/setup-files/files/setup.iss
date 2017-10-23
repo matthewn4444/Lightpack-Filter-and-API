@@ -1,5 +1,5 @@
 #define MyAppName "Lightpack Filter"
-#define MyAppVersion "0.6.4"
+#define MyAppVersion "0.7.0"
 #define MyAppPublisher "Matthew Ng"
 #define MyAppURL "https://github.com/matthewn4444/Lightpack-Filter-and-API/"
 #define LaunchProgram "Edit Lightpack settings"
@@ -31,12 +31,13 @@ Name: "desktopicon"; Description: "{#CreateDesktopIcon}"
 [Icons]
 Name: "{group}\Lightpack Filter"; Filename: "{app}\nw.exe"; WorkingDir: "{app}"; IconFilename: "{app}/app/src/images/icon.ico"
 Name: "{userdesktop}\Lightpack Filter"; Filename: "{app}\nw.exe"; WorkingDir: "{app}"; IconFilename: "{app}/app/src/images/icon.ico"; Tasks: desktopicon
-     
+
 [Run]
 Filename: "{app}\installFilter.bat"; Flags: skipifdoesntexist
 Filename: https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Usage; Description: "Read Usage (Website)"; Flags: postinstall shellexec
 Filename: "{app}\nw.exe"; WorkingDir: "{app}"; Description: {#LaunchProgram}; Flags: postinstall shellexec skipifdoesntexist
-[UninstallRun]
+
+[UninstallRun]
 Filename: "{app}\uninstallFilter.bat"; Flags: skipifdoesntexist
 
 [Code]

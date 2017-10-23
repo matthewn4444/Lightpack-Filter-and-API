@@ -18,17 +18,19 @@ This includes two projects:
 
 ## Lightpack Filter Installation
 
+![Lightpack Filter GUI](https://github.com/matthewn4444/Lightpack-Filter-and-API/blob/master/directshow/Lightpack-filter-gui/design/front-image.PNG)
+
 Choose either setup installation or unzip the package anywhere on your computer
 
-###Binaries (Windows x86/x64)
+### Binaries (Windows x86/x64)
 
-- [Installer (0.6.4)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.4/setup.exe)
-- [Zip (0.6.4)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.6.4/lightpack-filter.zip)
+- [Installer (0.7.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.7.0/setup.exe)
+- [Zip (0.7.0)](https://github.com/matthewn4444/Lightpack-Filter-and-API/releases/download/v0.7.0/lightpack-filter.zip)
 
 Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Installation) for more information on setup and usage.
 
-###Source Code
-- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.6.4.zip)
+### Source Code
+- [Source code (zip)](https://github.com/matthewn4444/Lightpack-Filter-and-API/archive/v0.7.0.zip)
 
 Go [here](https://github.com/matthewn4444/Lightpack-Filter-and-API/wiki/Building-the-Source) for compile and building instructions.
 
