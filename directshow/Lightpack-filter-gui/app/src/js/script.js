@@ -167,7 +167,8 @@ setTimeout(function() {
                     // setTimeout is needed or else error
                     setTimeout(function(){
                         updater.run(_path);
-                        lightpack.closeFilterWindow(close);
+                        // Close window after timeout since sometimes nodejs is killed before launching setup
+                        lightpack.closeFilterWindow(setTimeout.bind(null, close, 100));
                     }, 100);
                 } else {
                     // Unpack zip file
