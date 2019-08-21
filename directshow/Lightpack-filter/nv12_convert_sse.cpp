@@ -1,4 +1,5 @@
 #include "CLightpack.h"
+#include <emmintrin.h>
 
 // Static constant variables
 static const int divideShift = 6;

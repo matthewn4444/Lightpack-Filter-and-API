@@ -1,8 +1,9 @@
 #ifndef __LIGHTPACK__H__
 #define __LIGHTPACK__H__
 
-#include <string.h>
+#include <string>
 #include <vector>
+#include <memory>
 
 #define MAKE_RGB(r,g,b) ((Lightpack::RGBCOLOR)(unsigned char)(r)|((unsigned char)(g)<<8)|((unsigned char)(b)<<16))
 #define GET_RED(n)      n & 0xFF
@@ -106,7 +107,7 @@ namespace Lightpack {
     private:
         // PIMPL implemenation to avoid people to compile dlib dependency
         class socket_impl;
-        std::auto_ptr<socket_impl> pimpl;
+        std::unique_ptr<socket_impl> pimpl;
 
         std::string readResultLine();
         std::string readResultValue();

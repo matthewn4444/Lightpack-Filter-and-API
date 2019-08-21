@@ -19,6 +19,7 @@
  *  Taken from the QuickSync decoder by Eric Gur
  */
 
+#include <smmintrin.h>
 #include <emmintrin.h>
 
 // gpu_memcpy is a memcpy style function that copied data very fast from a

@@ -19,8 +19,8 @@ cd %RELEASE% && "%CD%\%SETUP%\tools\zip" -r lightpack-filter icudt.dll app local
 del post-unpack.bat
 
 rem Create setup file
-set "LOCATION_X64=C:\Program Files\Inno Setup 5\iscc.exe"
-set "LOCATION_X86=C:\Program Files (x86)\Inno Setup 5\iscc.exe"
+set "LOCATION_X64=C:\Program Files\Inno Setup 6\iscc.exe"
+set "LOCATION_X86=C:\Program Files (x86)\Inno Setup 6\iscc.exe"
 
 if exist "%LOCATION_X64%" (
     set "COMPILER=%LOCATION_X64%"
